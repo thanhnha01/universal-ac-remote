@@ -19,6 +19,7 @@ import androidx.core.content.FileProvider
 import com.thanhnha.universalacremote.BuildConfig
 import java.io.File
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 @Composable
 fun UpdatePanel() {
@@ -28,28 +29,31 @@ fun UpdatePanel() {
     var message by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
     val executor = remember { Executors.newSingleThreadExecutor() }
-    Column(Modifier.fillMaxWidth().padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Button(onClick = {
-            busy = true
-            executor.execute {
-                val result = runCatching { client.latestStableUpdate() }
-                android.os.Handler(context.mainLooper).post {
-                    busy = false
-                    result.onSuccess { found ->
-                        update = found?.takeIf { hasNewVersion(it.versionCode, BuildConfig.VERSION_CODE) }
-                        message = when {
-                            found == null -> "Không tìm thấy release stable có update.json."
-                            update == null -> "Ứng dụng đang ở phiên bản mới nhất."
-                            else -> "Có bản cập nhật mới."
-                        }
-                        context.getSharedPreferences("app_updates", 0).edit().putLong("last_check_ms", System.currentTimeMillis()).apply()
-                    }.onFailure {
-                        context.getSharedPreferences("app_updates", 0).edit().putLong("last_check_ms", System.currentTimeMillis()).apply()
-                        message = "Không thể kiểm tra cập nhật: ${it.message ?: "lỗi mạng"}"
+    val preferences = remember { context.getSharedPreferences("app_updates", 0) }
+    val checkForUpdate: () -> Unit = {
+        busy = true
+        executor.execute {
+            val result = runCatching { client.latestStableUpdate() }
+            android.os.Handler(context.mainLooper).post {
+                busy = false
+                result.onSuccess { found ->
+                    update = found?.takeIf { hasNewVersion(it.versionCode, BuildConfig.VERSION_CODE) }
+                    message = when {
+                        found == null -> "Không tìm thấy release stable có update.json."
+                        update == null -> "Ứng dụng đang ở phiên bản mới nhất."
+                        else -> "Có bản cập nhật mới."
                     }
-                }
+                }.onFailure { message = "Không thể kiểm tra cập nhật. Hãy thử lại khi có mạng." }
+                preferences.edit().putLong("last_check_ms", System.currentTimeMillis()).apply()
             }
-        }, enabled = !busy) { Text(if (busy) "Đang kiểm tra…" else "Kiểm tra cập nhật") }
+        }
+    }
+    LaunchedEffect(Unit) {
+        val lastCheck = preferences.getLong("last_check_ms", 0L)
+        if (System.currentTimeMillis() - lastCheck >= TimeUnit.HOURS.toMillis(24)) checkForUpdate()
+    }
+    Column(Modifier.fillMaxWidth().padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(onClick = checkForUpdate, enabled = !busy) { Text(if (busy) "Đang kiểm tra…" else "Kiểm tra cập nhật") }
         if (message.isNotBlank()) Text(message, style = MaterialTheme.typography.bodySmall)
         update?.let { available ->
             Text("Phiên bản ${available.versionName} đã sẵn sàng.", style = MaterialTheme.typography.titleSmall)

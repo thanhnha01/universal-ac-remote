@@ -4,7 +4,7 @@
 
 GitHub Actions sẽ tạo APK có thể tái tạo ở mức thực tế, tách build kiểm tra khỏi signing/release và không lấy dependency/toolchain “latest” trong mỗi lần chạy. GitHub Releases là kênh phát hành APK đã ký.
 
-Workflow kiểm tra `.github/workflows/build.yml` được triển khai trước theo contract bên dưới. Ba workflow còn lại vẫn là thiết kế cho milestone tương ứng.
+Workflow kiểm tra `.github/workflows/build.yml` chạy trên pull request/push. `.github/workflows/build-latest.yml` chỉ đọc branch tip của nguồn ACTIVE/được chấp thuận mỗi ngày và tạo report; workflow này không promote SHA, sửa lock, ký hay phát hành. `.github/workflows/release.yml` chỉ phát hành khi push tag SemVer `vMAJOR.MINOR.PATCH`.
 
 ## Nguyên tắc chung
 
@@ -74,9 +74,10 @@ Secret dự kiến: keystore dạng base64/encrypted payload, alias và password
 
 ## Versioning và kênh phát hành
 
-- Tag/release dùng SemVer có tiền tố nhất quán (dự kiến `vMAJOR.MINOR.PATCH`).
+- Tag/release dùng SemVer `vMAJOR.MINOR.PATCH`.
+- Release workflow tính `versionCode = MAJOR * 1,000,000 + MINOR * 1,000 + PATCH + 1`; MAJOR phải ≤ 2000, MINOR/PATCH < 1000. Trước build, code phải lớn hơn mọi stable release đã công bố. Đây là mapping xác định, tăng đơn điệu theo SemVer và không phân tích version từ commit/message.
 - Pre-release không được updater coi là stable trừ khi người dùng chọn kênh tương ứng.
-- `versionCode` tăng đơn điệu; `versionName` khớp release tag theo policy được test.
+- `versionName` khớp tag không có tiền tố `v`.
 - GitHub Release bị draft/prerelease phải được xử lý rõ, không chọn chỉ vì timestamp mới hơn.
 
 ## Dependabot
