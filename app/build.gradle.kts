@@ -8,6 +8,11 @@ android {
     namespace = "com.thanhnha.universalacremote"
     compileSdk = 35
 
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
     defaultConfig {
         applicationId = "com.thanhnha.universalacremote"
         minSdk = 23
@@ -25,6 +30,10 @@ android {
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
+}
+
+kotlin {
+    jvmToolchain(17)
 }
 
 dependencies {
