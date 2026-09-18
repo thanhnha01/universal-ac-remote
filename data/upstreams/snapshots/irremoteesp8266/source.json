@@ -1,0 +1,8 @@
+{
+  "source": "irremoteesp8266",
+  "repositoryUrl": "https://github.com/crankyoldgit/IRremoteESP8266",
+  "commitSha": "1e2f0f3ef0a93cbf2a8ddb2e95130f8f4c584b3f",
+  "licenseId": "LGPL-2.1-only",
+  "status": "ACTIVE",
+  "exclusions": []
+}

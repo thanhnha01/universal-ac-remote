@@ -92,6 +92,10 @@ IRremoteESP8266 được xem là nguồn implementation/protocol, không phải 
 
 JNI facade nhận DTO ổn định, primitive-only từ Kotlin và trả encoded durations/metadata hoặc lỗi có kiểu. C++ exception, pointer và class upstream không vượt qua ABI. Build pin NDK/CMake, khai báo ABI hỗ trợ, có unit/golden test ở cả biên native và Kotlin. License/notice phải được review trước khi đưa code vào.
 
+### M5 proof-of-concept
+
+Implementation tại `app/src/main/cpp` gọi upstream `IRac` qua một JNI `encodeAc(protocol, model, state)` dùng chung; `ProtocolRegistry` cho app ID, model, capability và giới hạn nhiệt độ. Build hiện bật LG, Gree, Panasonic A/C, Daikin, Fujitsu A/C, Midea, Mitsubishi A/C và Samsung A/C. Native lấy carrier từ `IRsend::enableIROut()` và timing từ `SWIGLIB`; JNI khóa lời gọi vì các capture vector của upstream là trạng thái toàn cục và từ chối waveform dùng nhiều carrier. Test instrumentation giữ LG waveform golden regression và đi qua các family đã bật bằng cùng API. ABI cố định `arm64-v8a`.
+
 ## Dữ liệu và provenance
 
 Mỗi record normalized mang `sourceId`, upstream URL, full commit SHA, source path, source record identity, license status, importer/schema version và content hash. Dữ liệu thiếu provenance hoặc chưa rõ giấy phép không được đóng gói/phát hành.

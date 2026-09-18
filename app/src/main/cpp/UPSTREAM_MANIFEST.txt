@@ -1,0 +1,101 @@
+IRremoteESP8266 upstream source manifest
+Repository: https://github.com/crankyoldgit/IRremoteESP8266
+Commit: 1e2f0f3ef0a93cbf2a8ddb2e95130f8f4c584b3f
+License: LGPL-2.1-only (unchanged LICENSE.txt is adjacent)
+
+Compiled upstream .cpp files: IRac.cpp, IRsend.cpp, IRtimer.cpp, IRutils.cpp,
+IRtext.cpp, ir_LG.cpp, ir_Gree.cpp, ir_Panasonic.cpp, ir_Daikin.cpp,
+ir_Midea.cpp, ir_Kelvinator.cpp, ir_Fujitsu.cpp, ir_Mitsubishi.cpp,
+ir_Samsung.cpp, and ir_Tcl.cpp. CMake
+enables only the corresponding SEND_LG, SEND_GREE, SEND_PANASONIC_AC,
+SEND_DAIKIN, SEND_MIDEA, SEND_FUJITSU_AC, SEND_MITSUBISHI_AC, and
+SEND_SAMSUNG_AC flags. All other copied files below
+are headers, including the compile-time include closure of upstream IRac.h.
+
+Copied upstream files:
+src/i18n.h
+src/ir_Airton.h
+src/ir_Airwell.h
+src/ir_Amcor.h
+src/ir_Argo.h
+src/ir_Bosch.h
+src/ir_Carrier.h
+src/ir_Coolix.h
+src/ir_Corona.h
+src/ir_Daikin.h
+src/ir_Daikin.cpp
+src/ir_Delonghi.h
+src/ir_Ecoclim.h
+src/ir_Electra.h
+src/ir_Eurom.h
+src/ir_Fujitsu.h
+src/ir_Fujitsu.cpp
+src/ir_Goodweather.h
+src/ir_Gree.h
+src/ir_Gree.cpp
+src/ir_Haier.h
+src/ir_Hitachi.h
+src/ir_Kelon.h
+src/ir_Kelvinator.h
+src/ir_Kelvinator.cpp
+src/ir_LG.cpp
+src/ir_LG.h
+src/ir_Midea.h
+src/ir_Midea.cpp
+src/ir_Mirage.h
+src/ir_Mitsubishi.h
+src/ir_Mitsubishi.cpp
+src/ir_Tcl.cpp
+src/ir_MitsubishiHeavy.h
+src/ir_Neoclima.h
+src/ir_NEC.h
+src/ir_Panasonic.h
+src/ir_Panasonic.cpp
+src/ir_Rhoss.h
+src/ir_Samsung.h
+src/ir_Samsung.cpp
+src/ir_Sanyo.h
+src/ir_Sharp.h
+src/ir_Tcl.h
+src/ir_Technibel.h
+src/ir_Teco.h
+src/ir_Toshiba.h
+src/ir_Transcold.h
+src/ir_Trotec.h
+src/ir_Truma.h
+src/ir_Vestel.h
+src/ir_Voltas.h
+src/ir_Whirlpool.h
+src/ir_York.h
+src/IRac.cpp
+src/IRac.h
+src/IRmacros.h
+src/IRrecv.h
+src/IRremoteESP8266.h
+src/IRsend.cpp
+src/IRsend.h
+src/IRtext.cpp
+src/IRtext.h
+src/IRtimer.cpp
+src/IRtimer.h
+src/IRutils.cpp
+src/IRutils.h
+src/locale/defaults.h
+src/locale/en-AU.h
+
+Protocol catalog input: SupportedProtocols.md at the same pinned commit,
+stored as docs/SupportedProtocols.upstream.md. `tools/generate_protocol_catalog.py`
+extracts all detailed A/C family rows and identifies uncompiled/unhandled
+protocol IDs against IRac::isProtocolSupported(); it does not auto-enable code.
+The generated report is docs/PROTOCOL_CATALOG.md.
+
+SWIGLIB adapter delta: local changes to IRac.cpp reset a carrier-frequency
+capture vector; local changes to IRsend.cpp append normalized Hz values in
+enableIROut(). JNI rejects mixed-frequency transmissions rather than guessing.
+
+Waveform regression fixture: test/ir_LG_test.cpp, TestDecodeLG.Issue620
+outputStr() assertion for LG A/C raw state 0x8808721 (On, Cool, 22C, Medium,
+38000 Hz). Generic instrumentation smoke tests also traverse Gree, Panasonic,
+Daikin, Fujitsu, Midea, Mitsubishi A/C, and Samsung A/C through IRac::sendAc.
+Protocol/model IDs and temperature limits are sourced from the pinned
+IRac.cpp, IRsend.h, IRremoteESP8266.h, and per-protocol headers.

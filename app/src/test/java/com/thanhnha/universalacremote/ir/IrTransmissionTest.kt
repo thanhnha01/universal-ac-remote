@@ -15,7 +15,7 @@ class IrTransmissionTest {
         val error = assertThrows(IllegalArgumentException::class.java) {
             IrTransmission(0, listOf(900, 450)).validate()
         }
-        assertEquals("Carrier frequency must be greater than 0 Hz.", error.message)
+        assertEquals("Carrier frequency is outside the supported 1..500000 Hz range.", error.message)
     }
 
     @Test
@@ -43,6 +43,16 @@ class IrTransmissionTest {
             "Malformed IR signal: every mark and space duration must be greater than 0 µs.",
             error.message,
         )
+    }
+
+    @Test
+    fun rejectsWaveformsOutsideTransmitterLimits() {
+        assertThrows(IllegalArgumentException::class.java) {
+            IrTransmission(500_001, listOf(900, 450)).validate()
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            IrTransmission(38_000, listOf(1_000_001, 450)).validate()
+        }
     }
 
     @Test

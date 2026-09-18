@@ -1,0 +1,36 @@
+{
+  "licenses": [
+    {
+      "source": "irremoteesp8266",
+      "licenseId": "LGPL-2.1-only",
+      "repository": "https://github.com/crankyoldgit/IRremoteESP8266",
+      "commitSha": "1e2f0f3ef0a93cbf2a8ddb2e95130f8f4c584b3f",
+      "licenseFilePath": "LICENSE.txt",
+      "notes": "Selected implementation files already vendored under app/src/main/cpp/upstream; preserve upstream license and copyright notices."
+    },
+    {
+      "source": "smartir",
+      "licenseId": "MIT",
+      "repository": "https://github.com/smartHomeHub/SmartIR",
+      "commitSha": "e4df2957ad915536f41ffb39daa96886d7cfe040",
+      "licenseFilePath": "LICENSE",
+      "notes": "Climate code JSON only; do not use SmartIR as product branding."
+    },
+    {
+      "source": "flipper-irdb",
+      "licenseId": "CC0-1.0",
+      "repository": "https://github.com/Lucaslhm/Flipper-IRDB",
+      "commitSha": "d126fb1b6f1e114c52b4a8c19839ea65e3a9c24d",
+      "licenseFilePath": "LICENSE",
+      "notes": "Repository states commits prior to 2319685 are not covered. Each ingested .ir file must have a proven first-add commit at/after that cutoff; otherwise exclude."
+    },
+    {
+      "source": "irplus",
+      "licenseId": null,
+      "repository": "https://github.com/irplus-remote/irplus-codes.github.io",
+      "commitSha": "57605b5971b7c5ef531ebaf0707826a1c073f9bb",
+      "licenseFilePath": null,
+      "notes": "Excluded from v1.0 because no clear repository license was established for automatic redistribution. No data ingested."
+    }
+  ]
+}

@@ -10,7 +10,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val diagnostics = readIrHardwareDiagnostics(this)
         setContent {
-            DiagnosticScreen(diagnostics)
+            RemoteApp(diagnostics)
         }
     }
 }
