@@ -66,13 +66,15 @@ fun UpdatePanel() {
                     android.os.Handler(context.mainLooper).post {
                         busy = false
                         result.onSuccess {
-                            if (Build.VERSION.SDK_INT >= 26 && !context.packageManager.canRequestPackageInstalls()) {
-                                context.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${context.packageName}")))
-                                message = "Cho phép cài ứng dụng từ nguồn này, sau đó chọn Cập nhật lần nữa."
-                            } else {
-                                val uri = FileProvider.getUriForFile(context, "${context.packageName}.updates", apk)
-                                context.startActivity(Intent(Intent.ACTION_INSTALL_PACKAGE).setData(uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
-                            }
+                            runCatching {
+                                if (Build.VERSION.SDK_INT >= 26 && !context.packageManager.canRequestPackageInstalls()) {
+                                    context.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${context.packageName}")))
+                                    message = "Cho phép cài ứng dụng từ nguồn này, sau đó chọn Cập nhật lần nữa."
+                                } else {
+                                    val uri = FileProvider.getUriForFile(context, "${context.packageName}.updates", apk)
+                                    context.startActivity(Intent(Intent.ACTION_INSTALL_PACKAGE).setData(uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
+                                }
+                            }.onFailure { message = "Không thể mở cài đặt/trình cài đặt Android." }
                         }.onFailure { message = "Tải/cài đặt thất bại: ${it.message ?: "lỗi không xác định"}" }
                     }
                 }

@@ -1,6 +1,12 @@
 name: Signed Android release
 
 on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Stable release version (MAJOR.MINOR.PATCH, e.g. 0.9.0)
+        required: true
+        type: string
   push:
     tags:
       - "v*"
@@ -33,8 +39,14 @@ jobs:
       - name: Derive reproducible version
         id: version
         shell: bash
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            version="$REQUESTED_VERSION"
+          else
+            version="${GITHUB_REF_NAME#v}"
+          fi
           python3 - "$version" >> "$GITHUB_OUTPUT" <<'PY'
           import re, sys
           match = re.fullmatch(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", sys.argv[1])
@@ -42,6 +54,7 @@ jobs:
           major, minor, patch = map(int, match.groups())
           if major > 2000 or minor >= 1000 or patch >= 1000: raise SystemExit("version component out of supported range")
           print(f"versionName={sys.argv[1]}")
+          print(f"tagName=v{sys.argv[1]}")
           print(f"versionCode={major * 1000000 + minor * 1000 + patch + 1}")
           PY
       - name: Validate tag is newer than every published release
@@ -68,7 +81,12 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          test -n "$ANDROID_KEYSTORE_BASE64" && test -n "$KEYSTORE_PASSWORD" && test -n "$KEY_ALIAS" && test -n "$KEY_PASSWORD"
+          for name in ANDROID_KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Required GitHub Actions secret $name is missing. No unsigned release will be published."
+              exit 1
+            fi
+          done
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" sign --ks "$RUNNER_TEMP/release.jks" --ks-pass env:KEYSTORE_PASSWORD --ks-key-alias "$KEY_ALIAS" --key-pass env:KEY_PASSWORD --out app/build/outputs/apk/release/UniversalAC-v${{ steps.version.outputs.versionName }}.apk app/build/outputs/apk/release/app-release-unsigned.apk
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose app/build/outputs/apk/release/UniversalAC-v${{ steps.version.outputs.versionName }}.apk
@@ -100,8 +118,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" \
+          gh release create "${{ steps.version.outputs.tagName }}" \
             "app/build/outputs/apk/release/UniversalAC-v${{ steps.version.outputs.versionName }}.apk" \
             update.json SHA256SUMS.txt upstream-lock.json catalog_report.json \
             --title "Universal A/C Remote ${{ steps.version.outputs.versionName }}" \
-            --notes-file release-notes.md
+            --notes-file release-notes.md \
+            --target "$GITHUB_SHA"
