@@ -4,7 +4,7 @@
 
 ## Trạng thái
 
-Repository đang ở **M0 — tài liệu dự án và kiến trúc CI/CD**. Chưa có production Android source code, chưa kiểm tra phần cứng, chưa tải database IR lớn và chưa có APK.
+Repository đã có app diagnostic Android tối thiểu cho **M1**. Ứng dụng kiểm tra `FEATURE_CONSUMER_IR`, `ConsumerIrManager`, `hasIrEmitter()` và hiển thị các dải carrier frequency do Android báo cáo. Xác minh trên OnePlus 15 và build APK chưa được thực hiện trong môi trường hiện tại vì không có thiết bị Android/Android SDK.
 
 ## Ràng buộc cốt lõi
 
@@ -44,4 +44,3 @@ Nguồn dữ liệu dự kiến gồm IRremoteESP8266, SmartIR, Flipper IRDB và
 ## Phát hành
 
 Khi pipeline được triển khai ở milestone phù hợp, APK release đã ký sẽ chỉ được công bố qua GitHub Releases. Người dùng phải chủ động xác nhận cài đặt; ứng dụng không thiết kế cơ chế cài đặt im lặng.
-
