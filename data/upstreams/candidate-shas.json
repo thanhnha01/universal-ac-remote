@@ -1,0 +1,28 @@
+{
+  "candidates": [
+    {
+      "name": "irremoteesp8266",
+      "branch": "master",
+      "candidateSha": "1e2f0f3ef0a93cbf2a8ddb2e95130f8f4c584b3f",
+      "observedAt": "2026-09-18T09:06:34.388146+00:00"
+    },
+    {
+      "name": "smartir",
+      "branch": "master",
+      "candidateSha": "e4df2957ad915536f41ffb39daa96886d7cfe040",
+      "observedAt": "2026-09-18T09:06:35.487208+00:00"
+    },
+    {
+      "name": "flipper-irdb",
+      "branch": "main",
+      "candidateSha": "d126fb1b6f1e114c52b4a8c19839ea65e3a9c24d",
+      "observedAt": "2026-09-18T09:06:36.864916+00:00"
+    },
+    {
+      "name": "irplus",
+      "branch": "master",
+      "candidateSha": "57605b5971b7c5ef531ebaf0707826a1c073f9bb",
+      "observedAt": "2026-09-18T09:06:37.798677+00:00"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+# Synthetic timing values for deterministic importer tests; not a device profile.
+Filetype: IR signals
+Version: 1
+#
+name: Power
+type: raw
+frequency: 38000
+duty_cycle: 33
+data: 9000 4500 560 560 560 1690
+#
+name: Mode
+type: raw
+frequency: 36000
+data: 500 500 1000 500

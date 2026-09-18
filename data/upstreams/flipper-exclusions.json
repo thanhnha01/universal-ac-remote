@@ -1,0 +1,785 @@
+{
+  "licenseCutoffCommit": "2319685f2cbf0cd3f809609622cade14d24fb819",
+  "excludedFiles": [
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Admiral/Admiral_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Airfel/AIRFEL_AFSW-12HAR1RCIO.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Airmax/Airmax.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Airmet/Airmet_ac.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Airwell/Airwell.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Airwell/Airwell_AWSI-PNXA012-N11.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Aldi/Easy_Home_Portable_Air_Cooler.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Amcor/Amcor_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Arctic_King/Arctic_King_RG15B1.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Argo/Argo_ac.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Argo/Argo_zelos.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Ariston/Ariston_AC_A-MW09-IGX.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Ballu/Ballu_R05-BGE.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Beko/Beko.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Black_and_Decker/Portable.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Bonaire/Bonaire_DurangoAC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Boston_Bay/Boston_Bay_MSAB_09CR.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Botti/Botti_BL-168DLR.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Boulanger/Boulanger_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/COTech/COTech_MPPH-08CRN7-QB6_AC.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Carrier/Carrier_orlen_ac.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Chigo/Chigo_CS-21H3A-B155AF.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Chigo/Chigo_KRF-51G_79F.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Ciatronic/Ciatronic_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Comfort_Aire/Comfort_Aire_RG57A6.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Corlitec/Cortlitec_portable_ac.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Daikin/Daikin_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Daikin/Daikin_AC_industrial_TB.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Daikin/Daikin_AC_unknownModel.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Daikin/Daikin_ARC480A53.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Daikin/Daikin_FTE35KV1.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Daikin/Daikin_FTX50GV1B.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Daikin/Daikin_FTXM95PVMA.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Daikin/Daikin_FTXS25KVMA.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Danby/Danby DAC060EB7WDB.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/DeLonghi/Delonghi_portable_Pinguino-Air-to-Air-PAC-N81_ac.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/DeLonghi/Pinguino_EL290HLWKC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/DeLonghi/Pinguino_PAC_EL275HGRKC.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/DeLonghi/Pinguino_PAC_EL92_SILENT.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Eberg/Eberg_RIO_R29E1.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Ecofort/Ecofort_CoolAir_7+_EQCA7+2900824.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Electra/electra_smart.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Electrolux/Electrol_ESV09CRO_B2I.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Emerson/Emerson_EARC8RE1_ac.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Emerson/Emerson_Quiet_Kool_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Eurom/Eurom_PAC_9.2.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Eurom/Eurom_Tristar_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Ferroli/Ferroli.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Firstline/Firstline_AAS2500.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Frico/Frico_PA2510E08.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Friedrich/Friedrich.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Friedrich/Friedrich_4235h.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Friedrich/Friedrich_AKB73756214.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Frigidaire/Frigidaire_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Frigidaire/Frigidaire_RG15D_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Fujidenzo/Fujidenzo_FEA5001_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Fujitsu/Fujitsu_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Fujitsu/Fujitsu_AC_ASU18RLF.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/GREE/GREE_YAPOF.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/GREE/Gree_KFR-70G-A1.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/GREE/Gree_airco.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/GREE/Gree_airco_lightoff.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/General_Electric/GE_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/General_Electric/GE_Window_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/GoodHome/GoodHome_FDP15.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Haier/Haier_AC_AS18GD3HRA.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Haier/Haier_AC_HPD10XCM-LW.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Haier/Haier_AC_HWE08XCR-L.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Hisense/Hisense_DG11J1-99_celsius.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Hisense/Hisense_DG11J1-99_fahrenheit.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Hisense/Hisense_room_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Hisense/Hisense_window_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Hitachi/Hitach_RAK-18QH8.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Hitachi/Hitachi_RAK35.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Honeywell/Honeywell_MN10CESS.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Innova/Innova_2.0.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Insigna/Insigna_AC_NSRC2AC9.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Insigna/Insignia_NS-AC8PWH9-C_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Inventum/Inventum_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Kelon/Kelon_AS-24HR4SQJUL.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Kenmore/Kenmore_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Klarstein/Klarstein_Metrobreeze_Miami.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Klarstein/Klarstein_Skyscraper.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Koldfront/Koldfront_WAC12001.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/LG/LG_AC.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/LG/LG_AC_2.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/LG/LG_COV30332906_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/LG/LG_LP0817WSR.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/LG/LG_LP1015WNR_AC.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/LG/LG_LP1417GSR_AC.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/LG/LG_LP1419IVSM.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/LG/LG_R12AWN-NB11.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/LG/LG_SX122CL.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Lamborghini/Unknown_Model_1.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Legion/Legion_LE-F30RH-IN.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Lennox/Lennox_AC.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Lifetime Air/Lifetime_Air.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Logik/Logik_HLF-20R.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/MayTag/MayTag_M6X06F2A.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Midea/Midea_AC_MAW05R1WBL.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Midea/Midea_MP12SVKBA3RCM.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Midea/Midea_WWK08CR81N.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Midea/Midea_silent_cool_26_pro.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Mitsubishi/Mitsubishi_MSH-30RV.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Mitsubishi/Mitsubishi_MSH_GA71VB.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Mitsubishi/Mitsubishi_SRK20ZJ-S.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Mitsubishi/Mitsubishi_SRK35ZS-W.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Mitsubishi/mitsubishi-MSY-GE10VA.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Moretti/Moretti_Air_Cooler.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/OK/Ok_AC_OAC_7020.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Oreck/Oreck_AIR12GU.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Osaka/Osaka_CH_09_DSBP.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Panasonic/Panasonic_A75C4187.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Panasonic/Panasonic_CS-E9HKR.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Panasonic/Panasonic_CWA75C4179.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Panasonic/Panasonic_Climate_A75C2600.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Pioneer/PioneerMiniSplit.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Princess/Princess_AC.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Remko/Remko_RKL.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Rinnai/Rinnai_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Royal_Clima/Royal_Clima_RC-TWN55HN.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Samsung/Samsung_AC_AR12K.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Samsung/Samsung_AR13TYHZCWKN.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Samsung/Samsung_Wind-Free.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/SereneLife/SereneLife_SLPAC8.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Sharp/Sharp AH-A9UCD.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Sharp/Sharp_AH_X9VEW_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Sharp/Sharp_CVP10MX.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Shivaki/Shivaki_SSA18002.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Sinclair/SINCLAIR_ASH13BIF2.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/SoleusAir/SoleusAir.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/SoleusAir/SoleusAir_Portable.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Subtropic/Subtropic_in-07HN1.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/SuedwindAmbientika/Suedwind.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Suntec/Suntec_Transform_AC.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/TCL/Tcl.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Timberk/Timberk_RG05D4-BGE.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Tora/Tora_TS_16-Classic.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Toshiba/Toshiba_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Toshiba/Toshiba_RAS13SKV2E.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Toshiba/Toshiba_RASB10BKVG-E.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Toshiba/Toshiba_RG57H4.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Tosot/Tosot_T24H-ILF.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Tropic/Tropic_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Trotec/Trotec_PAC2600X.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Vornado/Vornado.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Whynter/Whynter_AC.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Windfree/Windfree_Ac_test.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Windfree/Windfree_Actest2.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Windfree/Windfree_Remote3.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Xiaomi/Xiaomi_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/York/York_AC.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/York/York_full_working.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Zenith/Zenith_AC.ir",
+      "reason": "first-add provenance not proven: no first-add commit found in AC history"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/Zephir/Zephir_ZPO9001H_AC.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    },
+    {
+      "source": "flipper-irdb",
+      "path": "ACs/electriQ/electriQ_P15C-V2.ir",
+      "reason": "first-add commit predates CC0 cutoff 2319685"
+    }
+  ]
+}

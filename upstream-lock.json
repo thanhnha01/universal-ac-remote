@@ -1,0 +1,78 @@
+{
+  "sources": [
+    {
+      "name": "irremoteesp8266",
+      "repositoryUrl": "https://github.com/crankyoldgit/IRremoteESP8266",
+      "branch": "master",
+      "commitSha": "1e2f0f3ef0a93cbf2a8ddb2e95130f8f4c584b3f",
+      "fetchedAt": "2026-09-18",
+      "licenseId": "LGPL-2.1-only",
+      "licenseSource": "LICENSE.txt at pinned commit",
+      "includedPaths": [
+        "src/IRac.cpp",
+        "src/IRac.h",
+        "src/ir_*.h",
+        "src/ir_*.cpp"
+      ],
+      "excludedPaths": [
+        "non-AC sources; no upstream database vendored"
+      ],
+      "parserVersion": "1.1",
+      "status": "ACTIVE"
+    },
+    {
+      "name": "smartir",
+      "repositoryUrl": "https://github.com/smartHomeHub/SmartIR",
+      "branch": "master",
+      "commitSha": "e4df2957ad915536f41ffb39daa96886d7cfe040",
+      "fetchedAt": "2026-09-18",
+      "licenseId": "MIT",
+      "licenseSource": "LICENSE at pinned commit",
+      "includedPaths": [
+        "codes/climate/*.json"
+      ],
+      "excludedPaths": [
+        "codes/media_player/**",
+        "codes/fan/**",
+        "codes/light/**",
+        "custom_components/**"
+      ],
+      "parserVersion": "1.1",
+      "status": "ACTIVE"
+    },
+    {
+      "name": "flipper-irdb",
+      "repositoryUrl": "https://github.com/Lucaslhm/Flipper-IRDB",
+      "branch": "main",
+      "commitSha": "d126fb1b6f1e114c52b4a8c19839ea65e3a9c24d",
+      "fetchedAt": "2026-09-18",
+      "licenseId": "CC0-1.0",
+      "licenseSource": "README.md license notice at pinned commit; per-file cutoff enforced against commit 2319685",
+      "licenseCutoffRef": "2319685",
+      "includedPaths": [
+        "ACs/**/*.ir whose first-add commit is at or after 2319685"
+      ],
+      "excludedPaths": [
+        "ACs/**/*.ir whose first-add commit predates 2319685 or cannot be proven",
+        "all non-ACs paths"
+      ],
+      "parserVersion": "1.1",
+      "status": "PARTIAL_LICENSE_SAFE"
+    },
+    {
+      "name": "irplus",
+      "repositoryUrl": "https://github.com/irplus-remote/irplus-codes.github.io",
+      "branch": "master",
+      "commitSha": "57605b5971b7c5ef531ebaf0707826a1c073f9bb",
+      "fetchedAt": "2026-09-18",
+      "licenseId": null,
+      "licenseSource": null,
+      "includedPaths": [],
+      "excludedPaths": [
+        "**/*"
+      ],
+      "parserVersion": "1.1",
+      "status": "EXCLUDED_LICENSE_UNCLEAR"
+    }
+  ]
+}

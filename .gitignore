@@ -1,5 +1,12 @@
 .gradle/
 **/build/
+**/.cxx/
+__pycache__/
 local.properties
+.android-sdk/
+.jdk17/
+.jdk17-*/
+.jdk17-download.zip
+.local-signing/
 .idea/
 *.iml

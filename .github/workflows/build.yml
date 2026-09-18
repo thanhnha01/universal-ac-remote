@@ -34,8 +34,21 @@ jobs:
           cache-provider: basic
           validate-wrappers: false
 
+      - name: Install pinned Android SDK components
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0" \
+            "ndk;27.2.12479018" \
+            "cmake;3.22.1"
+
       - name: Make Gradle Wrapper executable
         run: chmod +x gradlew
+
+      - name: Run Python catalog tests
+        run: python3 tools/test_build_ir_catalog.py
 
       - name: Run debug unit tests
         run: ./gradlew :app:testDebugUnitTest
