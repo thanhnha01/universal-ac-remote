@@ -114,7 +114,10 @@ fun RemoteApp(diagnostics: IrHardwareDiagnostics, store: SavedRemotesViewModel =
     fun navigateTab(route: String) {
         val resolvedRoute = when (route) {
             "remote" -> home.remotes.firstOrNull()?.let { "remote/${it.id}" } ?: "add"
-            "scan" -> "add"
+            "scan" -> {
+                store.clearScan()
+                "scan"
+            }
             else -> route
         }
         nav.navigate(resolvedRoute) {
@@ -129,7 +132,7 @@ fun RemoteApp(diagnostics: IrHardwareDiagnostics, store: SavedRemotesViewModel =
             composable("home") { ProductionHomeScreen(home, diagnostics, store, ::navigateTab) { route -> nav.navigate(route) } }
             composable("add") { ProductionAddScreen(store, catalog, ::navigateTab) { route -> nav.navigate(route) } }
             composable("import") { IrImportScreen(store, ::navigateTab, onBack = { nav.popBackStack() }, onSaved = { nav.popBackStack("home", false) }) }
-            composable("scan") { ProductionScannerScreen(store, ::navigateTab, onDone = { nav.popBackStack("home", false) }, onChangeBrand = { nav.navigate("add") }, onImport = { nav.navigate("import") }) }
+            composable("scan") { ProductionScannerScreen(store, ::navigateTab, onDone = { nav.popBackStack("home", false) }, onChangeBrand = { store.clearScan() }, onImport = { nav.navigate("import") }) }
             composable("remote/{id}", arguments = listOf(navArgument("id") { type = NavType.StringType })) {
                 val remote = home.remotes.find { saved -> saved.id == it.arguments?.getString("id") }
                 if (remote == null) MissingRemoteScreen { nav.popBackStack("home", false) }
