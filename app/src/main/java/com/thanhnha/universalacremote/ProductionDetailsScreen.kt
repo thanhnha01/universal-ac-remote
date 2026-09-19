@@ -45,9 +45,10 @@ fun ProductionDetailsScreen(
     var renameOpen by remember { mutableStateOf(false) }
     var deleteOpen by remember { mutableStateOf(false) }
     var newName by remember(remote.id, remote.displayName) { mutableStateOf(remote.displayName) }
-    val transmittable = remote.importedCommandsJson.isNotBlank() ||
+    val imported = remote.importedCommandsJson.isNotBlank()
+    val transmittable = imported ||
         (candidate != null && com.thanhnha.universalacremote.ir.CatalogTransmitter.supports(candidate))
-    val verified = remote.verifiedCapabilities.isNotEmpty() && transmittable
+    val verified = !imported && remote.verifiedCapabilities.isNotEmpty() && transmittable
 
     AppScaffold(selectedRoute = null, onNavigate = {}, bottomBar = false) { padding ->
         PageColumn(padding) {
@@ -78,33 +79,55 @@ fun ProductionDetailsScreen(
                             color = AppColors.navySoft,
                         )
                         StatusChip(
-                            if (verified) "Đã xác minh" else "Chưa xác minh",
-                            Icons.Filled.CheckCircle,
-                            if (verified) AppColors.mint else AppColors.warning,
-                            if (verified) AppColors.paleMint else AppColors.paleWarning,
+                            when {
+                                imported -> "File IR"
+                                verified -> "Đã xác minh"
+                                else -> "Chưa xác minh"
+                            },
+                            if (imported || verified) Icons.Filled.CheckCircle else Icons.Filled.Tune,
+                            when {
+                                imported -> AppColors.blue
+                                verified -> AppColors.mint
+                                else -> AppColors.warning
+                            },
+                            when {
+                                imported -> AppColors.paleBlue
+                                verified -> AppColors.paleMint
+                                else -> AppColors.paleWarning
+                            },
                         )
                     }
                 }
             }
 
-            SectionTitle("Chức năng đã xác minh")
-            if (remote.verifiedCapabilities.isEmpty()) {
-                EmptyState(
-                    "Chưa có chức năng được xác minh",
-                    "Bạn có thể kiểm tra lại remote để xác nhận từng chức năng.",
-                    Icons.Filled.Tune,
+            if (imported) {
+                SectionTitle("Remote từ file .ir")
+                InfoBanner(
+                    "Remote này dùng đúng các lệnh IR có trong file đã nhập. App không tự thêm chức năng khác.",
+                    Icons.Filled.CheckCircle,
+                    AppColors.blue,
+                    AppColors.paleBlue,
                 )
             } else {
-                remote.verifiedCapabilities.mapNotNull { raw ->
-                    runCatching { VerificationCheck.valueOf(raw) }.getOrNull()
-                }.forEach { check ->
-                    CapabilityRow(
-                        title = detailCheckLabel(check),
-                        detail = "Đã xác nhận trên máy lạnh",
-                        icon = detailCheckIcon(check),
-                        color = AppColors.mint,
-                        status = "OK",
+                SectionTitle("Chức năng đã xác minh")
+                if (remote.verifiedCapabilities.isEmpty()) {
+                    EmptyState(
+                        "Chưa có chức năng được xác minh",
+                        "Bạn có thể kiểm tra lại remote để xác nhận từng chức năng.",
+                        Icons.Filled.Tune,
                     )
+                } else {
+                    remote.verifiedCapabilities.mapNotNull { raw ->
+                        runCatching { VerificationCheck.valueOf(raw) }.getOrNull()
+                    }.forEach { check ->
+                        CapabilityRow(
+                            title = detailCheckLabel(check),
+                            detail = "Đã xác nhận trên máy lạnh",
+                            icon = detailCheckIcon(check),
+                            color = AppColors.mint,
+                            status = "OK",
+                        )
+                    }
                 }
             }
 
@@ -137,11 +160,18 @@ fun ProductionDetailsScreen(
 
             SectionTitle("Quản lý")
             PrimaryButton("Mở remote", Modifier.fillMaxWidth(), Icons.Filled.PlayArrow, onClick = onOpen)
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                SecondaryButton("Kiểm tra lại", Modifier.weight(1f), Icons.Filled.Refresh, onClick = onRetest)
-                SecondaryButton("Đổi tên", Modifier.weight(1f), Icons.Filled.Edit) {
+            if (imported) {
+                SecondaryButton("Đổi tên", Modifier.fillMaxWidth(), Icons.Filled.Edit) {
                     newName = remote.displayName
                     renameOpen = true
+                }
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    SecondaryButton("Kiểm tra lại", Modifier.weight(1f), Icons.Filled.Refresh, onClick = onRetest)
+                    SecondaryButton("Đổi tên", Modifier.weight(1f), Icons.Filled.Edit) {
+                        newName = remote.displayName
+                        renameOpen = true
+                    }
                 }
             }
             SecondaryButton("Xóa khỏi máy", Modifier.fillMaxWidth(), Icons.Filled.DeleteOutline) {
