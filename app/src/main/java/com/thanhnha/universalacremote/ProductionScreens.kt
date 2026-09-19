@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -787,7 +786,7 @@ fun AcWallUnitArt(brand: String, modifier: Modifier = Modifier) {
         Box(Modifier.fillMaxWidth()) {
             Canvas(
                 Modifier
-                    .matchParentSize()
+                    .fillMaxSize()
                     .padding(horizontal = 8.dp, vertical = 9.dp)
             ) {
                 val bodyTop = size.height * 0.14f
