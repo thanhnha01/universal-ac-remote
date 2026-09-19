@@ -243,7 +243,6 @@ private fun ScannerScreen(store: SavedRemotesViewModel, onTab: (String) -> Unit,
     var resultMessage by remember { mutableStateOf("") }
     var pendingCheck by remember { mutableStateOf<VerificationCheck?>(null) }
     var scanStarted by remember(candidateKey) { mutableStateOf(false) }
-    var machineOff by remember(candidateKey) { mutableStateOf(false) }
     @Suppress("UNUSED_VARIABLE") val stateRefresh = refresh
     val scanner = remember(candidateKey) { UniversalAcScanner(candidates) { candidate ->
         val probe = CatalogTransmitter.safeProbe(candidate) ?: error("Không có lệnh thử an toàn cho hồ sơ này.")
@@ -267,8 +266,8 @@ private fun ScannerScreen(store: SavedRemotesViewModel, onTab: (String) -> Unit,
             } else if (!scanStarted && scanner.state == ScanState.READY) {
                 SurfaceCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Chuẩn bị máy lạnh", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
-                    Text("1. Bật máy bằng remote gốc hoặc nút trên máy.\n2. Hướng điện thoại về mắt nhận IR.\n3. Đứng cách máy khoảng 2–5 m và không che đầu phát.", color = AppColors.navySoft)
-                    SecondaryButton(if (machineOff) "Máy đang tắt • sẽ thử bật" else "Máy đang bật", Modifier.fillMaxWidth(), Icons.Filled.PowerSettingsNew) { machineOff = !machineOff }
+                    Text("1. Bật máy lạnh trước khi dò.\n2. Hướng điện thoại về mắt nhận IR.\n3. Đứng cách máy khoảng 2–5 m và không che đầu phát.", color = AppColors.navySoft)
+                    InfoBanner("Lệnh thử ban đầu luôn ưu tiên trạng thái BẬT an toàn; app không dùng lệnh tắt làm probe đầu tiên.", Icons.Filled.Info, AppColors.blue, AppColors.paleBlue)
                     PrimaryButton("Bắt đầu dò", Modifier.fillMaxWidth(), Icons.Filled.Search) { scanStarted = true }
                 } }
             }
@@ -286,13 +285,15 @@ private fun ScannerScreen(store: SavedRemotesViewModel, onTab: (String) -> Unit,
                     Text(if (nextCheck == VerificationCheck.POWER) "Chỉ kiểm tra nguồn ở bước cuối để không làm gián đoạn các phép thử khác." else "Hãy quan sát máy lạnh sau khi gửi lệnh.", color = AppColors.navySoft)
                     val actionLabel = when (nextCheck) { VerificationCheck.TEMPERATURE_CHANGED -> "Gửi thử 25°C"; VerificationCheck.MODE -> "Gửi thử chế độ khác"; VerificationCheck.FAN -> "Gửi thử tốc độ quạt khác"; VerificationCheck.SWING_VERTICAL -> "Gửi thử đảo gió dọc"; VerificationCheck.SWING_HORIZONTAL -> "Gửi thử đảo gió ngang"; VerificationCheck.POWER -> "Thử tắt máy" }
                     PrimaryButton(actionLabel, Modifier.fillMaxWidth(), Icons.Filled.Send, enabled = pendingCheck == null) { pendingCheck = nextCheck; resultMessage = runCatching { val selected = scanner.selected ?: error("missing"); AndroidIrTransmitter.from(context).transmit(CatalogTransmitter.encode(selected, testState(selected, nextCheck, RemoteControls.from(selected)))); "Đã gửi lệnh kiểm tra. Chọn kết quả bên dưới." }.getOrElse { "Không thể phát tín hiệu này. Thử hồ sơ tiếp theo hoặc kiểm tra phần cứng IR." }; refresh++ }
-                    if (pendingCheck == nextCheck) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { PrimaryButton("Có", Modifier.weight(1f), Icons.Filled.Check) { val selected = scanner.selected; if (nextCheck == VerificationCheck.POWER && selected != null) { runCatching { AndroidIrTransmitter.from(context).transmit(CatalogTransmitter.encodeSafeProbe(selected)) }; resultMessage = "Đã thử bật lại máy." }; scanner.recordVerification(nextCheck); pendingCheck = null; refresh++ }; SecondaryButton("Không", Modifier.weight(1f), Icons.Filled.Close) { scanner.recordVerification(nextCheck, supported = false); pendingCheck = null; refresh++ }; TextButton(onClick = { scanner.skipVerification(nextCheck); pendingCheck = null; refresh++ }) { Text("Bỏ qua") } }
+                    if (pendingCheck == nextCheck) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { PrimaryButton("Đúng", Modifier.weight(1f), Icons.Filled.Check) { val selected = scanner.selected; if (nextCheck == VerificationCheck.POWER && selected != null) { runCatching { AndroidIrTransmitter.from(context).transmit(CatalogTransmitter.encodeSafeProbe(selected)) }; resultMessage = "Đã thử bật lại máy." }; scanner.recordVerification(nextCheck); pendingCheck = null; refresh++ }; SecondaryButton("Không đúng", Modifier.weight(1f), Icons.Filled.Close) { scanner.recordVerification(nextCheck, supported = false); pendingCheck = null; refresh++ }; TextButton(onClick = { scanner.skipVerification(nextCheck); pendingCheck = null; refresh++ }) { Text("Bỏ qua") } }
                 } }
             } else if (scanner.state == ScanState.VERIFYING) {
                 PrimaryButton("Xem kết quả", Modifier.fillMaxWidth(), Icons.Filled.CheckCircle) { scanner.finishVerification(); refresh++ }
             }
             if (scanner.state == ScanState.COMPLETE) { val scanResult = scanner.result; StatusChip(when (scanResult) { ScanResult.FULL_MATCH -> "Đã xác minh"; ScanResult.PARTIAL_MATCH -> "Hồ sơ hoạt động một phần"; else -> "Không tìm thấy phản hồi" }, if (scanResult == ScanResult.NO_MATCH) Icons.Filled.ErrorOutline else Icons.Filled.CheckCircle, if (scanResult == ScanResult.NO_MATCH) AppColors.danger else AppColors.mint, if (scanResult == ScanResult.NO_MATCH) AppColors.paleDanger else AppColors.paleMint); if (scanner.cursor + 1 < candidates.size) SecondaryButton("Thử hồ sơ tiếp theo", Modifier.fillMaxWidth(), Icons.Filled.ArrowForward) { scanner.continueAfterResult(); resultMessage = "Đã chuyển sang hồ sơ tiếp theo."; refresh++ }; if (scanResult != ScanResult.NO_MATCH) { OutlinedField("Tên máy", machineName, { machineName = it }); PrimaryButton("Lưu hồ sơ này", Modifier.fillMaxWidth(), Icons.Filled.CheckCircle, enabled = machineName.isNotBlank() && scanner.verifiedCapabilities.isNotEmpty()) { val candidate = scanner.selected ?: return@PrimaryButton; store.save(SavedRemote(UUID.randomUUID().toString(), machineName.trim(), candidate.id, candidate.brand, candidate.acModel, candidate.remoteModel, candidate.protocolId, candidate.protocolModel, scanner.verifiedCapabilities.map { it.name })); onDone() } } }
-            SecondaryButton("Dừng quét", Modifier.fillMaxWidth(), Icons.Filled.Stop) { scanner.stop(); onDone() }
+            if (scanStarted && scanner.state != ScanState.COMPLETE) {
+                SecondaryButton("Dừng quét", Modifier.fillMaxWidth(), Icons.Filled.Stop) { scanner.stop(); onDone() }
+            }
         }
     }
 }
