@@ -102,7 +102,7 @@ fun IrImportScreen(
             fileName = null
             commands = emptyList()
             selectedIndex = -1
-            feedback = it.message ?: "File .ir không hợp lệ."
+            feedback = "Không thể đọc file .ir này. Hãy chọn một file IR hợp lệ."
         }
     }
 
@@ -170,7 +170,7 @@ fun IrImportScreen(
                     feedback = runCatching {
                         AndroidIrTransmitter.from(context).transmit(commands[selectedIndex].transmission)
                         "Đã phát lệnh kiểm tra."
-                    }.getOrElse { it.message ?: "Không thể phát lệnh IR." }
+                    }.getOrElse { "Không thể phát lệnh IR. Hãy kiểm tra bộ phát IR và thử lại." }
                 }
                 SecondaryButton("Lưu remote", Modifier.weight(1f), Icons.Filled.CheckCircle, enabled = commands.isNotEmpty() && remoteName.isNotBlank()) {
                     val payload = SavedRemoteConverters().encodeImportedCommands(commands.map { ImportedRawCommand(it.name, it.transmission) })
