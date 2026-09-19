@@ -163,7 +163,7 @@ fun RemoteCandidate.displayModelLabel(): String = when {
 
 fun RemoteCandidate.compactDisplayModelLabel(maxModels: Int = 2): String {
     val label = displayModelLabel()
-    val models = label.split(',').map(String::trim).filter(String::isNotBlank)
+    val models = label.split(',').map { it.trim() }.filter { it.isNotBlank() }
     if (models.size <= maxModels) return label
     return models.take(maxModels).joinToString(", ") + "  +${models.size - maxModels} model"
 }
