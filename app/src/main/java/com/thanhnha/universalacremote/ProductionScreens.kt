@@ -179,6 +179,8 @@ fun ProductionHomeScreen(
                                         .joinToString(" • "),
                                     color = AppColors.navySoft,
                                     style = MaterialTheme.typography.bodySmall,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                                 StatusChip(
                                     when {
@@ -1024,6 +1026,7 @@ private fun BrandTile(
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
