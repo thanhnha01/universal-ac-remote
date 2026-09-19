@@ -223,11 +223,10 @@ fun ProductionAddScreen(
     val popular by store.popularBrands.collectAsState()
     val search by store.search.collectAsState()
     var query by remember { mutableStateOf("") }
-    var selectedBrand by remember { mutableStateOf<String?>(null) }
+    var scanBrand by remember { mutableStateOf<String?>(null) }
 
     fun searchNow(value: String) {
         query = value
-        selectedBrand = popular.firstOrNull { it.equals(value.trim(), true) } ?: selectedBrand
         store.updateSearchText(value)
     }
 
@@ -246,16 +245,14 @@ fun ProductionAddScreen(
                     Modifier.padding(18.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        IconBubble(Icons.Filled.Search, size = 52)
-                        Column {
-                            Text("Tôi biết model", fontWeight = FontWeight.ExtraBold, color = AppColors.navy)
-                            Text("Tìm theo hãng, model máy hoặc model remote.", color = AppColors.navySoft)
-                        }
-                    }
+                    SetupFlowHeader(
+                        number = "1",
+                        title = "Tôi biết model",
+                        subtitle = "Tìm theo hãng, model máy hoặc model remote.",
+                        icon = Icons.Filled.Search,
+                        tint = AppColors.blue,
+                        background = AppColors.paleBlue,
+                    )
                     SearchField(query, ::searchNow, "Ví dụ: Daikin, FTXM35, ARC…")
                 }
             }
@@ -280,10 +277,9 @@ fun ProductionAddScreen(
                             rowBrands.forEach { brand ->
                                 BrandTile(
                                     brand = brand,
-                                    selected = selectedBrand.equals(brand, true),
+                                    selected = query.equals(brand, true),
                                     modifier = Modifier.weight(1f),
                                 ) {
-                                    selectedBrand = brand
                                     query = brand
                                     store.updateSearchText(brand)
                                 }
@@ -318,32 +314,29 @@ fun ProductionAddScreen(
                 }
             }
 
-            SectionTitle("Tôi không biết model")
             SurfaceCard(Modifier.fillMaxWidth()) {
                 Column(
                     Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        IconBubble(Icons.Outlined.Radio, background = AppColors.paleMint, tint = AppColors.mint)
-                        Column(Modifier.weight(1f)) {
-                            Text("Dò remote 1000-in-1", fontWeight = FontWeight.ExtraBold, color = AppColors.navy)
-                            Text("Chọn hãng rồi thử lần lượt các mã điều khiển phù hợp.", color = AppColors.navySoft)
-                        }
-                    }
+                    SetupFlowHeader(
+                        number = "2",
+                        title = "Tôi không biết model",
+                        subtitle = "Chọn hãng để app dò remote 1000-in-1.",
+                        icon = Icons.Outlined.Radio,
+                        tint = AppColors.mint,
+                        background = AppColors.paleMint,
+                    )
                     if (popular.isNotEmpty()) {
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             items(popular.take(12)) { brand ->
-                                BrandChoiceChip(brand, selectedBrand.equals(brand, true)) {
-                                    selectedBrand = brand
+                                BrandChoiceChip(brand, scanBrand.equals(brand, true)) {
+                                    scanBrand = brand
                                 }
                             }
                         }
                     }
-                    selectedBrand?.let { brand ->
+                    scanBrand?.let { brand ->
                         PrimaryButton(
                             "Bắt đầu dò $brand",
                             Modifier.fillMaxWidth(),
@@ -361,23 +354,35 @@ fun ProductionAddScreen(
                 }
             }
 
-            SectionTitle("Dữ liệu có sẵn")
             SurfaceCard(
                 Modifier
                     .fillMaxWidth()
                     .clickable { navigate("import") }
             ) {
-                Row(
+                Column(
                     Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    IconBubble(Icons.Filled.FileDownload, background = Color(0xFFF3F0FF), tint = AppColors.purple)
-                    Column(Modifier.weight(1f)) {
-                        Text("Nhập file .ir", fontWeight = FontWeight.ExtraBold, color = AppColors.navy)
-                        Text("Dùng file IR đã lưu trên điện thoại.", color = AppColors.navySoft)
+                    SetupFlowHeader(
+                        number = "3",
+                        title = "Nhập file .ir",
+                        subtitle = "Dùng file IR bạn đã có sẵn trên điện thoại.",
+                        icon = Icons.Filled.FileDownload,
+                        tint = AppColors.purple,
+                        background = Color(0xFFF4F0FF),
+                    )
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            "Mở trình chọn file",
+                            modifier = Modifier.weight(1f),
+                            color = AppColors.navy,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Icon(Icons.Filled.ArrowForward, null, tint = AppColors.navySoft)
                     }
-                    Icon(Icons.Filled.ArrowForward, null, tint = AppColors.navySoft)
                 }
             }
         }
@@ -907,6 +912,39 @@ fun AcWallUnitArt(brand: String, modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.labelMedium,
                 maxLines = 1,
             )
+        }
+    }
+}
+
+@Composable
+private fun SetupFlowHeader(
+    number: String,
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    tint: Color,
+    background: Color,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Surface(
+            shape = RoundedCornerShape(999.dp),
+            color = background,
+            border = BorderStroke(1.dp, tint.copy(alpha = 0.18f)),
+        ) {
+            Text(
+                number,
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                color = tint,
+                fontWeight = FontWeight.ExtraBold,
+            )
+        }
+        IconBubble(icon, tint = tint, background = background, size = 48)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, fontWeight = FontWeight.ExtraBold, color = AppColors.navy)
+            Text(subtitle, color = AppColors.navySoft, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
