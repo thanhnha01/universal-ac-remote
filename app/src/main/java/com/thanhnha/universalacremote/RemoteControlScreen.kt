@@ -91,7 +91,7 @@ fun RemoteControlScreen(
         ?: "auto"
     val initialTemperature = temperatureRange?.let { 24.coerceIn(it.first, it.last) } ?: 24
 
-    var power by remember(candidate.id) { mutableStateOf(false) }
+    var power by remember(candidate.id) { mutableStateOf<Boolean?>(null) }
     var temperature by remember(candidate.id) { mutableIntStateOf(initialTemperature) }
     var mode by remember(candidate.id) { mutableStateOf(initialMode) }
     var fan by remember(candidate.id) { mutableStateOf(initialFan) }
@@ -106,7 +106,7 @@ fun RemoteControlScreen(
     val verified = remote.verifiedCapabilities.isNotEmpty() && transmittable
 
     fun transmit(
-        nextPower: Boolean = power,
+        nextPower: Boolean = power ?: true,
         nextTemperature: Int = temperature,
         nextMode: String = mode,
         nextFan: String = fan,
@@ -126,7 +126,7 @@ fun RemoteControlScreen(
 
         if (
             candidate.encodingType.equals("RAW_PROFILE", true) &&
-            nextPower && !power &&
+            nextPower && power != true &&
             (modes.isEmpty() || fans.isEmpty() || temperatureRange == null)
         ) {
             val explicitOn = CatalogTransmitter.explicitPowerOn(candidate)
@@ -241,7 +241,7 @@ fun RemoteControlScreen(
                     val range = temperatureRange ?: return@RemoteHeroCard
                     if (temperature < range.last) transmit(nextTemperature = temperature + 1)
                 },
-                onPower = { transmit(nextPower = !power) },
+                onPower = { transmit(nextPower = power != true) },
                 onMode = ::cycleMode,
                 onFan = ::cycleFan,
                 modeLabel = modes.firstOrNull { it.equals(mode, true) }?.let(::modeLabel) ?: "Chế độ",
@@ -379,7 +379,7 @@ private fun RemoteTopHeader(
 private fun RemoteHeroCard(
     brand: String,
     temperature: Int,
-    power: Boolean,
+    power: Boolean?,
     temperatureEnabled: Boolean,
     powerEnabled: Boolean,
     onMinus: () -> Unit,
@@ -408,7 +408,7 @@ private fun RemoteHeroCard(
                     Modifier.weight(1f),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text("Nhiệt độ", color = AppColors.navySoft, style = MaterialTheme.typography.bodySmall)
+                    Text("Nhiệt độ đặt", color = AppColors.navySoft, style = MaterialTheme.typography.bodySmall)
                     Text(
                         if (temperatureEnabled) "${temperature}°C" else "—",
                         style = MaterialTheme.typography.displayMedium,
@@ -416,8 +416,16 @@ private fun RemoteHeroCard(
                         color = AppColors.navy,
                     )
                     Text(
-                        if (power) "Bật" else "Tắt",
-                        color = if (power) AppColors.mint else AppColors.navySoft,
+                        when (power) {
+                            true -> "Đang bật"
+                            false -> "Đang tắt"
+                            null -> "Chưa đồng bộ"
+                        },
+                        color = when (power) {
+                            true -> AppColors.mint
+                            false -> AppColors.navySoft
+                            null -> AppColors.warning
+                        },
                         fontWeight = FontWeight.Bold,
                     )
                 }
@@ -425,7 +433,7 @@ private fun RemoteHeroCard(
                 Surface(
                     modifier = Modifier.size(82.dp).clickable(enabled = powerEnabled, onClick = onPower),
                     shape = RoundedCornerShape(41.dp),
-                    color = if (power) AppColors.mint else AppColors.blue,
+                    color = if (power == true) AppColors.mint else AppColors.blue,
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
