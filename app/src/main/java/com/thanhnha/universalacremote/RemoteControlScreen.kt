@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.thanhnha.universalacremote.ir.AcFan
 import com.thanhnha.universalacremote.ir.AcMode
@@ -53,6 +54,7 @@ import com.thanhnha.universalacremote.ir.IrHardwareDiagnostics
 import com.thanhnha.universalacremote.ir.RemoteCandidate
 import com.thanhnha.universalacremote.ir.RemoteControls
 import com.thanhnha.universalacremote.ir.displayModelLabel
+import com.thanhnha.universalacremote.ir.compactDisplayModelLabel
 import com.thanhnha.universalacremote.ir.fanLabel
 import com.thanhnha.universalacremote.ir.modeLabel
 
@@ -357,10 +359,14 @@ private fun RemoteTopHeader(
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.ExtraBold,
                     color = AppColors.navy,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    listOfNotNull(remote.brand, candidate.displayModelLabel().takeIf(String::isNotBlank)).joinToString(" • "),
+                    listOfNotNull(remote.brand, candidate.compactDisplayModelLabel().takeIf(String::isNotBlank)).joinToString(" • "),
                     color = AppColors.navySoft,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
 
