@@ -37,6 +37,18 @@ Người dùng chính là chủ thiết bị Android tương thích, trước m�
 6. Lưu profile hoạt động và nguồn gốc dữ liệu cục bộ.
 7. Kiểm tra GitHub Release theo lựa chọn người dùng và thông báo bản mới.
 
+## Chuẩn UI/UX production
+
+Chi tiết bắt buộc nằm tại [UI_UX.md](UI_UX.md). Tóm tắt:
+
+- Giao diện Compose sáng, hiện đại, ưu tiên trắng/xanh nhạt, xanh dương/cyan, card bo tròn, typography rõ và touch target tối thiểu 48dp.
+- Flow người dùng phải đơn giản, ưu tiên ngôn ngữ chức năng thay vì thuật ngữ kỹ thuật như `RAW_PROFILE`, `PROTOCOL` hoặc lỗi exception.
+- Add A/C tập trung vào ba đường chính: biết model, không biết model → dò 1000-in-1, và nhập file `.ir`.
+- Scanner dùng một hành động tại một thời điểm: phát thử → phản ứng/không phản ứng → wizard xác minh từng chức năng. Power kiểm tra cuối.
+- Remote hoạt động như remote vật lý: bấm Power/Temp/Mode/Fan/Swing là phát IR ngay nếu profile hỗ trợ; không yêu cầu nút "Gửi lệnh" chung.
+- Chức năng không hoạt động hoặc chưa implement phải bị ẩn hoặc ghi rõ chưa khả dụng; không để CTA giả.
+- UI chỉ hiển thị capability/status thật từ runtime/catalog, không hardcode dữ liệu mockup.
+
 ## Nguyên tắc trải nghiệm và an toàn
 
 - Không phát IR khi người dùng chưa thực hiện hành động rõ ràng.
