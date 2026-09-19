@@ -111,9 +111,12 @@ def parse_smartir(path: Path, sha: str) -> list[dict]:
     if not isinstance(fans, list) or not all(isinstance(v, str) for v in fans): raise ValueError("fanModes must be a string list")
     swing_modes = obj.get("swingModes", [])
     if not isinstance(swing_modes, list) or not all(isinstance(v, str) for v in swing_modes): raise ValueError("swingModes must be a string list")
-    # SmartIR's swingModes is preserved verbatim; it does not identify an axis,
-    # so do not guess vertical versus horizontal in the canonical capability fields.
-    vertical = {"type":"NONE", "positions":[]}
+    normalized_swing = {v.casefold() for v in swing_modes}
+    # SmartIR commonly encodes swing state as an explicit branch such as
+    # off/vertical/horizontal/both. This is enough evidence for ON/OFF support
+    # of each axis, but not for discrete vane positions.
+    vertical = {"type":"ON_OFF" if {"vertical", "both"} & normalized_swing else "NONE", "positions":[]}
+    horizontal = {"type":"ON_OFF" if {"horizontal", "both"} & normalized_swing else "NONE", "positions":[]}
     standard_commands = {"off", "on", *modes, *fans}
     special = sorted(k for k in commands if isinstance(k, str) and k.casefold() not in standard_commands)
     try: source_path = path.relative_to(ROOT / "data/upstreams/snapshots/smartir").as_posix()
@@ -121,9 +124,13 @@ def parse_smartir(path: Path, sha: str) -> list[dict]:
     record = base_profile(source="smartir", sha=sha, path=source_path, source_id=path.stem,
         brand=brand, ac_model=", ".join(obj.get("supportedModels", [])) or None,
         remote_model=None, protocol_id=None, variant=None, encoding="RAW_PROFILE",
-        capabilities=[*[f"mode:{x}" for x in modes], *[f"fan:{x}" for x in fans], *(["power"] if "off" in commands or "on" in commands else []), *[f"special:{x}" for x in special]],
+        capabilities=[*[f"mode:{x}" for x in modes], *[f"fan:{x}" for x in fans],
+            *(["power"] if "off" in commands or "on" in commands else []),
+            *(["swing:vertical"] if vertical["type"] != "NONE" else []),
+            *(["swing:horizontal"] if horizontal["type"] != "NONE" else []),
+            *[f"special:{x}" for x in special]],
         temp={"minC": obj["minTemperature"], "maxC": obj["maxTemperature"]}, fans=fans, modes=modes,
-        v_swing=vertical, h_swing={"type":"NONE","positions":[]},
+        v_swing=vertical, h_swing=horizontal,
         special=special, verification="candidate")
     record["rawCommands"] = commands
     record["sourceMetadata"] = {"supportedController": obj.get("supportedController"),
