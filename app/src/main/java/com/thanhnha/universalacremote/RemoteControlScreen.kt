@@ -231,7 +231,9 @@ fun RemoteControlScreen(
                 brand = remote.brand,
                 temperature = temperature,
                 power = power,
+                temperatureVisible = temperatureRange != null,
                 temperatureEnabled = temperatureRange != null && ready,
+                powerVisible = controls.power,
                 powerEnabled = controls.power && ready,
                 onMinus = {
                     val range = temperatureRange ?: return@RemoteHeroCard
@@ -246,7 +248,9 @@ fun RemoteControlScreen(
                 onFan = ::cycleFan,
                 modeLabel = modes.firstOrNull { it.equals(mode, true) }?.let(::modeLabel) ?: "Chế độ",
                 fanLabel = fans.firstOrNull { it.equals(fan, true) }?.let(::fanLabel) ?: "Quạt",
+                quickModeVisible = modes.size > 1,
                 quickModeEnabled = modes.size > 1 && ready,
+                quickFanVisible = fans.size > 1,
                 quickFanEnabled = fans.size > 1 && ready,
             )
 
@@ -380,7 +384,9 @@ private fun RemoteHeroCard(
     brand: String,
     temperature: Int,
     power: Boolean?,
+    temperatureVisible: Boolean,
     temperatureEnabled: Boolean,
+    powerVisible: Boolean,
     powerEnabled: Boolean,
     onMinus: () -> Unit,
     onPlus: () -> Unit,
@@ -389,7 +395,9 @@ private fun RemoteHeroCard(
     onFan: () -> Unit,
     modeLabel: String,
     fanLabel: String,
+    quickModeVisible: Boolean,
     quickModeEnabled: Boolean,
+    quickFanVisible: Boolean,
     quickFanEnabled: Boolean,
 ) {
     SurfaceCard(Modifier.fillMaxWidth(), SoftHeroGradient) {
@@ -410,7 +418,7 @@ private fun RemoteHeroCard(
                 ) {
                     Text("Nhiệt độ đặt", color = AppColors.navySoft, style = MaterialTheme.typography.bodySmall)
                     Text(
-                        if (temperatureEnabled) "${temperature}°C" else "—",
+                        if (temperatureVisible) "${temperature}°C" else "—",
                         style = MaterialTheme.typography.displayMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = AppColors.navy,
@@ -430,55 +438,65 @@ private fun RemoteHeroCard(
                     )
                 }
 
-                Surface(
-                    modifier = Modifier.size(82.dp).clickable(enabled = powerEnabled, onClick = onPower),
-                    shape = RoundedCornerShape(41.dp),
-                    color = if (power == true) AppColors.mint else AppColors.blue,
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Filled.PowerSettingsNew,
-                            "Bật hoặc tắt",
-                            tint = Color.White,
-                            modifier = Modifier.size(40.dp),
-                        )
+                if (powerVisible) {
+                    Surface(
+                        modifier = Modifier.size(82.dp).clickable(enabled = powerEnabled, onClick = onPower),
+                        shape = RoundedCornerShape(41.dp),
+                        color = if (power == true) AppColors.mint else AppColors.blue,
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Filled.PowerSettingsNew,
+                                "Bật hoặc tắt",
+                                tint = Color.White,
+                                modifier = Modifier.size(40.dp),
+                            )
+                        }
                     }
                 }
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                RemoteQuickAction(
-                    "−",
-                    "Giảm nhiệt",
-                    Icons.Filled.Thermostat,
-                    Modifier.weight(1f),
-                    temperatureEnabled,
-                    onMinus,
-                )
-                RemoteQuickAction(
-                    "+",
-                    "Tăng nhiệt",
-                    Icons.Filled.Thermostat,
-                    Modifier.weight(1f),
-                    temperatureEnabled,
-                    onPlus,
-                )
-                RemoteQuickAction(
-                    "",
-                    modeLabel,
-                    Icons.Filled.Tune,
-                    Modifier.weight(1f),
-                    quickModeEnabled,
-                    onMode,
-                )
-                RemoteQuickAction(
-                    "",
-                    fanLabel,
-                    Icons.Filled.Air,
-                    Modifier.weight(1f),
-                    quickFanEnabled,
-                    onFan,
-                )
+            if (temperatureVisible || quickModeVisible || quickFanVisible) {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (temperatureVisible) {
+                        RemoteQuickAction(
+                            "−",
+                            "Giảm nhiệt",
+                            Icons.Filled.Thermostat,
+                            Modifier.weight(1f),
+                            temperatureEnabled,
+                            onMinus,
+                        )
+                        RemoteQuickAction(
+                            "+",
+                            "Tăng nhiệt",
+                            Icons.Filled.Thermostat,
+                            Modifier.weight(1f),
+                            temperatureEnabled,
+                            onPlus,
+                        )
+                    }
+                    if (quickModeVisible) {
+                        RemoteQuickAction(
+                            "",
+                            modeLabel,
+                            Icons.Filled.Tune,
+                            Modifier.weight(1f),
+                            quickModeEnabled,
+                            onMode,
+                        )
+                    }
+                    if (quickFanVisible) {
+                        RemoteQuickAction(
+                            "",
+                            fanLabel,
+                            Icons.Filled.Air,
+                            Modifier.weight(1f),
+                            quickFanEnabled,
+                            onFan,
+                        )
+                    }
+                }
             }
         }
     }
