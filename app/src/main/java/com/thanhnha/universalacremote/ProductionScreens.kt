@@ -118,7 +118,7 @@ fun ProductionHomeScreen(
 
             if (!diagnostics.hasIrEmitter) {
                 InfoBanner(
-                    "Android chưa xác nhận được bộ phát IR. Bạn vẫn có thể quản lý hồ sơ nhưng chưa thể phát lệnh.",
+                    "Điện thoại chưa sẵn sàng phát IR. Bạn vẫn có thể quản lý remote nhưng chưa thể điều khiển máy lạnh.",
                     Icons.Filled.ErrorOutline,
                     AppColors.danger,
                     AppColors.paleDanger,
@@ -322,7 +322,7 @@ fun ProductionAddScreen(
                         IconBubble(Icons.Outlined.Radio, background = AppColors.paleMint, tint = AppColors.mint)
                         Column(Modifier.weight(1f)) {
                             Text("Dò remote 1000-in-1", fontWeight = FontWeight.ExtraBold, color = AppColors.navy)
-                            Text("Chọn hãng rồi thử lần lượt các hồ sơ có thể phát.", color = AppColors.navySoft)
+                            Text("Chọn hãng rồi thử lần lượt các mã điều khiển phù hợp.", color = AppColors.navySoft)
                         }
                     }
                     if (popular.isNotEmpty()) {
@@ -511,7 +511,7 @@ fun ProductionScannerScreen(
                                     scanner.tryCurrent(System.currentTimeMillis())
                                     "Đã phát tín hiệu. Chờ 2–3 giây rồi xác nhận phản ứng của máy."
                                 }.getOrElse {
-                                    "Không thể phát tín hiệu này. Hãy kiểm tra phần cứng IR hoặc thử hồ sơ khác."
+                                    "Không thể phát tín hiệu này. Hãy kiểm tra IR hoặc thử mã khác."
                                 }
                                 refresh++
                             }
@@ -536,7 +536,7 @@ fun ProductionScannerScreen(
                                 }
                                 SecondaryButton("Không", Modifier.weight(1f), Icons.Filled.Close) {
                                     scanner.reportNoReaction()
-                                    message = if (scanner.state == ScanState.COMPLETE) "Đã thử hết hồ sơ." else "Chuyển sang mã tiếp theo."
+                                    message = if (scanner.state == ScanState.COMPLETE) "Đã thử hết mã điều khiển." else "Chuyển sang mã tiếp theo."
                                     refresh++
                                 }
                             }
@@ -764,7 +764,7 @@ fun ProductionSettingsScreen(
                     ProductionSourceRow("IRremoteESP8266", "Bộ mã protocol máy lạnh")
                     ProductionSourceRow("SmartIR", "Mã điều khiển cộng đồng")
                     ProductionSourceRow("Flipper IRDB", "Nguồn file IR khi hợp lệ")
-                    ProductionSourceRow("irplus", "Nguồn profile bổ sung")
+                    ProductionSourceRow("irplus", "Nguồn mã điều khiển bổ sung")
                 }
             }
         }
