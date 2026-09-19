@@ -8,6 +8,8 @@ on:
         required: true
         type: string
   push:
+    branches:
+      - main
     tags:
       - "v*"
 
@@ -16,6 +18,7 @@ permissions:
 
 jobs:
   release:
+    if: github.event_name != 'push' || startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, '[ir-auto-update]')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -41,11 +44,26 @@ jobs:
         shell: bash
         env:
           REQUESTED_VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             version="$REQUESTED_VERSION"
-          else
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
             version="${GITHUB_REF_NAME#v}"
+          else
+            version=$(gh release list --limit 100 --json tagName,isDraft,isPrerelease | python3 -c '
+            import json, re, sys
+            versions=[]
+            for row in json.load(sys.stdin):
+              if row["isDraft"] or row["isPrerelease"]: continue
+              match=re.fullmatch(r"v(\d+)\.(\d+)\.(\d+)", row["tagName"])
+              if match: versions.append(tuple(map(int, match.groups())))
+            major, minor, patch=max(versions, default=(0, 0, 0))
+            if patch >= 999:
+              minor, patch = minor + 1, 0
+            else:
+              patch += 1
+            print(f"{major}.{minor}.{patch}")')
           fi
           python3 - "$version" >> "$GITHUB_OUTPUT" <<'PY'
           import re, sys

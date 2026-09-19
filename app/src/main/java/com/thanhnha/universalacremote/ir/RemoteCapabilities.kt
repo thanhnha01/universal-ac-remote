@@ -14,6 +14,16 @@ data class RemoteControls(
     val horizontalSwing: SwingControl,
     val specialCapabilities: List<String>,
 ) {
+    /** Stable, user-friendly order. Power is intentionally verified last. */
+    fun verificationOrder(): List<VerificationCheck> = listOf(
+        VerificationCheck.TEMPERATURE_CHANGED,
+        VerificationCheck.MODE,
+        VerificationCheck.FAN,
+        VerificationCheck.SWING_VERTICAL,
+        VerificationCheck.SWING_HORIZONTAL,
+        VerificationCheck.POWER,
+    ).filter { it in verificationRequirements() }
+
     fun verificationRequirements(): Set<VerificationCheck> = buildSet {
         if (power) add(VerificationCheck.POWER)
         if (temperatureRange != null && temperatureRange.first < temperatureRange.last) add(VerificationCheck.TEMPERATURE_CHANGED)

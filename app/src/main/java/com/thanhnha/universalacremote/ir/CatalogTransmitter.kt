@@ -13,10 +13,61 @@ object CatalogTransmitter {
 
     fun supports(candidate: RemoteCandidate): Boolean = when {
         protocol(candidate) != null -> true
-        candidate.encodingType.equals("RAW_PROFILE", true) -> canDecodeSmartIr(candidate)
+        candidate.encodingType.equals("RAW_PROFILE", true) -> canDecodeSmartIr(candidate) && safeProbe(candidate) != null
         candidate.encodingType.equals("IMPORTED_RAW", true) -> firstImportedRaw(candidate) != null
         else -> false
     }
+
+    fun safeProbe(candidate: RemoteCandidate): SafeProbe? {
+        explicitPowerOn(candidate)?.let { return SafeProbe(AcState(true, 24, AcMode.COOL, AcFan.AUTO), "Thử bật máy", transmission = it) }
+        explicitToggle(candidate)?.let {
+            return SafeProbe(
+                AcState(true, 24, AcMode.COOL, AcFan.AUTO),
+                "Thử tín hiệu hồ sơ",
+                "Hồ sơ này chỉ có lệnh bật/tắt. Máy có thể đổi trạng thái khi thử.",
+                it,
+            )
+        }
+        val policy = SafeProbePolicy.forCandidate(candidate) ?: return null
+        val controls = RemoteControls.from(candidate)
+        val definition = protocol(candidate)
+        val modes = (controls.modes.mapNotNull(::mode) + (definition?.modes?.toList() ?: emptyList()))
+            .distinct().ifEmpty { listOf(policy.state.mode) }
+        val fans = (controls.fanModes.mapNotNull(::fan) + (definition?.fanSpeeds?.toList() ?: emptyList()))
+            .distinct().ifEmpty { listOf(policy.state.fan) }
+        val range = controls.temperatureRange ?: definition?.let { it.minTemperatureCelsius..it.maxTemperatureCelsius }
+            ?: return null
+        val states = range.asSequence().flatMap { temperature ->
+            modes.asSequence().flatMap { selectedMode -> fans.asSequence().map { selectedFan ->
+                policy.state.copy(power = true, temperatureCelsius = temperature, mode = selectedMode, fan = selectedFan)
+            } }
+        }
+        return states.mapNotNull { state ->
+            runCatching { encode(candidate, state) }.getOrNull()?.let { SafeProbe(state, if (state.mode == AcMode.COOL) "Thử làm lạnh ${state.temperatureCelsius}°C" else policy.description, policy.warning) }
+        }.firstOrNull()
+    }
+
+    fun encodeSafeProbe(candidate: RemoteCandidate): IrTransmission {
+        val probe = safeProbe(candidate) ?: error("This profile has no safe probe.")
+        return probe.transmission ?: encode(candidate, probe.state)
+    }
+
+    /** Returns only an explicitly named ON command; an OFF/toggle command is never selected here. */
+    fun explicitPowerOn(candidate: RemoteCandidate): IrTransmission? = runCatching {
+        if (!candidate.encodingType.equals("RAW_PROFILE", true)) return@runCatching null
+        val commands = candidate.rawCommandsJson?.let(::JSONObject) ?: return@runCatching null
+        val encoded = listOf("power_on", "powerOn", "on").asSequence()
+            .mapNotNull { key -> commands.optString(key).takeIf(String::isNotBlank) }
+            .firstOrNull() ?: return@runCatching null
+        BroadlinkDecoder.decodeBase64(encoded)
+    }.getOrNull()
+
+    private fun explicitToggle(candidate: RemoteCandidate): IrTransmission? = runCatching {
+        if (!candidate.encodingType.equals("RAW_PROFILE", true)) return@runCatching null
+        val commands = candidate.rawCommandsJson?.let(::JSONObject) ?: return@runCatching null
+        val encoded = commands.optString("toggle").takeIf(String::isNotBlank) ?: return@runCatching null
+        BroadlinkDecoder.decodeBase64(encoded)
+    }.getOrNull()
 
     fun modelId(candidate: RemoteCandidate, definition: ProtocolDefinition): String? {
         val catalogModels = candidate.protocolModel.orEmpty().split(',').map(String::trim).filter(String::isNotEmpty)

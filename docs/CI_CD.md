@@ -4,7 +4,7 @@
 
 GitHub Actions sẽ tạo APK có thể tái tạo ở mức thực tế, tách build kiểm tra khỏi signing/release và không lấy dependency/toolchain “latest” trong mỗi lần chạy. GitHub Releases là kênh phát hành APK đã ký.
 
-Workflow kiểm tra `.github/workflows/build.yml` chạy trên pull request/push. `.github/workflows/build-latest.yml` chỉ đọc branch tip của nguồn ACTIVE/được chấp thuận mỗi ngày và tạo report; workflow này không promote SHA, sửa lock, ký hay phát hành. `.github/workflows/release.yml` chỉ phát hành khi push tag SemVer `vMAJOR.MINOR.PATCH`.
+Workflow kiểm tra `.github/workflows/build.yml` chạy trên pull request/push. `.github/workflows/update-ir.yml` kiểm tra upstream mỗi ngày, materialize nguồn IR đã được phép và mở Pull Request cập nhật; không commit thẳng vào `main`. Khi PR có tiêu đề `[ir-auto-update]` được merge vào `main`, `.github/workflows/release.yml` tự tăng patch version, ký và phát hành APK. `.github/workflows/build-latest.yml` vẫn chỉ tạo report kiểm tra upstream.
 
 ## Nguyên tắc chung
 
@@ -44,6 +44,16 @@ Acceptance: build sạch từ checkout mới, không network resolution ngoài a
 - Dependabot/PR riêng mới là đường cập nhật version pin chính thức.
 
 Tên workflow biểu thị “compatibility check gần mới nhất”, không cho phép runtime build chính tự resolve latest.
+
+## `update-ir.yml`
+
+**Mục đích:** cập nhật source/profile IR trực tiếp trên GitHub mà không cần máy local.
+
+- Trigger: schedule hằng ngày và `workflow_dispatch`.
+- Đọc branch tip, giữ full commit SHA trong `upstream-lock.json`, tải đúng các path đã chọn và chạy parser/catalog tests.
+- Tự mở PR với tiêu đề `[ir-auto-update]`; build/lint Android chạy trên PR như bình thường.
+- Sau khi merge PR vào `main`, release workflow tự phát hành patch version mới.
+- `IRremoteESP8266` native source có local JNI delta nên chưa được tự động promote trong workflow này; thay đổi protocol engine phải qua PR riêng để không làm mất patch cục bộ.
 
 ## `upstream-check.yml`
 
