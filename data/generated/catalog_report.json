@@ -3,6 +3,9 @@
   "totalProfiles": 351,
   "protocolProfiles": 8,
   "rawProfiles": 343,
+  "smartirTotal": 343,
+  "smartirTransmittable": 241,
+  "smartirUnsupported": 102,
   "profilesBySource": {
     "irremoteesp8266": 8,
     "smartir": 343,

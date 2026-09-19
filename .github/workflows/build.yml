@@ -59,6 +59,9 @@ jobs:
       - name: Assemble debug APK
         run: ./gradlew :app:assembleDebug
 
+      - name: Assemble release APK (unsigned CI verification)
+        run: ./gradlew :app:assembleRelease
+
       - name: Upload debug APK
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

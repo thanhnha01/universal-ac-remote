@@ -6,6 +6,7 @@ import json
 import math
 import re
 import sys
+import base64
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -46,7 +47,7 @@ def base_profile(*, source: str, sha: str, path: str, source_id: str,
     if not SHA_RE.fullmatch(sha):
         raise ValueError(f"{source}: sourceCommitSha must be a full 40-character SHA")
     return {
-        "id": f"{source}:{source_id}", "brand": brand,
+        "id": f"{source}:{source_id}", "sourceProfileId": source_id, "brand": brand,
         "normalizedBrand": normalize_brand(brand), "aliases": [],
         "acModel": ac_model, "remoteModel": remote_model,
         "protocolId": protocol_id, "protocolModel": variant,
@@ -119,7 +120,7 @@ def parse_smartir(path: Path, sha: str) -> list[dict]:
     except ValueError: source_path = path.name
     record = base_profile(source="smartir", sha=sha, path=source_path, source_id=path.stem,
         brand=brand, ac_model=", ".join(obj.get("supportedModels", [])) or None,
-        remote_model=None, protocol_id=None, variant=None, encoding="IMPORTED_RAW",
+        remote_model=None, protocol_id=None, variant=None, encoding="RAW_PROFILE",
         capabilities=[*[f"mode:{x}" for x in modes], *[f"fan:{x}" for x in fans], *(["power"] if "off" in commands or "on" in commands else []), *[f"special:{x}" for x in special]],
         temp={"minC": obj["minTemperature"], "maxC": obj["maxTemperature"]}, fans=fans, modes=modes,
         v_swing=vertical, h_swing={"type":"NONE","positions":[]},
@@ -174,7 +175,7 @@ def parse_flipper_text(text: str, sha: str, path: str) -> list[dict]:
             continue
         if fields.get("type") != "raw": raise ValueError(f"unsupported Flipper encoding '{fields.get('type')}'")
         raw = fields.get("data", "").split()
-        if not raw or len(raw) > 4096 or len(raw) % 2: raise ValueError("invalid RAW timing count; expected complete mark/space pairs")
+        if not raw or len(raw) > 4096: raise ValueError("invalid RAW timing count")
         try: vals = [int(x) for x in raw]
         except ValueError as exc: raise ValueError("RAW timing contains a non-integer token") from exc
         if any(x <= 0 or x > 1_000_000 for x in vals) or sum(vals) > 120_000_000: raise ValueError("RAW timing outside safety bounds")
@@ -197,7 +198,7 @@ def find_duplicates(profiles: list[dict]) -> list[dict]:
     # Names are clues only; never auto-merge. Exact same source path and model is a review candidate.
     groups: dict[tuple, list[str]] = {}
     for p in profiles:
-        key = (p["normalizedBrand"], p["sourcePath"], p["acModel"], p["remoteModel"], p["protocolId"], p["protocolModel"])
+        key = (p["normalizedBrand"], p["sourcePath"], p.get("sourceProfileId"), p["acModel"], p["remoteModel"], p["protocolId"], p["protocolModel"])
         groups.setdefault(key, []).append(p["id"])
     return [{"identity": list(k), "profileIds": ids} for k, ids in groups.items() if len(ids) > 1]
 
@@ -230,6 +231,9 @@ def build() -> tuple[list[dict], dict]:
                     if path.relative_to(folder).as_posix() in excluded_flipper_paths: continue
                     profiles.extend(parse_flipper_ir(path, sha))
             except Exception as exc: malformed.append({"source":source,"path":path.relative_to(ROOT).as_posix(),"reason":str(exc)})
+    for profile in profiles:
+        if profile["encodingType"] in ("RAW_PROFILE", "IMPORTED_RAW"):
+            profile["verificationStatus"] = "transmittable" if is_transmittable(profile) else "unsupported"
     profiles.sort(key=lambda p: p["id"])
     counts = {s: sum(p["source"] == s for p in profiles) for s in ("irremoteesp8266", "smartir", "flipper-irdb", "irplus")}
     flipper_excluded = [x for x in excluded if x.get("source") == "flipper-irdb"]
@@ -238,6 +242,9 @@ def build() -> tuple[list[dict], dict]:
     report = {"totalBrands": len({p["normalizedBrand"] for p in profiles}), "totalProfiles": len(profiles),
         "protocolProfiles": sum(p["encodingType"] == "PROTOCOL" for p in profiles),
         "rawProfiles": sum(p["encodingType"] != "PROTOCOL" for p in profiles),
+        "smartirTotal": sum(p["source"] == "smartir" for p in profiles),
+        "smartirTransmittable": sum(p["source"] == "smartir" and is_transmittable(p) for p in profiles),
+        "smartirUnsupported": sum(p["source"] == "smartir" and not is_transmittable(p) for p in profiles),
         "profilesBySource": counts, "malformedEntries": malformed, "duplicateCandidates": find_duplicates(profiles),
         "excluded": {"licenseUnclear": [{"source":"irplus","reason":"EXCLUDED_LICENSE_UNCLEAR"}],
             "flipperLicenseCutoff": flipper_cutoff, "malformed": malformed,
@@ -260,26 +267,87 @@ def build() -> tuple[list[dict], dict]:
     return profiles, report
 
 
+def decode_broadlink(command: str) -> list[int]:
+    """Decode one SmartIR Broadlink Base64 command into validated microseconds."""
+    try:
+        packet = base64.b64decode(command, validate=True)
+    except (ValueError, base64.binascii.Error) as exc:
+        raise ValueError("invalid Broadlink Base64 payload") from exc
+    if len(packet) < 4 or packet[0] != 0x26:
+        raise ValueError("unsupported Broadlink packet type")
+    data_length = int.from_bytes(packet[2:4], "little")
+    if data_length <= 0 or data_length + 4 > len(packet):
+        raise ValueError("malformed Broadlink packet length")
+    if any(packet[data_length + 4:]):
+        raise ValueError("malformed Broadlink trailing data")
+    result: list[int] = []
+    index, end = 4, data_length + 4
+    while index < end:
+        value = packet[index]
+        index += 1
+        if value == 0:
+            if index + 1 >= end:
+                raise ValueError("truncated Broadlink timing")
+            value = int.from_bytes(packet[index:index + 2], "big")
+            index += 2
+        if value <= 0:
+            raise ValueError("non-positive Broadlink timing")
+        result.append(int(value * 32.84))
+    return result
+
+
+def _command_leaves(value):
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for child in value.values():
+            yield from _command_leaves(child)
+    else:
+        raise ValueError("malformed SmartIR command tree")
+
+
+def _valid_timings(frequency: int, timings) -> bool:
+    if not isinstance(timings, list) or not timings or len(timings) > 4096: return False
+    if any(isinstance(v, bool) or not isinstance(v, int) or not 0 < v <= 1_000_000 for v in timings): return False
+    return 1 <= frequency <= 500_000 and sum(timings) <= 120_000_000
+
+
 def is_transmittable(profile: dict) -> bool:
-    """Fail-closed validation for imported timing payloads; encoded blobs are not waveforms."""
+    """Fail-closed validation for raw timings and SmartIR Broadlink commands."""
+    if profile.get("encodingType") == "RAW_PROFILE":
+        metadata = profile.get("sourceMetadata") or {}
+        if str(metadata.get("supportedController", "")).casefold() != "broadlink": return False
+        if str(metadata.get("commandsEncoding", "")).casefold() != "base64": return False
+        try:
+            commands = profile.get("rawCommands")
+            if not isinstance(commands, dict) or not commands: return False
+            for encoded in _command_leaves(commands):
+                if not _valid_timings(38_000, decode_broadlink(encoded)): return False
+            return True
+        except (TypeError, ValueError):
+            return False
     if profile.get("encodingType") != "IMPORTED_RAW": return False
     commands = profile.get("rawCommands")
     if not isinstance(commands, dict) or not commands: return False
     for command in commands.values():
         if not isinstance(command, dict): return False
         frequency, timings = command.get("carrierFrequencyHz"), command.get("durationsMicros")
-        if isinstance(frequency, bool) or not isinstance(frequency, int) or not 1 <= frequency <= 500_000: return False
-        if not isinstance(timings, list) or not timings or len(timings) > 4096 or len(timings) % 2: return False
-        if any(isinstance(v, bool) or not isinstance(v, int) or not 0 < v <= 1_000_000 for v in timings): return False
-        if sum(timings) > 120_000_000: return False
+        if isinstance(frequency, bool) or not isinstance(frequency, int): return False
+        if not _valid_timings(frequency, timings): return False
     return True
 
 
 def to_mobile_index(profiles: list[dict]) -> dict:
-    index_keys = ("id", "brand", "normalizedBrand", "aliases", "acModel", "remoteModel", "protocolId", "protocolModel",
+    index_keys = ("id", "sourceProfileId", "brand", "normalizedBrand", "aliases", "acModel", "remoteModel", "protocolId", "protocolModel",
                   "encodingType", "capabilities", "temperatureRange", "fanModes", "operationModes", "verticalSwingCapabilities",
                   "horizontalSwingCapabilities", "specialCapabilities", "source", "sourceCommitSha", "sourcePath", "verificationStatus", "sourceMetadata")
-    return {"schemaVersion": "1.0", "profiles": [{key: profile[key] for key in index_keys if key in profile} for profile in profiles]}
+    mobile_profiles = []
+    for profile in profiles:
+        item = {key: profile[key] for key in index_keys if key in profile}
+        if profile.get("encodingType") != "PROTOCOL" and "rawCommands" in profile:
+            item["rawCommands"] = profile["rawCommands"]
+        mobile_profiles.append(item)
+    return {"schemaVersion": "1.0", "profiles": mobile_profiles}
 
 
 def main() -> None:

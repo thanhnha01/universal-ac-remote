@@ -29,9 +29,9 @@ class FlipperRawImporterTest {
         assertThrows(IllegalArgumentException::class.java) { FlipperRawImporter.parse(raw("frequency: 38000\ndata: 10 0")) }
     }
 
-    @Test fun rejectsMalformedFormatAndTimingSequence() {
+    @Test fun rejectsMalformedFormatAndAcceptsTrailingMark() {
         assertThrows(IllegalArgumentException::class.java) { FlipperRawImporter.parse("not a field") }
-        assertThrows(IllegalArgumentException::class.java) { FlipperRawImporter.parse(raw("frequency: 38000\ndata: 10 20 30")) }
+        assertEquals(3, FlipperRawImporter.parse(raw("frequency: 38000\ndata: 10 20 30"))[0].transmission.timingsMicros.size)
     }
 
     private fun raw(fields: String) = "Filetype: IR signals\nVersion: 1\n#\nname: Test\ntype: raw\n$fields\n"

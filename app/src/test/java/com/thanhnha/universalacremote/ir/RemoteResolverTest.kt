@@ -45,4 +45,24 @@ class RemoteResolverTest {
         assertEquals(listOf("usable"), resolver.scannerCandidates { it.encodingType == "PROTOCOL" }.map { it.id })
         assertEquals(null, resolver.findById("removed-from-catalog"))
     }
+
+    @Test fun transmittableExactModelRanksAboveUnsupportedExactModel() {
+        val usable = profile("usable", ac = "A1")
+        val unsupported = profile("unsupported", ac = "A1").copy(
+            encodingType = "RAW_PROFILE", verificationStatus = "unsupported",
+        )
+        assertEquals(listOf("usable", "unsupported"), RemoteResolver(listOf(unsupported, usable))
+            .resolve(RemoteQuery(acModel = "A1")).map { it.id })
+    }
+
+    @Test fun unknownSmartIrProfilesKeepDistinctDisplayIdentity() {
+        val first = profile("smartir:100", brand = "Midea", ac = "Unknown").copy(
+            id = "smartir:100", encodingType = "RAW_PROFILE", source = "smartir", sourceProfileId = "100",
+        )
+        val second = first.copy(id = "smartir:101", sourceProfileId = "101")
+        assertEquals("Model chưa xác định · SmartIR #100", first.displayModelLabel())
+        assertEquals("Model chưa xác định · SmartIR #101", second.displayModelLabel())
+        assertEquals(listOf("smartir:100", "smartir:101"), RemoteResolver(listOf(first, second))
+            .resolve(RemoteQuery(brand = "Midea")).map { it.id })
+    }
 }

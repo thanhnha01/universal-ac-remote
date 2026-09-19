@@ -19,6 +19,10 @@ data class RemoteCandidate(
     val source: String? = null,
     val sourceCommitSha: String? = null,
     val sourcePath: String? = null,
+    val sourceProfileId: String? = null,
+    val verificationStatus: String? = null,
+    val rawCommandsJson: String? = null,
+    val sourceMetadataJson: String? = null,
 )
 
 /** Read-only view of the generated Unified IR Catalog. */
@@ -75,7 +79,8 @@ class RemoteResolver(private val candidates: List<RemoteCandidate>) {
             else -> 9
         }
         candidate.copy(evidence = reasons.distinct(), priority = priority)
-        }.sortedWith(compareBy<RemoteCandidate> { it.priority }.thenBy { it.id })
+        }.sortedWith(compareBy<RemoteCandidate> { if (it.isTransmittableByCatalogStatus()) 0 else 1 }
+            .thenBy { it.priority }.thenBy { it.id })
 
     companion object {
         fun fromCatalog(json: String): RemoteResolver = fromCatalogDocument(json)
@@ -113,6 +118,9 @@ class RemoteResolver(private val candidates: List<RemoteCandidate>) {
                     verticalSwing = vertical, horizontalSwing = horizontal,
                     specialCapabilities = p.optJSONArray("specialCapabilities")?.strings().orEmpty(),
                     source = p.nullable("source"), sourceCommitSha = p.nullable("sourceCommitSha"), sourcePath = p.nullable("sourcePath"),
+                    sourceProfileId = p.nullable("sourceProfileId"), verificationStatus = p.nullable("verificationStatus"),
+                    rawCommandsJson = p.optJSONObject("rawCommands")?.toString(),
+                    sourceMetadataJson = metadata?.toString(),
                 )
             }
             return RemoteResolver(parsed)
@@ -133,6 +141,15 @@ class RemoteResolver(private val candidates: List<RemoteCandidate>) {
         }
         private fun String.containsNormalized(query: String): Boolean = normalizeSearchText(this).contains(normalizeSearchText(query))
     }
+}
+
+fun RemoteCandidate.isTransmittableByCatalogStatus(): Boolean =
+    encodingType.equals("PROTOCOL", true) || verificationStatus.equals("transmittable", true)
+
+fun RemoteCandidate.displayModelLabel(): String = when {
+    !acModel.isNullOrBlank() && !acModel.equals("Unknown", true) -> acModel
+    source.equals("smartir", true) -> "Model chưa xác định · SmartIR #${sourceProfileId ?: id.substringAfterLast(':')}"
+    else -> acModel.orEmpty()
 }
 
 fun normalizeSearchText(value: String): String = value.trim().lowercase().filter(Char::isLetterOrDigit)

@@ -43,6 +43,12 @@ class NativeAcEncoderTest {
         }
     }
 
+    @Test fun mideaGenericEngineWaveformIsAcceptedWithoutSyntheticTrailingSpace() {
+        val actual = NativeAcEncoder.encodeAc("midea", acState = AcState(true, 22, AcMode.COOL, AcFan.MEDIUM))
+        actual.validate()
+        assertTrue(actual.timingsMicros.isNotEmpty())
+    }
+
     @Test fun rejectsUnknownProtocolAndUnsupportedTemperature() {
         assertThrows(IllegalArgumentException::class.java) {
             NativeAcEncoder.encodeAc("not-a-protocol", acState = AcState(true, 22, AcMode.COOL, AcFan.AUTO))

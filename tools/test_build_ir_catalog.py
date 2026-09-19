@@ -38,9 +38,16 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(len(candidates[0]["profileIds"]), 2)
         self.assertEqual(len(records), 9)
 
+    def test_unknown_profiles_with_different_source_ids_are_not_duplicates(self):
+        first = {"id": "smartir:100", "sourceProfileId": "100", "normalizedBrand": "midea",
+                 "sourcePath": "codes/climate/100.json", "acModel": "Unknown", "remoteModel": None,
+                 "protocolId": None, "protocolModel": None}
+        second = dict(first, id="smartir:101", sourceProfileId="101")
+        self.assertEqual(catalog.find_duplicates([first, second]), [])
+
     def test_malformed_flipper_profile_rejected(self):
-        text = "Filetype: IR signals\nVersion: 1\n#\nname: Cool\ntype: raw\nfrequency: 38000\ndata: 900 0 400\n"
-        with self.assertRaises(ValueError): catalog.parse_flipper_text(text, SHA, "ACs/Brand/model.ir")
+        text = "Filetype: IR signals\nVersion: 1\n#\nname: Cool\ntype: raw\nfrequency: 38000\ndata: 900 450 400\n"
+        self.assertEqual(len(catalog.parse_flipper_text(text, SHA, "ACs/Brand/model.ir")[0]["rawCommands"]["Cool"]["durationsMicros"]), 3)
         self.assertEqual(catalog.parse_flipper_text(text, SHA, "TVs/Brand/model.ir"), [])
 
     def test_flipper_raw_transmission_validation_is_fail_closed(self):
@@ -100,6 +107,25 @@ class CatalogTests(unittest.TestCase):
             self.assertIn("sleep", record["specialCapabilities"])
             self.assertIn("special:sleep", record["capabilities"])
 
+    def test_broadlink_decoder_accepts_valid_packet_and_rejects_malformed_packets(self):
+        valid = "JgAEA AECAwQ=".replace(" ", "")
+        self.assertEqual(catalog.decode_broadlink(valid), [32, 65, 98, 131])
+        for encoded in ("not-base64", "sgAEA AECAwQ=".replace(" ", ""), "JgAFA AECAwQ=".replace(" ", "")):
+            with self.assertRaises(ValueError): catalog.decode_broadlink(encoded)
+
+    def test_smartir_transmittable_status_is_decoded_not_assumed(self):
+        import base64
+        packet = base64.b64encode(bytes([0x26, 0, 4, 0, 1, 2, 3, 4])).decode()
+        record = catalog.base_profile(source="smartir", sha=SHA, path="codes/climate/1.json", source_id="1",
+            brand="Example", ac_model="Unknown", remote_model=None, protocol_id=None, variant=None,
+            encoding="RAW_PROFILE", capabilities=[], temp={"minC": 16, "maxC": 30}, fans=["low"], modes=["cool"],
+            v_swing={"type":"NONE","positions":[]}, h_swing={"type":"NONE","positions":[]}, special=[], verification="candidate")
+        record["rawCommands"] = {"off": packet}
+        record["sourceMetadata"] = {"supportedController":"Broadlink", "commandsEncoding":"Base64"}
+        self.assertTrue(catalog.is_transmittable(record))
+        record["rawCommands"] = {"off": "not-base64"}
+        self.assertFalse(catalog.is_transmittable(record))
+
     def test_built_catalog_uses_exact_source_shas_and_climate_profiles(self):
         profiles, report = catalog.build()
         lock = {x["name"]:x for x in __import__("json").loads((catalog.ROOT / "upstream-lock.json").read_text(encoding="utf-8"))["sources"]}
@@ -109,6 +135,7 @@ class CatalogTests(unittest.TestCase):
         self.assertGreater(len(smart), 0)
         self.assertTrue(all(p["sourcePath"].startswith("codes/climate/") for p in smart))
         self.assertEqual(report["validationStatus"], "PASS")
+        self.assertEqual(report["smartirTotal"], report["smartirTransmittable"] + report["smartirUnsupported"])
         self.assertEqual(report["flipperCutoffExcludedFiles"], 131)
         self.assertEqual(report["flipperMissingProvenanceFiles"], 25)
         self.assertIn("flipperFilesScanned", report)

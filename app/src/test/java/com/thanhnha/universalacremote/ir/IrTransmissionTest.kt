@@ -11,6 +11,11 @@ class IrTransmissionTest {
     }
 
     @Test
+    fun acceptsTrailingMarkWithoutAppendingSyntheticSpace() {
+        IrTransmission(38_000, listOf(900, 450, 560)).validate()
+    }
+
+    @Test
     fun rejectsNonPositiveFrequency() {
         val error = assertThrows(IllegalArgumentException::class.java) {
             IrTransmission(0, listOf(900, 450)).validate()
@@ -24,14 +29,6 @@ class IrTransmissionTest {
             IrTransmission(38_000, emptyList()).validate()
         }
         assertEquals("IR timing sequence must not be empty.", error.message)
-    }
-
-    @Test
-    fun rejectsIncompleteMarkSpacePairAsMalformed() {
-        val error = assertThrows(IllegalArgumentException::class.java) {
-            IrTransmission(38_000, listOf(900, 450, 560)).validate()
-        }
-        assertEquals("Malformed IR signal: expected complete mark/space pairs.", error.message)
     }
 
     @Test

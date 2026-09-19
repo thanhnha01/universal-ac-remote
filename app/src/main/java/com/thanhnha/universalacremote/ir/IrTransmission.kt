@@ -15,9 +15,6 @@ data class IrTransmission(
         require(timingsMicros.isNotEmpty()) {
             "IR timing sequence must not be empty."
         }
-        require(timingsMicros.size % 2 == 0) {
-            "Malformed IR signal: expected complete mark/space pairs."
-        }
         require(timingsMicros.all { it > 0 }) {
             "Malformed IR signal: every mark and space duration must be greater than 0 µs."
         }
