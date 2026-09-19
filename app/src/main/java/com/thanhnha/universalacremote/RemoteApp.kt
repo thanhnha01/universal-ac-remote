@@ -134,7 +134,7 @@ fun RemoteApp(diagnostics: IrHardwareDiagnostics, store: SavedRemotesViewModel =
             composable("remote/{id}", arguments = listOf(navArgument("id") { type = NavType.StringType })) {
                 val remote = home.remotes.find { saved -> saved.id == it.arguments?.getString("id") }
                 if (remote == null) MissingRemoteScreen { nav.popBackStack("home", false) }
-                else if (remote.importedCommandsJson.isNotBlank()) ImportedRemoteScreen(remote, store) { nav.popBackStack() }
+                else if (remote.importedCommandsJson.isNotBlank()) ImportedRemoteControlScreen(remote, store, ::navigateTab) { nav.popBackStack() }
                 else {
                     val profile = store.profileFor(remote.catalogProfileId)
                     when {
