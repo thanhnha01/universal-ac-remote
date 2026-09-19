@@ -1,0 +1,116 @@
+name: Update IR sources
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 5 * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-ir
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Prepare reviewed IR update PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12.8"
+
+      - name: Configure GitHub bot identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Skip when an IR update PR is already open
+        id: existing-pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          count=$(gh pr list --base main --state open --search 'in:title [ir-auto-update]' --json number --jq 'length')
+          echo "exists=$([ "$count" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve upstream candidate SHAs
+        id: candidates
+        if: steps.existing-pr.outputs.exists != 'true'
+        run: |
+          python3 tools/sync_upstreams.py --update-candidates
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          lock_path = Path("upstream-lock.json")
+          candidates_path = Path("data/upstreams/candidate-shas.json")
+          lock = json.loads(lock_path.read_text(encoding="utf-8"))
+          candidates = json.loads(candidates_path.read_text(encoding="utf-8"))
+          by_name = {source["name"]: source for source in lock["sources"]}
+
+          # These sources have a complete, provenance-preserving materializer.
+          # The native IRremoteESP8266 snapshot includes local JNI patches and
+          # therefore remains a separate reviewed source update.
+          auto_sources = {"smartir", "flipper-irdb"}
+          changed = []
+          for candidate in candidates["candidates"]:
+              name = candidate["name"]
+              if name not in auto_sources:
+                  candidate["candidateSha"] = by_name[name]["commitSha"]
+                  continue
+              if candidate["candidateSha"] != by_name[name]["commitSha"]:
+                  if len(candidate["candidateSha"]) != 40:
+                      raise SystemExit(f"{name}: candidate SHA is not a full commit SHA")
+                  by_name[name]["commitSha"] = candidate["candidateSha"]
+                  by_name[name]["fetchedAt"] = candidate["observedAt"][:10]
+                  changed.append(name)
+
+          candidates_path.write_text(json.dumps(candidates, indent=2) + "\n", encoding="utf-8")
+          lock_path.write_text(json.dumps(lock, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"changed={'true' if changed else 'false'}\n")
+              output.write(f"sources={','.join(changed)}\n")
+          print(f"Auto-updatable source changes: {', '.join(changed) or 'none'}")
+          print("IRremoteESP8266 native source is intentionally held for a separate reviewed update.")
+          PY
+
+      - name: Materialize and validate updated sources
+        if: steps.existing-pr.outputs.exists != 'true' && steps.candidates.outputs.changed == 'true'
+        run: |
+          python3 tools/sync_upstreams.py --sync-locked
+          python3 tools/build_ir_catalog.py
+          python3 tools/test_build_ir_catalog.py
+          git diff --check
+
+      - name: Promote validated SHAs
+        if: steps.existing-pr.outputs.exists != 'true' && steps.candidates.outputs.changed == 'true'
+        run: |
+          python3 tools/sync_upstreams.py --promote-candidates --validation-report data/generated/catalog_report.json
+          python3 tools/build_ir_catalog.py
+          python3 tools/test_build_ir_catalog.py
+
+      - name: Create update pull request
+        if: steps.existing-pr.outputs.exists != 'true' && steps.candidates.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          branch="automation/update-ir-${GITHUB_RUN_ID}"
+          git switch -c "$branch"
+          git add upstream-lock.json data/upstreams/candidate-shas.json data/upstreams/snapshots data/upstreams/flipper-exclusions.json data/generated/ir_catalog.json data/generated/catalog_report.json app/src/main/assets/catalog-index.json
+          git commit -m "chore(ir): update upstream IR sources [ir-auto-update]"
+          git push --set-upstream origin "$branch"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "chore(ir): update upstream IR sources [ir-auto-update]" \
+            --body "Automated IR source update from pinned upstream commits.\n\nSources: ${{ steps.candidates.outputs.sources }}\n\nThe PR has passed catalog validation. GitHub Actions will run the Android build and lint checks. Merge this PR on GitHub to publish the next patch version automatically."
