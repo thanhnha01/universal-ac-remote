@@ -49,7 +49,7 @@ fun UpdatePanel() {
                 result.onSuccess { found ->
                     update = found?.takeIf { hasNewVersion(it.versionCode, BuildConfig.VERSION_CODE) }
                     message = when {
-                        found == null -> "Chưa có bản cập nhật stable."
+                        found == null -> "Chưa có bản cập nhật mới."
                         update == null -> "Bạn đang dùng phiên bản mới nhất."
                         else -> "Có bản cập nhật mới ${found.versionName}."
                     }
