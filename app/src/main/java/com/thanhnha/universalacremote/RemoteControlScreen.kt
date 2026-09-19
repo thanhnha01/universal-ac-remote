@@ -122,8 +122,36 @@ fun RemoteControlScreen(
             error = true
             return false
         }
+
+        // Some raw SmartIR profiles expose only explicit power commands.
+        // Allow those profiles to power on/off without inventing mode/fan state.
+        if (candidate.encodingType.equals("RAW_PROFILE", true) &&
+            nextPower && !power &&
+            (mappedModes.isEmpty() || mappedFans.isEmpty() || temperatureRange == null)
+        ) {
+            val explicitOn = CatalogTransmitter.explicitPowerOn(candidate)
+            if (explicitOn != null) {
+                return runCatching {
+                    AndroidIrTransmitter.from(context).transmit(explicitOn)
+                }.fold(
+                    onSuccess = {
+                        power = true
+                        message = "Đã phát lệnh bật."
+                        error = false
+                        true
+                    },
+                    onFailure = {
+                        message = "Không thể phát tín hiệu IR."
+                        error = true
+                        false
+                    },
+                )
+            }
+        }
+
         val selectedMode = CatalogTransmitter.mode(nextMode)
             ?: protocol?.modes?.firstOrNull()
+            ?: if (!nextPower && candidate.encodingType.equals("RAW_PROFILE", true)) AcMode.COOL else null
             ?: run {
                 message = "Chế độ này chưa được bộ phát hỗ trợ."
                 error = true
@@ -131,6 +159,7 @@ fun RemoteControlScreen(
             }
         val selectedFan = CatalogTransmitter.fan(nextFan)
             ?: protocol?.fanSpeeds?.firstOrNull()
+            ?: if (!nextPower && candidate.encodingType.equals("RAW_PROFILE", true)) AcFan.AUTO else null
             ?: run {
                 message = "Tốc độ quạt này chưa được bộ phát hỗ trợ."
                 error = true
@@ -186,9 +215,13 @@ fun RemoteControlScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                val verified = remote.verifiedCapabilities.isNotEmpty()
+                val verified = remote.verifiedCapabilities.isNotEmpty() && transmittable
                 StatusChip(
-                    if (verified) "Đã xác minh" else "Chưa xác minh",
+                    when {
+                        verified -> "Đã xác minh"
+                        remote.verifiedCapabilities.isNotEmpty() -> "Cần kiểm tra lại"
+                        else -> "Chưa xác minh"
+                    },
                     if (verified) Icons.Filled.CheckCircle else Icons.Filled.Info,
                     if (verified) AppColors.mint else AppColors.warning,
                     if (verified) AppColors.paleMint else AppColors.paleWarning,
