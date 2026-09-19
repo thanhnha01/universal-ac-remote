@@ -119,7 +119,7 @@ fun RemoteControlScreen(
             return false
         }
         if (!transmittable) {
-            feedback = "Hồ sơ này chưa thể phát trên thiết bị."
+            feedback = "Remote này chưa thể phát trên thiết bị."
             feedbackError = true
             return false
         }
@@ -153,7 +153,7 @@ fun RemoteControlScreen(
             ?: protocol?.modes?.firstOrNull()
             ?: if (!nextPower && candidate.encodingType.equals("RAW_PROFILE", true)) AcMode.COOL else null
             ?: run {
-                feedback = "Chế độ này chưa được hồ sơ hỗ trợ."
+                feedback = "Chế độ này chưa được remote hỗ trợ."
                 feedbackError = true
                 return false
             }
@@ -161,7 +161,7 @@ fun RemoteControlScreen(
             ?: protocol?.fanSpeeds?.firstOrNull()
             ?: if (!nextPower && candidate.encodingType.equals("RAW_PROFILE", true)) AcFan.AUTO else null
             ?: run {
-                feedback = "Tốc độ quạt này chưa được hồ sơ hỗ trợ."
+                feedback = "Tốc độ quạt này chưa được remote hỗ trợ."
                 feedbackError = true
                 return false
             }
@@ -255,7 +255,7 @@ fun RemoteControlScreen(
                     if (!hardwareReady)
                         "Bộ phát IR chưa sẵn sàng. Kiểm tra phần cứng trong Cài đặt."
                     else
-                        "Hồ sơ này chưa có đường phát tương thích. Hãy kiểm tra lại hoặc dò hồ sơ khác.",
+                        "Remote này chưa thể phát. Hãy kiểm tra lại hoặc dò mã khác.",
                     Icons.Filled.ErrorOutline,
                     AppColors.danger,
                     AppColors.paleDanger,
