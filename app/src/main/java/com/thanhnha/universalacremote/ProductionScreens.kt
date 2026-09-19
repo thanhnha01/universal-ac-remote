@@ -238,7 +238,7 @@ fun ProductionAddScreen(
         store.updateSearchText(value)
     }
 
-    val usableResults = search.results.filter { CatalogTransmitter.supports(it) }
+    val usableResults = search.results.filter(store::canTransmit)
 
     AppScaffold("home", onTab) { padding ->
         PageColumn(padding) {
@@ -706,8 +706,13 @@ fun ProductionScannerScreen(
                                 scanner.recordVerification(nextCheck, supported = true)
                                 pendingCheck = null
                                 if (nextCheck == VerificationCheck.POWER && selected != null) {
-                                    runCatching {
+                                    val restored = runCatching {
                                         AndroidIrTransmitter.from(context).transmit(CatalogTransmitter.encodeSafeProbe(selected))
+                                    }.isSuccess
+                                    message = if (restored) {
+                                        "Đã xác nhận nguồn. App đã gửi lệnh bật lại máy."
+                                    } else {
+                                        "Đã xác nhận nguồn nhưng không thể gửi lệnh bật lại máy."
                                     }
                                 }
                                 refresh++

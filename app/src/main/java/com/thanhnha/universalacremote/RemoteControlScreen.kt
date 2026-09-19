@@ -125,7 +125,7 @@ fun RemoteControlScreen(
         ?: protocol?.fanSpeeds?.firstOrNull()
 
     fun resolvedState(
-        nextPower: Boolean = power ?: true,
+        nextPower: Boolean = true,
         nextTemperature: Int = temperature,
         nextMode: String = mode,
         nextFan: String = fan,
@@ -137,8 +137,12 @@ fun RemoteControlScreen(
         lockVertical: Boolean = false,
         lockHorizontal: Boolean = false,
     ): AcState? {
-        val resolvedMode = selectedMode(nextMode) ?: return null
-        val resolvedFan = selectedFan(nextFan) ?: return null
+        val resolvedMode = selectedMode(nextMode)
+            ?: if (!nextPower && candidate.encodingType.equals("RAW_PROFILE", true)) AcMode.COOL else null
+            ?: return null
+        val resolvedFan = selectedFan(nextFan)
+            ?: if (!nextPower && candidate.encodingType.equals("RAW_PROFILE", true)) AcFan.AUTO else null
+            ?: return null
         return CatalogTransmitter.resolveState(
             target,
             AcState(
@@ -181,9 +185,13 @@ fun RemoteControlScreen(
     val horizontalAutoEnabled = horizontalSupported && resolvedState(nextHorizontal = true, lockHorizontal = true)?.swingHorizontal == true
     val showVerticalSwing = verticalFixedEnabled || verticalAutoEnabled
     val showHorizontalSwing = horizontalFixedEnabled || horizontalAutoEnabled
+    val canPowerOn = CatalogTransmitter.explicitPowerOn(candidate) != null || resolvedState(nextPower = true) != null
+    val canPowerOff = resolvedState(nextPower = false) != null
+    val powerVisible = controls.power && (canPowerOn || (power == true && canPowerOff))
+    val powerActionEnabled = ready && if (power == true) canPowerOff else canPowerOn
 
     fun transmit(
-        nextPower: Boolean = power ?: true,
+        nextPower: Boolean = true,
         nextTemperature: Int = temperature,
         nextMode: String = mode,
         nextFan: String = fan,
@@ -299,8 +307,8 @@ fun RemoteControlScreen(
                 temperatureVisible = temperatureRange != null,
                 decreaseTemperatureEnabled = ready && canDecreaseTemperature,
                 increaseTemperatureEnabled = ready && canIncreaseTemperature,
-                powerVisible = controls.power,
-                powerEnabled = controls.power && ready,
+                powerVisible = powerVisible,
+                powerEnabled = powerActionEnabled,
                 onMinus = {
                     val range = temperatureRange ?: return@RemoteHeroCard
                     if (temperature > range.first) transmit(nextTemperature = temperature - 1)
