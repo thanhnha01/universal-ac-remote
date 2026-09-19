@@ -107,6 +107,13 @@ data class HomeUiState(val remotes: List<SavedRemote> = emptyList(), val loading
 data class CatalogUiState(val loading: Boolean = true, val error: String? = null, val profileCount: Int = 0)
 data class CatalogSearchState(val loading: Boolean = false, val results: List<RemoteCandidate> = emptyList())
 
+private data class LoadedCatalog(
+    val resolver: RemoteResolver,
+    val popularBrands: List<String>,
+    val scannerBrands: List<String>,
+    val scannerCapableIds: Set<String>,
+)
+
 class SavedRemotesViewModel(application: Application) : AndroidViewModel(application) {
     private val dao = SavedRemoteDatabase.get(application).savedRemoteDao()
     private val mutableState = MutableStateFlow(HomeUiState())
@@ -115,24 +122,43 @@ class SavedRemotesViewModel(application: Application) : AndroidViewModel(applica
     val catalog: StateFlow<CatalogUiState> = mutableCatalog.asStateFlow()
     private val mutablePopularBrands = MutableStateFlow<List<String>>(emptyList())
     val popularBrands: StateFlow<List<String>> = mutablePopularBrands.asStateFlow()
+    private val mutableScannerBrands = MutableStateFlow<List<String>>(emptyList())
+    val scannerBrands: StateFlow<List<String>> = mutableScannerBrands.asStateFlow()
     private val mutableSearch = MutableStateFlow(CatalogSearchState())
     val search: StateFlow<CatalogSearchState> = mutableSearch.asStateFlow()
     private val mutableScanCandidates = MutableStateFlow<List<RemoteCandidate>>(emptyList())
     val scanCandidates: StateFlow<List<RemoteCandidate>> = mutableScanCandidates.asStateFlow()
     @Volatile private var resolver: RemoteResolver? = null
+    @Volatile private var scannerCapableIds: Set<String> = emptySet()
     private var searchJob: Job? = null
 
     init {
         viewModelScope.launch { dao.observeAll().collect { mutableState.value = HomeUiState(it, false) } }
         viewModelScope.launch {
             runCatching {
-                withContext(Dispatchers.IO) {
+                val json = withContext(Dispatchers.IO) {
                     getApplication<Application>().assets.open("catalog-index.json").bufferedReader().use { it.readText() }
-                }.let(RemoteResolver::fromCatalogIndex)
+                }
+                withContext(Dispatchers.Default) {
+                    val loaded = RemoteResolver.fromCatalogIndex(json)
+                    val capableIds = loaded.resolve(RemoteQuery())
+                        .asSequence()
+                        .filter(CatalogTransmitter::supports)
+                        .map(RemoteCandidate::id)
+                        .toSet()
+                    LoadedCatalog(
+                        resolver = loaded,
+                        popularBrands = loaded.popularBrands(),
+                        scannerBrands = loaded.scannerBrands { it.id in capableIds },
+                        scannerCapableIds = capableIds,
+                    )
+                }
             }.onSuccess { loaded ->
-                resolver = loaded
-                mutableCatalog.value = CatalogUiState(loading = false, profileCount = loaded.profileCount)
-                mutablePopularBrands.value = loaded.popularBrands()
+                resolver = loaded.resolver
+                scannerCapableIds = loaded.scannerCapableIds
+                mutableCatalog.value = CatalogUiState(loading = false, profileCount = loaded.resolver.profileCount)
+                mutablePopularBrands.value = loaded.popularBrands
+                mutableScannerBrands.value = loaded.scannerBrands
             }.onFailure { error ->
                 mutableCatalog.value = CatalogUiState(loading = false, error = error.message ?: "Không thể tải danh mục máy lạnh.")
             }
@@ -170,7 +196,7 @@ class SavedRemotesViewModel(application: Application) : AndroidViewModel(applica
                 addAll(activeResolver.resolve(RemoteQuery(acModel = text)))
                 addAll(activeResolver.resolve(RemoteQuery(remoteModel = text)))
             }.distinctBy(RemoteCandidate::id)
-                .sortedWith(compareBy<RemoteCandidate> { if (CatalogTransmitter.supports(it)) 0 else 1 }
+                .sortedWith(compareBy<RemoteCandidate> { if (it.id in scannerCapableIds) 0 else 1 }
                     .thenBy(RemoteCandidate::priority)
                     .thenBy(RemoteCandidate::brand)
                     .thenBy(RemoteCandidate::id))
@@ -179,10 +205,10 @@ class SavedRemotesViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
+    fun canTransmit(candidate: RemoteCandidate): Boolean = candidate.id in scannerCapableIds
+
     fun beginScan(query: RemoteQuery = RemoteQuery(), selected: RemoteCandidate? = null) {
-        val canTransmit: (RemoteCandidate) -> Boolean = { candidate ->
-            CatalogTransmitter.supports(candidate)
-        }
+        val canTransmit: (RemoteCandidate) -> Boolean = ::canTransmit
         mutableScanCandidates.value = if (selected != null) listOf(selected).filter(canTransmit)
         else resolver?.scannerCandidates(query, canTransmit).orEmpty()
     }

@@ -75,7 +75,10 @@ class UniversalAcScanner(
 
     fun nextVerificationCheck(): VerificationCheck? {
         check(state == ScanState.VERIFYING)
-        return RemoteControls.from(selected!!).verificationOrder().firstOrNull { it !in verificationStatuses }
+        val candidate = selected!!
+        return RemoteControls.from(candidate).verificationOrder().firstOrNull { check ->
+            check !in verificationStatuses && CatalogTransmitter.verificationState(candidate, check) != null
+        }
     }
 
     fun finishVerification(): ScanResult {

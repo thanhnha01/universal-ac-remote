@@ -139,6 +139,8 @@ class CatalogTests(unittest.TestCase):
         self.assertTrue(all(p["sourcePath"].startswith("codes/climate/") for p in smart))
         self.assertEqual(report["validationStatus"], "PASS")
         self.assertEqual(report["smartirTotal"], report["smartirTransmittable"] + report["smartirUnsupported"])
+        self.assertGreater(report["transmittableBrands"], 0)
+        self.assertLessEqual(report["transmittableBrands"], report["totalBrands"])
         self.assertEqual(report["flipperCutoffExcludedFiles"], 131)
         self.assertEqual(report["flipperMissingProvenanceFiles"], 25)
         self.assertIn("flipperFilesScanned", report)

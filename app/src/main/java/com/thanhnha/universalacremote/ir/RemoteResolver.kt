@@ -34,6 +34,15 @@ class RemoteResolver(private val candidates: List<RemoteCandidate>) {
         .sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key })
         .take(limit).map { it.key }
 
+    fun scannerBrands(canTransmit: (RemoteCandidate) -> Boolean): List<String> =
+        candidates.asSequence()
+            .filter(canTransmit)
+            .map { it.brand.trim() }
+            .filter(String::isNotBlank)
+            .sortedWith(String.CASE_INSENSITIVE_ORDER)
+            .distinctBy(::normalizeSearchText)
+            .toList()
+
     fun findById(id: String): RemoteCandidate? = candidates.firstOrNull { it.id == id }
 
     fun scannerCandidates(query: RemoteQuery = RemoteQuery(), canTransmit: (RemoteCandidate) -> Boolean): List<RemoteCandidate> =
@@ -150,6 +159,13 @@ fun RemoteCandidate.displayModelLabel(): String = when {
     !acModel.isNullOrBlank() && !acModel.equals("Unknown", true) -> acModel
     source.equals("smartir", true) -> "Model chưa xác định · SmartIR #${sourceProfileId ?: id.substringAfterLast(':')}"
     else -> acModel.orEmpty()
+}
+
+fun RemoteCandidate.compactDisplayModelLabel(maxModels: Int = 2): String {
+    val label = displayModelLabel()
+    val models = label.split(',').map { it.trim() }.filter { it.isNotBlank() }
+    if (models.size <= maxModels) return label
+    return models.take(maxModels).joinToString(", ") + "  +${models.size - maxModels} model"
 }
 
 fun normalizeSearchText(value: String): String = value.trim().lowercase().filter(Char::isLetterOrDigit)

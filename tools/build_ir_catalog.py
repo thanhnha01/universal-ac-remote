@@ -246,7 +246,9 @@ def build() -> tuple[list[dict], dict]:
     flipper_excluded = [x for x in excluded if x.get("source") == "flipper-irdb"]
     flipper_cutoff = [x for x in flipper_excluded if "predates CC0 cutoff" in x.get("reason", "")]
     flipper_unproven = [x for x in flipper_excluded if "provenance not proven" in x.get("reason", "")]
-    report = {"totalBrands": len({p["normalizedBrand"] for p in profiles}), "totalProfiles": len(profiles),
+    report = {"totalBrands": len({p["normalizedBrand"] for p in profiles}),
+        "transmittableBrands": len({p["normalizedBrand"] for p in profiles if p["encodingType"] == "PROTOCOL" or is_transmittable(p)}),
+        "totalProfiles": len(profiles),
         "protocolProfiles": sum(p["encodingType"] == "PROTOCOL" for p in profiles),
         "rawProfiles": sum(p["encodingType"] != "PROTOCOL" for p in profiles),
         "smartirTotal": sum(p["source"] == "smartir" for p in profiles),

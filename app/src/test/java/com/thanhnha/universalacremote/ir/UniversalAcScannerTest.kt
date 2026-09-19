@@ -5,12 +5,39 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class UniversalAcScannerTest {
+    private val commandA = "JgAEAAECAwQ="
+    private val commandB = "JgAEAAQDAgE="
+
+    /**
+     * Realistic SmartIR fixture: the tree is sparse, so DRY is only valid with LOW fan,
+     * and commands include the swing layer used by profiles such as Casper 3240.
+     */
     private val candidate = RemoteCandidate(
-        "p", "Acme", null, null, "proto", null, "PROTOCOL",
-        setOf("power", "temperature", "mode:cool", "fan:auto", "swing:vertical"), emptyList(), 6,
-        minimumTemperatureCelsius = 16, maximumTemperatureCelsius = 30,
-        operationModes = listOf("cool"), fanModes = listOf("auto"),
+        id = "smartir:scanner-fixture",
+        brand = "Acme",
+        acModel = "Sparse",
+        remoteModel = null,
+        protocolId = null,
+        protocolModel = null,
+        encodingType = "RAW_PROFILE",
+        capabilities = setOf(
+            "power",
+            "mode:cool",
+            "mode:dry",
+            "fan:auto",
+            "fan:low",
+            "swing:vertical",
+        ),
+        evidence = emptyList(),
+        priority = 6,
+        minimumTemperatureCelsius = 24,
+        maximumTemperatureCelsius = 25,
+        operationModes = listOf("cool", "dry"),
+        fanModes = listOf("auto", "low"),
         verticalSwing = SwingCapability("ON_OFF"),
+        verificationStatus = "transmittable",
+        rawCommandsJson = """{"off":"$commandA","cool":{"auto":{"off":{"24":"$commandA","25":"$commandB"},"vertical":{"24":"$commandB","25":"$commandA"}},"low":{"off":{"24":"$commandB","25":"$commandA"},"vertical":{"24":"$commandA","25":"$commandB"}}},"dry":{"low":{"off":{"24":"$commandB","25":"$commandA"},"vertical":{"24":"$commandA","25":"$commandB"}}}}""",
+        sourceMetadataJson = """{"supportedController":"Broadlink","commandsEncoding":"Base64","swingModes":["off","vertical"]}""",
     )
 
     @Test fun stopPreventsFurtherTransmission() {
@@ -57,14 +84,19 @@ class UniversalAcScannerTest {
     }
 
     @Test fun unsupportedVerificationChecksAreIgnored() {
-        val powerOnly = candidate.copy(capabilities = setOf("power"), minimumTemperatureCelsius = null, maximumTemperatureCelsius = null)
+        val powerOnly = candidate.copy(
+            capabilities = setOf("power"),
+            minimumTemperatureCelsius = null,
+            maximumTemperatureCelsius = null,
+            verticalSwing = SwingCapability("NONE"),
+        )
         val scanner = UniversalAcScanner(listOf(powerOnly)) {}
         scanner.tryCurrent(0)
         scanner.reportReaction()
         scanner.recordVerification(VerificationCheck.POWER)
         scanner.recordVerification(VerificationCheck.TEMPERATURE_CHANGED)
         assertEquals(setOf(VerificationCheck.POWER), scanner.verifiedCapabilities)
-        assertEquals(ScanResult.PARTIAL_MATCH, scanner.finishVerification())
+        assertEquals(ScanResult.FULL_MATCH, scanner.finishVerification())
     }
 
     @Test fun verificationOrderKeepsPowerLastAndReactionLocksCandidate() {
@@ -74,6 +106,10 @@ class UniversalAcScannerTest {
 
         assertEquals(VerificationCheck.TEMPERATURE_CHANGED, scanner.nextVerificationCheck())
         scanner.recordVerification(VerificationCheck.TEMPERATURE_CHANGED)
+        assertEquals(VerificationCheck.MODE, scanner.nextVerificationCheck())
+        scanner.recordVerification(VerificationCheck.MODE)
+        assertEquals(VerificationCheck.FAN, scanner.nextVerificationCheck())
+        scanner.recordVerification(VerificationCheck.FAN)
         assertEquals(VerificationCheck.SWING_VERTICAL, scanner.nextVerificationCheck())
         scanner.recordVerification(VerificationCheck.SWING_VERTICAL)
         assertEquals(VerificationCheck.POWER, scanner.nextVerificationCheck())
@@ -81,11 +117,7 @@ class UniversalAcScannerTest {
     }
 
     @Test fun failedAndSkippedVerificationStatusesAreRetained() {
-        val modeCandidate = candidate.copy(
-            capabilities = candidate.capabilities + "mode:dry",
-            operationModes = listOf("cool", "dry"),
-        )
-        val scanner = UniversalAcScanner(listOf(modeCandidate)) {}
+        val scanner = UniversalAcScanner(listOf(candidate)) {}
         scanner.tryCurrent(0)
         scanner.reportReaction()
         scanner.recordVerification(VerificationCheck.TEMPERATURE_CHANGED, supported = false)

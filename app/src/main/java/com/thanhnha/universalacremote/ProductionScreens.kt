@@ -65,6 +65,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.thanhnha.universalacremote.ir.AcFan
 import com.thanhnha.universalacremote.ir.AcMode
@@ -80,6 +81,7 @@ import com.thanhnha.universalacremote.ir.ScanState
 import com.thanhnha.universalacremote.ir.UniversalAcScanner
 import com.thanhnha.universalacremote.ir.VerificationCheck
 import com.thanhnha.universalacremote.ir.displayModelLabel
+import com.thanhnha.universalacremote.ir.compactDisplayModelLabel
 import com.thanhnha.universalacremote.update.UpdatePanel
 import java.util.UUID
 
@@ -177,6 +179,8 @@ fun ProductionHomeScreen(
                                         .joinToString(" • "),
                                     color = AppColors.navySoft,
                                     style = MaterialTheme.typography.bodySmall,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                                 StatusChip(
                                     when {
@@ -234,7 +238,7 @@ fun ProductionAddScreen(
         store.updateSearchText(value)
     }
 
-    val usableResults = search.results.filter { CatalogTransmitter.supports(it) }
+    val usableResults = search.results.filter(store::canTransmit)
 
     AppScaffold("home", onTab) { padding ->
         PageColumn(padding) {
@@ -403,13 +407,14 @@ fun ProductionScannerScreen(
 ) {
     val context = LocalContext.current
     val candidates by store.scanCandidates.collectAsState()
-    val popular by store.popularBrands.collectAsState()
+    val scannerBrands by store.scannerBrands.collectAsState()
     val candidateKey = candidates.joinToString("|") { it.id }
     var refresh by remember { mutableIntStateOf(0) }
     var scanStarted by remember(candidateKey) { mutableStateOf(false) }
     var pendingCheck by remember { mutableStateOf<VerificationCheck?>(null) }
     var machineName by remember { mutableStateOf("") }
-    var entryBrand by remember { mutableStateOf<String?>(null) }
+    var entryBrand by remember(candidateKey) { mutableStateOf<String?>(null) }
+    var brandFilter by remember(candidateKey) { mutableStateOf("") }
     var message by remember { mutableStateOf("") }
     @Suppress("UNUSED_VARIABLE") val stateRefresh = refresh
 
@@ -421,7 +426,9 @@ fun ProductionScannerScreen(
 
     val current = scanner.selected ?: candidates.getOrNull(scanner.cursor)
     val controls = current?.let(RemoteControls::from)
-    val requirements = controls?.verificationOrder().orEmpty()
+    val requirements = current?.let { candidate ->
+        controls?.verificationOrder().orEmpty().filter { CatalogTransmitter.verificationState(candidate, it) != null }
+    }.orEmpty()
     val nextCheck = if (scanner.state == ScanState.VERIFYING) scanner.nextVerificationCheck() else null
     val safeProbe = current?.let { CatalogTransmitter.safeProbe(it) }
 
@@ -434,6 +441,11 @@ fun ProductionScannerScreen(
             )
 
             if (candidates.isEmpty()) {
+                val matchingBrands = scannerBrands.filter {
+                    brandFilter.isBlank() || it.contains(brandFilter.trim(), ignoreCase = true)
+                }
+                val visibleBrands = matchingBrands.take(24)
+
                 SurfaceCard(Modifier.fillMaxWidth(), SoftHeroGradient) {
                     Column(
                         Modifier.padding(18.dp),
@@ -444,7 +456,7 @@ fun ProductionScannerScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             IconBubble(Icons.Outlined.Radio, size = 54)
-                            Column(Modifier.weight(1f)) {
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text(
                                     "Chọn hãng máy lạnh",
                                     style = MaterialTheme.typography.titleLarge,
@@ -452,13 +464,17 @@ fun ProductionScannerScreen(
                                     color = AppColors.navy,
                                 )
                                 Text(
-                                    "App sẽ thử lần lượt các mã điều khiển phù hợp với hãng bạn chọn.",
+                                    if (scannerBrands.isEmpty())
+                                        "Thư viện mã điều khiển chưa sẵn sàng."
+                                    else
+                                        "${scannerBrands.size} hãng có mã điều khiển có thể phát.",
                                     color = AppColors.navySoft,
+                                    style = MaterialTheme.typography.bodySmall,
                                 )
                             }
                         }
 
-                        if (popular.isEmpty()) {
+                        if (scannerBrands.isEmpty()) {
                             InfoBanner(
                                 "Thư viện hãng chưa sẵn sàng.",
                                 Icons.Filled.Info,
@@ -466,21 +482,48 @@ fun ProductionScannerScreen(
                                 AppColors.paleWarning,
                             )
                         } else {
-                            popular.take(12).chunked(4).forEach { rowBrands ->
-                                Row(
-                                    Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                ) {
-                                    rowBrands.forEach { brand ->
-                                        BrandTile(
-                                            brand = brand,
-                                            selected = entryBrand.equals(brand, true),
-                                            modifier = Modifier.weight(1f),
-                                        ) {
-                                            entryBrand = brand
-                                        }
+                            SearchField(
+                                brandFilter,
+                                { value ->
+                                    brandFilter = value
+                                    scannerBrands.firstOrNull { it.equals(value.trim(), true) }?.let {
+                                        entryBrand = it
                                     }
-                                    repeat(4 - rowBrands.size) { Box(Modifier.weight(1f)) }
+                                },
+                                "Tìm hãng, ví dụ: Daikin, Casper, LG…",
+                            )
+
+                            if (visibleBrands.isEmpty()) {
+                                EmptyState(
+                                    "Không tìm thấy hãng",
+                                    "Thử nhập tên hãng khác.",
+                                    Icons.Filled.Search,
+                                )
+                            } else {
+                                visibleBrands.chunked(3).forEach { rowBrands ->
+                                    Row(
+                                        Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    ) {
+                                        rowBrands.forEach { brand ->
+                                            BrandTile(
+                                                brand = brand,
+                                                selected = entryBrand.equals(brand, true),
+                                                modifier = Modifier.weight(1f),
+                                            ) {
+                                                entryBrand = brand
+                                                brandFilter = brand
+                                            }
+                                        }
+                                        repeat(3 - rowBrands.size) { Box(Modifier.weight(1f)) }
+                                    }
+                                }
+                                if (matchingBrands.size > visibleBrands.size) {
+                                    Text(
+                                        "Đang hiển thị ${visibleBrands.size}/${matchingBrands.size} hãng. Nhập tên hãng để lọc nhanh.",
+                                        color = AppColors.navySoft,
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
                                 }
                             }
                         }
@@ -508,7 +551,7 @@ fun ProductionScannerScreen(
 
             ScannerBrandHero(
                 brand = current?.brand.orEmpty(),
-                model = current?.displayModelLabel().orEmpty(),
+                model = current?.compactDisplayModelLabel().orEmpty(),
                 onChangeBrand = onChangeBrand,
             )
 
@@ -570,12 +613,22 @@ fun ProductionScannerScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(14.dp),
                             ) {
-                                AcWallUnitArt(current.brand, Modifier.width(126.dp).height(78.dp))
-                                Column(Modifier.weight(1f)) {
-                                    Text(current.brand, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
+                                AcWallUnitArt(current.brand, Modifier.width(98.dp).height(66.dp))
+                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                     Text(
-                                        current.displayModelLabel().ifBlank { "Model chưa xác định" },
+                                        current.brand,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = AppColors.navy,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    Text(
+                                        current.compactDisplayModelLabel().ifBlank { "Model chưa xác định" },
                                         color = AppColors.navySoft,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
                                     )
                                 }
                             }
@@ -637,7 +690,8 @@ fun ProductionScannerScreen(
                                     AndroidIrTransmitter.from(context).transmit(
                                         CatalogTransmitter.encode(
                                             selected,
-                                            scannerVerificationState(selected, nextCheck, RemoteControls.from(selected)),
+                                            CatalogTransmitter.verificationState(selected, nextCheck)
+                                                ?: error("No encodable verification state."),
                                         )
                                     )
                                     pendingCheck = nextCheck
@@ -652,8 +706,13 @@ fun ProductionScannerScreen(
                                 scanner.recordVerification(nextCheck, supported = true)
                                 pendingCheck = null
                                 if (nextCheck == VerificationCheck.POWER && selected != null) {
-                                    runCatching {
+                                    val restored = runCatching {
                                         AndroidIrTransmitter.from(context).transmit(CatalogTransmitter.encodeSafeProbe(selected))
+                                    }.isSuccess
+                                    message = if (restored) {
+                                        "Đã xác nhận nguồn. App đã gửi lệnh bật lại máy."
+                                    } else {
+                                        "Đã xác nhận nguồn nhưng không thể gửi lệnh bật lại máy."
                                     }
                                 }
                                 refresh++
@@ -985,6 +1044,7 @@ private fun BrandTile(
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
@@ -1031,17 +1091,32 @@ private fun UserProfileCard(candidate: RemoteCandidate, onClick: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             IconBubble(Icons.Filled.AcUnit)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(candidate.brand, fontWeight = FontWeight.ExtraBold, color = AppColors.navy)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    candidate.displayModelLabel().ifBlank { "Model chưa xác định" },
+                    candidate.brand,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = AppColors.navy,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    candidate.compactDisplayModelLabel().ifBlank { "Model chưa xác định" },
                     color = AppColors.navySoft,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
                 candidate.remoteModel?.takeIf(String::isNotBlank)?.let {
-                    Text("Remote $it", color = AppColors.navySoft, style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        "Remote $it",
+                        color = AppColors.navySoft,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
+                StatusChip("Sẵn sàng thử", Icons.Filled.SignalCellularAlt)
             }
-            StatusChip("Sẵn sàng thử", Icons.Filled.SignalCellularAlt)
+            Icon(Icons.Filled.ArrowForward, null, tint = AppColors.navySoft)
         }
     }
 }
@@ -1049,17 +1124,39 @@ private fun UserProfileCard(candidate: RemoteCandidate, onClick: () -> Unit) {
 @Composable
 private fun ScannerBrandHero(brand: String, model: String, onChangeBrand: () -> Unit) {
     SurfaceCard(Modifier.fillMaxWidth(), SoftHeroGradient) {
-        Row(
+        Column(
             Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            AcWallUnitArt(brand, Modifier.width(126.dp).height(78.dp))
-            Column(Modifier.weight(1f)) {
-                Text(brand.ifBlank { "Máy lạnh" }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
-                Text(model.ifBlank { "Không rõ model" }, color = AppColors.navySoft)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                AcWallUnitArt(brand, Modifier.width(98.dp).height(66.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        brand.ifBlank { "Máy lạnh" },
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = AppColors.navy,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        model.ifBlank { "Không rõ model" },
+                        color = AppColors.navySoft,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
-            TextButton(onClick = onChangeBrand) { Text("Đổi hãng") }
+            TextButton(
+                onClick = onChangeBrand,
+                modifier = Modifier.align(Alignment.End),
+            ) {
+                Text("Đổi hãng")
+            }
         }
     }
 }
@@ -1120,34 +1217,6 @@ private fun VerificationWizardCard(
                 TextButton(onClick = onSkip, modifier = Modifier.fillMaxWidth()) { Text("Bỏ qua bước này") }
             }
         }
-    }
-}
-
-private fun scannerVerificationState(
-    candidate: RemoteCandidate,
-    check: VerificationCheck,
-    controls: RemoteControls,
-): AcState {
-    val definition = CatalogTransmitter.protocol(candidate)
-    val modes = controls.modes.mapNotNull(CatalogTransmitter::mode)
-        .filter { definition == null || it in definition.modes }
-    val fans = controls.fanModes.mapNotNull(CatalogTransmitter::fan)
-        .filter { definition == null || it in definition.fanSpeeds }
-    val mode = modes.firstOrNull() ?: definition?.modes?.firstOrNull() ?: AcMode.COOL
-    val fan = fans.firstOrNull() ?: definition?.fanSpeeds?.firstOrNull() ?: AcFan.AUTO
-    val range = controls.temperatureRange
-        ?: definition?.let { it.minTemperatureCelsius..it.maxTemperatureCelsius }
-        ?: 16..30
-    val baseTemp = 24.coerceIn(range.first, range.last)
-    val changedTemp = if (range.first < range.last) (baseTemp + 1).coerceAtMost(range.last) else baseTemp
-
-    return when (check) {
-        VerificationCheck.POWER -> AcState(false, baseTemp, mode, fan)
-        VerificationCheck.TEMPERATURE_CHANGED -> AcState(true, changedTemp, mode, fan)
-        VerificationCheck.MODE -> AcState(true, baseTemp, modes.getOrNull(1) ?: mode, fan)
-        VerificationCheck.FAN -> AcState(true, baseTemp, mode, fans.getOrNull(1) ?: fan)
-        VerificationCheck.SWING_VERTICAL -> AcState(true, baseTemp, mode, fan, swingVertical = true)
-        VerificationCheck.SWING_HORIZONTAL -> AcState(true, baseTemp, mode, fan, swingHorizontal = true)
     }
 }
 

@@ -65,4 +65,28 @@ class RemoteResolverTest {
         assertEquals(listOf("smartir:100", "smartir:101"), RemoteResolver(listOf(first, second))
             .resolve(RemoteQuery(brand = "Midea")).map { it.id })
     }
+    @Test fun scannerBrandsExposeAllEligibleBrandsNotOnlyPopularOnes() {
+        val resolver = RemoteResolver(
+            listOf(
+                profile("a1", brand = "Daikin"),
+                profile("a2", brand = "daikin"),
+                profile("b", brand = "LG"),
+                profile("blocked", brand = "Blocked"),
+            )
+        )
+        assertEquals(
+            listOf("Daikin", "LG"),
+            resolver.scannerBrands { it.id != "blocked" },
+        )
+    }
+
+    @Test fun longSupportedModelListsAreCompactedForCards() {
+        val candidate = profile(
+            "models",
+            brand = "Daikin",
+            ac = "FTXS20LVMA, FTXS25LVMA, FTXS35LVMA, FTXS46LVMA",
+        )
+        assertEquals("FTXS20LVMA, FTXS25LVMA  +2 model", candidate.compactDisplayModelLabel())
+    }
+
 }
