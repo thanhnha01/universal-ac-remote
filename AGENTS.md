@@ -9,7 +9,14 @@ Các ràng buộc không được phá vỡ:
 - Chỉ Android; không đưa ESP32 hoặc phần cứng IR ngoài vào dự án.
 - GitHub là repository chính. GitHub Actions build APK; GitHub Releases phát hành APK đã ký.
 - Không commit signing key, password, token hoặc secret dưới bất kỳ hình thức nào.
-- Không thêm production Android source code trong milestone M0.
+
+## Trạng thái milestone hiện tại
+
+- Repository đã qua milestone M0.
+- Các ràng buộc dành riêng cho M0 không được áp dụng cho task ở milestone/phạm vi hiện tại, trừ khi task explicitly yêu cầu quay lại M0.
+- Được phép thêm hoặc sửa production Android source code khi cần để hoàn thành task hiện tại.
+- Không được dùng quy tắc M0 cũ để né việc sửa logic, UI, scanner, transmitter, persistence, updater hoặc các phần production khác nằm đúng trong scope task.
+- Mọi thay đổi vẫn phải tuân thủ nguyên tắc: sửa tối thiểu cần thiết, không mở rộng feature ngoài yêu cầu, không refactor không liên quan.
 
 ## Quy tắc làm việc bắt buộc
 
@@ -44,6 +51,6 @@ Các ràng buộc không được phá vỡ:
 ## Giới hạn theo milestone
 
 - Chỉ làm đúng milestone/task được yêu cầu và không triển khai trước milestone sau.
-- Với M0, chỉ tài liệu, chính sách repository và thiết kế CI/CD; không dò phần cứng, không phát IR, không nhập database lớn, không tạo ứng dụng production.
+- Nếu một task được xác định rõ là M0, thì M0 chỉ gồm tài liệu, chính sách repository và thiết kế CI/CD; không dò phần cứng, không phát IR, không nhập database lớn, không tạo ứng dụng production.
+- Quy tắc M0 ở dòng trên chỉ áp dụng cho task M0; không phải ràng buộc toàn cục của repository sau khi đã qua M0.
 - Mọi thay đổi ảnh hưởng an toàn phát IR, signing, updater hoặc supply chain phải được nêu rõ trong pull request.
-
