@@ -764,7 +764,7 @@ fun ProductionSettingsScreen(
 ) {
     AppScaffold("settings", onTab) { padding ->
         PageColumn(padding) {
-            SettingsHero()
+            SettingsHero(diagnostics)
 
             SectionTitle("Ứng dụng")
             SurfaceCard(Modifier.fillMaxWidth()) {
@@ -1148,19 +1148,60 @@ private fun scannerVerificationState(
 }
 
 @Composable
-private fun SettingsHero() {
-    SurfaceCard(Modifier.fillMaxWidth(), Brush.linearGradient(listOf(Color.White, Color(0xFFEAF6FF)))) {
-        Row(
+private fun SettingsHero(diagnostics: IrHardwareDiagnostics) {
+    SurfaceCard(
+        Modifier.fillMaxWidth(),
+        Brush.linearGradient(listOf(Color(0xFFE8F5FF), Color.White, Color(0xFFF7FBFF))),
+    ) {
+        Column(
             Modifier.padding(18.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            IconBubble(Icons.Filled.Settings, size = 62, background = Color(0xFF1687EE), tint = Color.White)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Cài đặt", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
-                Text("Tùy chỉnh ứng dụng và kiểm tra trạng thái", color = AppColors.navySoft)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                IconBubble(
+                    Icons.Filled.Settings,
+                    size = 62,
+                    background = Color(0xFF1687EE),
+                    tint = Color.White,
+                )
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(
+                        "Cài đặt",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = AppColors.navy,
+                    )
+                    Text(
+                        "Universal A/C Remote",
+                        color = AppColors.navy,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        "Thiết bị, dữ liệu và cập nhật",
+                        color = AppColors.navySoft,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                AcWallUnitArt("A/C", Modifier.width(118.dp).height(72.dp))
             }
-            AcWallUnitArt("A/C", Modifier.width(110.dp).height(66.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                StatusChip(
+                    "v${BuildConfig.VERSION_NAME}",
+                    Icons.Filled.Build,
+                    AppColors.blue,
+                    AppColors.paleBlue,
+                )
+                StatusChip(
+                    if (diagnostics.hasIrEmitter) "IR sẵn sàng" else "IR chưa sẵn sàng",
+                    Icons.Filled.SignalCellularAlt,
+                    if (diagnostics.hasIrEmitter) AppColors.mint else AppColors.danger,
+                    if (diagnostics.hasIrEmitter) AppColors.paleMint else AppColors.paleDanger,
+                )
+            }
         }
     }
 }
