@@ -125,6 +125,71 @@ object CatalogTransmitter {
         }
     }
 
+    /**
+     * Resolves a requested A/C state to a concrete state that this profile can encode.
+     * Locked fields represent the user's direct action and are never changed; other
+     * fields may move to the closest compatible value for sparse SmartIR command trees.
+     */
+    fun resolveState(
+        candidate: RemoteCandidate,
+        desired: AcState,
+        lockTemperature: Boolean = false,
+        lockMode: Boolean = false,
+        lockFan: Boolean = false,
+        lockSwingVertical: Boolean = false,
+        lockSwingHorizontal: Boolean = false,
+    ): AcState? {
+        if (!desired.power) {
+            return desired.takeIf { runCatching { encode(candidate, it) }.isSuccess }
+        }
+
+        val controls = RemoteControls.from(candidate)
+        val definition = protocol(candidate)
+        val modes = (listOf(desired.mode) + controls.modes.mapNotNull(::mode) + definition?.modes.orEmpty())
+            .distinct()
+            .let { values -> if (lockMode) listOf(desired.mode) else values }
+        val fans = (listOf(desired.fan) + controls.fanModes.mapNotNull(::fan) + definition?.fanSpeeds.orEmpty())
+            .distinct()
+            .let { values -> if (lockFan) listOf(desired.fan) else values }
+        val range = controls.temperatureRange
+            ?: definition?.let { it.minTemperatureCelsius..it.maxTemperatureCelsius }
+            ?: desired.temperatureCelsius..desired.temperatureCelsius
+        val temperatures = if (lockTemperature) {
+            listOf(desired.temperatureCelsius)
+        } else {
+            range.toList().sortedBy { kotlin.math.abs(it - desired.temperatureCelsius) }
+        }
+        val verticalStates = if (lockSwingVertical) {
+            listOf(desired.swingVertical)
+        } else {
+            listOf(desired.swingVertical, false, true).distinct()
+        }
+        val horizontalStates = if (lockSwingHorizontal) {
+            listOf(desired.swingHorizontal)
+        } else {
+            listOf(desired.swingHorizontal, false, true).distinct()
+        }
+
+        return modes.asSequence().flatMap { selectedMode ->
+            fans.asSequence().flatMap { selectedFan ->
+                temperatures.asSequence().flatMap { selectedTemperature ->
+                    verticalStates.asSequence().flatMap { selectedVertical ->
+                        horizontalStates.asSequence().map { selectedHorizontal ->
+                            desired.copy(
+                                power = true,
+                                temperatureCelsius = selectedTemperature,
+                                mode = selectedMode,
+                                fan = selectedFan,
+                                swingVertical = selectedVertical,
+                                swingHorizontal = selectedHorizontal,
+                            )
+                        }
+                    }
+                }
+            }
+        }.firstOrNull { state -> runCatching { encode(candidate, state) }.isSuccess }
+    }
+
     /** Returns only an explicitly named ON command; an OFF/toggle command is never selected here. */
     fun explicitPowerOn(candidate: RemoteCandidate): IrTransmission? = runCatching {
         if (!candidate.encodingType.equals("RAW_PROFILE", true)) return@runCatching null

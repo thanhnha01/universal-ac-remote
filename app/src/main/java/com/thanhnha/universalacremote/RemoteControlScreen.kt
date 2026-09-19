@@ -86,28 +86,101 @@ fun RemoteControlScreen(
     val temperatureRange = controls.temperatureRange
         ?: protocol?.let { it.minTemperatureCelsius..it.maxTemperatureCelsius }
 
-    val initialMode = modes.firstOrNull()
+    val safeState = remember(candidate.id) { CatalogTransmitter.safeProbe(candidate)?.state }
+    val initialMode = safeState?.mode?.let { safeMode ->
+        modes.firstOrNull { CatalogTransmitter.mode(it) == safeMode }
+    } ?: modes.firstOrNull()
         ?: protocol?.modes?.firstOrNull()?.name?.lowercase()
         ?: "cool"
-    val initialFan = fans.firstOrNull()
+    val initialFan = safeState?.fan?.let { safeFan ->
+        fans.firstOrNull { CatalogTransmitter.fan(it) == safeFan }
+    } ?: fans.firstOrNull()
         ?: protocol?.fanSpeeds?.firstOrNull()?.let(::fanKey)
         ?: "auto"
-    val initialTemperature = temperatureRange?.let { 24.coerceIn(it.first, it.last) } ?: 24
+    val initialTemperature = safeState?.temperatureCelsius
+        ?.takeIf { temperatureRange == null || it in temperatureRange }
+        ?: temperatureRange?.let { 24.coerceIn(it.first, it.last) }
+        ?: 24
 
     var power by remember(candidate.id) { mutableStateOf<Boolean?>(null) }
     var temperature by remember(candidate.id) { mutableIntStateOf(initialTemperature) }
     var mode by remember(candidate.id) { mutableStateOf(initialMode) }
     var fan by remember(candidate.id) { mutableStateOf(initialFan) }
-    var swingVertical by remember(candidate.id) { mutableStateOf(false) }
-    var swingHorizontal by remember(candidate.id) { mutableStateOf(false) }
+    var swingVertical by remember(candidate.id) { mutableStateOf(safeState?.swingVertical ?: false) }
+    var swingHorizontal by remember(candidate.id) { mutableStateOf(safeState?.swingHorizontal ?: false) }
     var feedback by remember { mutableStateOf("") }
     var feedbackError by remember { mutableStateOf(false) }
     var hasSentState by remember(candidate.id) { mutableStateOf(false) }
 
     val ready = hardwareReady && transmittable
-    val showVerticalSwing = controls.verticalSwing.type == "ON_OFF" || controls.verticalSwing.type == "AUTO_AND_POSITIONS"
-    val showHorizontalSwing = controls.horizontalSwing.type == "ON_OFF" || controls.horizontalSwing.type == "AUTO_AND_POSITIONS"
     val verification = remote.verificationState(candidate)
+    val target = remember(candidate.id, candidate.protocolModel, protocol?.id) {
+        if (protocol != null) candidate.copy(protocolModel = CatalogTransmitter.modelId(candidate, protocol)) else candidate
+    }
+
+    fun selectedMode(value: String): AcMode? = CatalogTransmitter.mode(value)
+        ?: protocol?.modes?.firstOrNull()
+
+    fun selectedFan(value: String): AcFan? = CatalogTransmitter.fan(value)
+        ?: protocol?.fanSpeeds?.firstOrNull()
+
+    fun resolvedState(
+        nextPower: Boolean = power ?: true,
+        nextTemperature: Int = temperature,
+        nextMode: String = mode,
+        nextFan: String = fan,
+        nextVertical: Boolean = swingVertical,
+        nextHorizontal: Boolean = swingHorizontal,
+        lockTemperature: Boolean = false,
+        lockMode: Boolean = false,
+        lockFan: Boolean = false,
+        lockVertical: Boolean = false,
+        lockHorizontal: Boolean = false,
+    ): AcState? {
+        val resolvedMode = selectedMode(nextMode) ?: return null
+        val resolvedFan = selectedFan(nextFan) ?: return null
+        return CatalogTransmitter.resolveState(
+            target,
+            AcState(
+                power = nextPower,
+                temperatureCelsius = nextTemperature,
+                mode = resolvedMode,
+                fan = resolvedFan,
+                swingVertical = nextVertical,
+                swingHorizontal = nextHorizontal,
+            ),
+            lockTemperature = lockTemperature,
+            lockMode = lockMode,
+            lockFan = lockFan,
+            lockSwingVertical = lockVertical,
+            lockSwingHorizontal = lockHorizontal,
+        )
+    }
+
+    val selectableModes = modes.filter { value ->
+        val requested = selectedMode(value) ?: return@filter false
+        resolvedState(nextMode = value, lockMode = true)?.mode == requested
+    }
+    val selectableFans = fans.filter { value ->
+        val requested = selectedFan(value) ?: return@filter false
+        resolvedState(nextFan = value, lockFan = true)?.fan == requested
+    }
+    val canDecreaseTemperature = temperatureRange?.let { range ->
+        temperature > range.first &&
+            resolvedState(nextTemperature = temperature - 1, lockTemperature = true)?.temperatureCelsius == temperature - 1
+    } == true
+    val canIncreaseTemperature = temperatureRange?.let { range ->
+        temperature < range.last &&
+            resolvedState(nextTemperature = temperature + 1, lockTemperature = true)?.temperatureCelsius == temperature + 1
+    } == true
+    val verticalSupported = controls.verticalSwing.type == "ON_OFF" || controls.verticalSwing.type == "AUTO_AND_POSITIONS"
+    val horizontalSupported = controls.horizontalSwing.type == "ON_OFF" || controls.horizontalSwing.type == "AUTO_AND_POSITIONS"
+    val verticalFixedEnabled = verticalSupported && resolvedState(nextVertical = false, lockVertical = true)?.swingVertical == false
+    val verticalAutoEnabled = verticalSupported && resolvedState(nextVertical = true, lockVertical = true)?.swingVertical == true
+    val horizontalFixedEnabled = horizontalSupported && resolvedState(nextHorizontal = false, lockHorizontal = true)?.swingHorizontal == false
+    val horizontalAutoEnabled = horizontalSupported && resolvedState(nextHorizontal = true, lockHorizontal = true)?.swingHorizontal == true
+    val showVerticalSwing = verticalFixedEnabled || verticalAutoEnabled
+    val showHorizontalSwing = horizontalFixedEnabled || horizontalAutoEnabled
 
     fun transmit(
         nextPower: Boolean = power ?: true,
@@ -154,49 +227,34 @@ fun RemoteControlScreen(
             }
         }
 
-        val selectedMode = CatalogTransmitter.mode(nextMode)
-            ?: protocol?.modes?.firstOrNull()
-            ?: if (!nextPower && candidate.encodingType.equals("RAW_PROFILE", true)) AcMode.COOL else null
-            ?: run {
-                feedback = "Chế độ này chưa được remote hỗ trợ."
-                feedbackError = true
-                return false
-            }
-        val selectedFan = CatalogTransmitter.fan(nextFan)
-            ?: protocol?.fanSpeeds?.firstOrNull()
-            ?: if (!nextPower && candidate.encodingType.equals("RAW_PROFILE", true)) AcFan.AUTO else null
-            ?: run {
-                feedback = "Tốc độ quạt này chưa được remote hỗ trợ."
-                feedbackError = true
-                return false
-            }
-
-        val target = if (protocol != null) {
-            candidate.copy(protocolModel = CatalogTransmitter.modelId(candidate, protocol))
-        } else candidate
+        val resolved = resolvedState(
+            nextPower = nextPower,
+            nextTemperature = nextTemperature,
+            nextMode = nextMode,
+            nextFan = nextFan,
+            nextVertical = nextVertical,
+            nextHorizontal = nextHorizontal,
+            lockTemperature = nextTemperature != temperature,
+            lockMode = !nextMode.equals(mode, true),
+            lockFan = !nextFan.equals(fan, true),
+            lockVertical = nextVertical != swingVertical,
+            lockHorizontal = nextHorizontal != swingHorizontal,
+        ) ?: run {
+            feedback = "Tổ hợp điều khiển này không có mã IR tương ứng."
+            feedbackError = true
+            return false
+        }
 
         return runCatching {
-            AndroidIrTransmitter.from(context).transmit(
-                CatalogTransmitter.encode(
-                    target,
-                    AcState(
-                        power = nextPower,
-                        temperatureCelsius = nextTemperature,
-                        mode = selectedMode,
-                        fan = selectedFan,
-                        swingVertical = nextVertical,
-                        swingHorizontal = nextHorizontal,
-                    )
-                )
-            )
+            AndroidIrTransmitter.from(context).transmit(CatalogTransmitter.encode(target, resolved))
         }.fold(
             onSuccess = {
-                power = nextPower
-                temperature = nextTemperature
-                mode = nextMode
-                fan = nextFan
-                swingVertical = nextVertical
-                swingHorizontal = nextHorizontal
+                power = resolved.power
+                temperature = resolved.temperatureCelsius
+                mode = modes.firstOrNull { CatalogTransmitter.mode(it) == resolved.mode } ?: modeKey(resolved.mode)
+                fan = fans.firstOrNull { CatalogTransmitter.fan(it) == resolved.fan } ?: fanKey(resolved.fan)
+                swingVertical = resolved.swingVertical
+                swingHorizontal = resolved.swingHorizontal
                 hasSentState = true
                 feedback = "Đã phát lệnh."
                 feedbackError = false
@@ -211,15 +269,15 @@ fun RemoteControlScreen(
     }
 
     fun cycleMode() {
-        if (modes.isEmpty()) return
-        val current = modes.indexOfFirst { it.equals(mode, true) }.coerceAtLeast(0)
-        transmit(nextMode = modes[(current + 1) % modes.size])
+        if (selectableModes.isEmpty()) return
+        val current = selectableModes.indexOfFirst { it.equals(mode, true) }.coerceAtLeast(0)
+        transmit(nextMode = selectableModes[(current + 1) % selectableModes.size])
     }
 
     fun cycleFan() {
-        if (fans.isEmpty()) return
-        val current = fans.indexOfFirst { it.equals(fan, true) }.coerceAtLeast(0)
-        transmit(nextFan = fans[(current + 1) % fans.size])
+        if (selectableFans.isEmpty()) return
+        val current = selectableFans.indexOfFirst { it.equals(fan, true) }.coerceAtLeast(0)
+        transmit(nextFan = selectableFans[(current + 1) % selectableFans.size])
     }
 
     AppScaffold("remote", onTab) { padding ->
@@ -239,7 +297,8 @@ fun RemoteControlScreen(
                 power = power,
                 hasSentState = hasSentState,
                 temperatureVisible = temperatureRange != null,
-                temperatureEnabled = temperatureRange != null && ready,
+                decreaseTemperatureEnabled = ready && canDecreaseTemperature,
+                increaseTemperatureEnabled = ready && canIncreaseTemperature,
                 powerVisible = controls.power,
                 powerEnabled = controls.power && ready,
                 onMinus = {
@@ -253,12 +312,12 @@ fun RemoteControlScreen(
                 onPower = { transmit(nextPower = power != true) },
                 onMode = ::cycleMode,
                 onFan = ::cycleFan,
-                modeLabel = modes.firstOrNull { it.equals(mode, true) }?.let(::modeLabel) ?: "Chế độ",
-                fanLabel = fans.firstOrNull { it.equals(fan, true) }?.let(::fanLabel) ?: "Quạt",
-                quickModeVisible = modes.size > 1,
-                quickModeEnabled = modes.size > 1 && ready,
-                quickFanVisible = fans.size > 1,
-                quickFanEnabled = fans.size > 1 && ready,
+                modeLabel = selectableModes.firstOrNull { it.equals(mode, true) }?.let(::modeLabel) ?: "Chế độ",
+                fanLabel = selectableFans.firstOrNull { it.equals(fan, true) }?.let(::fanLabel) ?: "Quạt",
+                quickModeVisible = selectableModes.size > 1,
+                quickModeEnabled = selectableModes.size > 1 && ready,
+                quickFanVisible = selectableFans.size > 1,
+                quickFanEnabled = selectableFans.size > 1 && ready,
             )
 
             if (!ready) {
@@ -273,18 +332,18 @@ fun RemoteControlScreen(
                 )
             }
 
-            if (modes.isNotEmpty()) {
+            if (selectableModes.isNotEmpty()) {
                 RemoteModePanel(
-                    modes = modes,
+                    modes = selectableModes,
                     selected = mode,
                     enabled = ready,
                     onSelect = { transmit(nextMode = it) },
                 )
             }
 
-            if (fans.isNotEmpty()) {
+            if (selectableFans.isNotEmpty()) {
                 RemoteFanPanel(
-                    fans = fans,
+                    fans = selectableFans,
                     selected = fan,
                     enabled = ready,
                     onSelect = { transmit(nextFan = it) },
@@ -297,7 +356,10 @@ fun RemoteControlScreen(
                     horizontalVisible = showHorizontalSwing,
                     vertical = swingVertical,
                     horizontal = swingHorizontal,
-                    enabled = ready,
+                    verticalFixedEnabled = ready && verticalFixedEnabled,
+                    verticalAutoEnabled = ready && verticalAutoEnabled,
+                    horizontalFixedEnabled = ready && horizontalFixedEnabled,
+                    horizontalAutoEnabled = ready && horizontalAutoEnabled,
                     onVertical = { transmit(nextVertical = it) },
                     onHorizontal = { transmit(nextHorizontal = it) },
                 )
@@ -413,7 +475,8 @@ private fun RemoteHeroCard(
     power: Boolean?,
     hasSentState: Boolean,
     temperatureVisible: Boolean,
-    temperatureEnabled: Boolean,
+    decreaseTemperatureEnabled: Boolean,
+    increaseTemperatureEnabled: Boolean,
     powerVisible: Boolean,
     powerEnabled: Boolean,
     onMinus: () -> Unit,
@@ -496,7 +559,7 @@ private fun RemoteHeroCard(
                             "Giảm nhiệt",
                             Icons.Filled.Thermostat,
                             Modifier.weight(1f),
-                            temperatureEnabled,
+                            decreaseTemperatureEnabled,
                             onMinus,
                         )
                         RemoteQuickAction(
@@ -504,7 +567,7 @@ private fun RemoteHeroCard(
                             "Tăng nhiệt",
                             Icons.Filled.Thermostat,
                             Modifier.weight(1f),
-                            temperatureEnabled,
+                            increaseTemperatureEnabled,
                             onPlus,
                         )
                     }
@@ -679,7 +742,10 @@ private fun RemoteSwingPanel(
     horizontalVisible: Boolean,
     vertical: Boolean,
     horizontal: Boolean,
-    enabled: Boolean,
+    verticalFixedEnabled: Boolean,
+    verticalAutoEnabled: Boolean,
+    horizontalFixedEnabled: Boolean,
+    horizontalAutoEnabled: Boolean,
     onVertical: (Boolean) -> Unit,
     onHorizontal: (Boolean) -> Unit,
 ) {
@@ -693,7 +759,8 @@ private fun RemoteSwingPanel(
                 SwingSegmentRow(
                     title = "Dọc (Lên/Xuống)",
                     active = vertical,
-                    enabled = enabled,
+                    fixedEnabled = verticalFixedEnabled,
+                    autoEnabled = verticalAutoEnabled,
                     onChange = onVertical,
                 )
             }
@@ -701,7 +768,8 @@ private fun RemoteSwingPanel(
                 SwingSegmentRow(
                     title = "Ngang (Trái/Phải)",
                     active = horizontal,
-                    enabled = enabled,
+                    fixedEnabled = horizontalFixedEnabled,
+                    autoEnabled = horizontalAutoEnabled,
                     onChange = onHorizontal,
                 )
             }
@@ -713,14 +781,15 @@ private fun RemoteSwingPanel(
 private fun SwingSegmentRow(
     title: String,
     active: Boolean,
-    enabled: Boolean,
+    fixedEnabled: Boolean,
+    autoEnabled: Boolean,
     onChange: (Boolean) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
         Text(title, fontWeight = FontWeight.Bold, color = AppColors.navy)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SwingChoice("Cố định", !active, enabled, Modifier.weight(1f)) { onChange(false) }
-            SwingChoice("Tự động", active, enabled, Modifier.weight(1f)) { onChange(true) }
+            SwingChoice("Cố định", !active, fixedEnabled, Modifier.weight(1f)) { onChange(false) }
+            SwingChoice("Tự động", active, autoEnabled, Modifier.weight(1f)) { onChange(true) }
         }
     }
 }
@@ -771,6 +840,14 @@ private fun RemoteSectionCard(
             content()
         }
     }
+}
+
+private fun modeKey(value: AcMode): String = when (value) {
+    AcMode.AUTO -> "auto"
+    AcMode.COOL -> "cool"
+    AcMode.DRY -> "dry"
+    AcMode.FAN -> "fan"
+    AcMode.HEAT -> "heat"
 }
 
 private fun fanKey(value: AcFan): String = when (value) {
