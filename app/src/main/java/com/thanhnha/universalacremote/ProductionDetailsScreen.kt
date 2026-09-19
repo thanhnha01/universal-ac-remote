@@ -48,7 +48,7 @@ fun ProductionDetailsScreen(
     val imported = remote.importedCommandsJson.isNotBlank()
     val transmittable = imported ||
         (candidate != null && com.thanhnha.universalacremote.ir.CatalogTransmitter.supports(candidate))
-    val verified = !imported && remote.verifiedCapabilities.isNotEmpty() && transmittable
+    val verification = remote.verificationState(candidate)
 
     AppScaffold(selectedRoute = null, onNavigate = {}, bottomBar = false) { padding ->
         PageColumn(padding) {
@@ -81,18 +81,23 @@ fun ProductionDetailsScreen(
                         StatusChip(
                             when {
                                 imported -> "File IR"
-                                verified -> "Đã xác minh"
+                                verification == SavedVerificationState.FULL -> "Đã xác minh"
+                                verification == SavedVerificationState.PARTIAL -> "Đã kiểm tra một phần"
                                 else -> "Chưa xác minh"
                             },
-                            if (imported || verified) Icons.Filled.CheckCircle else Icons.Filled.Tune,
+                            when {
+                                imported || verification == SavedVerificationState.FULL -> Icons.Filled.CheckCircle
+                                verification == SavedVerificationState.PARTIAL -> Icons.Filled.Tune
+                                else -> Icons.Filled.Tune
+                            },
                             when {
                                 imported -> AppColors.blue
-                                verified -> AppColors.mint
+                                verification == SavedVerificationState.FULL -> AppColors.mint
                                 else -> AppColors.warning
                             },
                             when {
                                 imported -> AppColors.paleBlue
-                                verified -> AppColors.paleMint
+                                verification == SavedVerificationState.FULL -> AppColors.paleMint
                                 else -> AppColors.paleWarning
                             },
                         )
@@ -117,9 +122,7 @@ fun ProductionDetailsScreen(
                         Icons.Filled.Tune,
                     )
                 } else {
-                    remote.verifiedCapabilities.mapNotNull { raw ->
-                        runCatching { VerificationCheck.valueOf(raw) }.getOrNull()
-                    }.forEach { check ->
+                    remote.verifiedChecksSet().forEach { check ->
                         CapabilityRow(
                             title = detailCheckLabel(check),
                             detail = "Đã xác nhận trên máy lạnh",
