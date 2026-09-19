@@ -99,6 +99,7 @@ fun RemoteControlScreen(
     var swingHorizontal by remember(candidate.id) { mutableStateOf(false) }
     var feedback by remember { mutableStateOf("") }
     var feedbackError by remember { mutableStateOf(false) }
+    var hasSentState by remember(candidate.id) { mutableStateOf(false) }
 
     val ready = hardwareReady && transmittable
     val showVerticalSwing = controls.verticalSwing.type == "ON_OFF" || controls.verticalSwing.type == "AUTO_AND_POSITIONS"
@@ -136,6 +137,7 @@ fun RemoteControlScreen(
                 }.fold(
                     onSuccess = {
                         power = true
+                        hasSentState = true
                         feedback = "Đã phát lệnh bật."
                         feedbackError = false
                         true
@@ -192,6 +194,7 @@ fun RemoteControlScreen(
                 fan = nextFan
                 swingVertical = nextVertical
                 swingHorizontal = nextHorizontal
+                hasSentState = true
                 feedback = "Đã phát lệnh."
                 feedbackError = false
                 true
@@ -231,6 +234,7 @@ fun RemoteControlScreen(
                 brand = remote.brand,
                 temperature = temperature,
                 power = power,
+                hasSentState = hasSentState,
                 temperatureVisible = temperatureRange != null,
                 temperatureEnabled = temperatureRange != null && ready,
                 powerVisible = controls.power,
@@ -384,6 +388,7 @@ private fun RemoteHeroCard(
     brand: String,
     temperature: Int,
     power: Boolean?,
+    hasSentState: Boolean,
     temperatureVisible: Boolean,
     temperatureEnabled: Boolean,
     powerVisible: Boolean,
@@ -416,7 +421,11 @@ private fun RemoteHeroCard(
                     Modifier.weight(1f),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text("Nhiệt độ đặt", color = AppColors.navySoft, style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        if (hasSentState) "Nhiệt độ đã gửi" else "Mức đặt khi gửi",
+                        color = AppColors.navySoft,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                     Text(
                         if (temperatureVisible) "${temperature}°C" else "—",
                         style = MaterialTheme.typography.displayMedium,
@@ -427,7 +436,7 @@ private fun RemoteHeroCard(
                         when (power) {
                             true -> "Đang bật"
                             false -> "Đang tắt"
-                            null -> "Chưa đồng bộ"
+                            null -> "Chưa gửi trạng thái"
                         },
                         color = when (power) {
                             true -> AppColors.mint
