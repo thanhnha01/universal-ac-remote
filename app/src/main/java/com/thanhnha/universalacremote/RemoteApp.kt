@@ -145,7 +145,7 @@ fun RemoteApp(diagnostics: IrHardwareDiagnostics, store: SavedRemotesViewModel =
             }
             composable("details/{id}", arguments = listOf(navArgument("id") { type = NavType.StringType })) {
                 home.remotes.find { remote -> remote.id == it.arguments?.getString("id") }?.let { remote ->
-                    DetailsScreen(remote, store.profileFor(remote.catalogProfileId), store, { nav.navigate("remote/${remote.id}") }, { store.beginScan(RemoteQuery(brand = remote.brand)); nav.navigate("scan") }, { nav.popBackStack() })
+                    ProductionDetailsScreen(remote, store.profileFor(remote.catalogProfileId), store, { nav.navigate("remote/${remote.id}") }, { store.beginScan(RemoteQuery(brand = remote.brand)); nav.navigate("scan") }, { nav.popBackStack() })
                 }
             }
             composable("settings") { ProductionSettingsScreen(diagnostics, catalog, ::navigateTab, { nav.navigate("diagnostics") }, { nav.navigate("import") }) }
