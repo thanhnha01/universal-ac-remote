@@ -150,6 +150,35 @@ class SavedRemotesViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
+    /**
+     * Search the user-facing catalog from one text field. The previous UI sent
+     * every query as a brand query even though the hint promised brand/model/
+     * remote search, so model searches silently returned nothing.
+     */
+    fun updateSearchText(text: String) {
+        searchJob?.cancel()
+        val activeResolver = resolver ?: return
+        if (text.isBlank()) {
+            mutableSearch.value = CatalogSearchState()
+            return
+        }
+        mutableSearch.value = CatalogSearchState(loading = true)
+        searchJob = viewModelScope.launch(Dispatchers.Default) {
+            delay(120)
+            val result = buildList {
+                addAll(activeResolver.resolve(RemoteQuery(brand = text)))
+                addAll(activeResolver.resolve(RemoteQuery(acModel = text)))
+                addAll(activeResolver.resolve(RemoteQuery(remoteModel = text)))
+            }.distinctBy(RemoteCandidate::id)
+                .sortedWith(compareBy<RemoteCandidate> { if (CatalogTransmitter.supports(it)) 0 else 1 }
+                    .thenBy(RemoteCandidate::priority)
+                    .thenBy(RemoteCandidate::brand)
+                    .thenBy(RemoteCandidate::id))
+                .take(40)
+            mutableSearch.value = CatalogSearchState(loading = false, results = result)
+        }
+    }
+
     fun beginScan(query: RemoteQuery = RemoteQuery(), selected: RemoteCandidate? = null) {
         val canTransmit: (RemoteCandidate) -> Boolean = { candidate ->
             CatalogTransmitter.supports(candidate)
