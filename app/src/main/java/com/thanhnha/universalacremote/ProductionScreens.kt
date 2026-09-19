@@ -390,11 +390,13 @@ fun ProductionScannerScreen(
 ) {
     val context = LocalContext.current
     val candidates by store.scanCandidates.collectAsState()
+    val popular by store.popularBrands.collectAsState()
     val candidateKey = candidates.joinToString("|") { it.id }
     var refresh by remember { mutableIntStateOf(0) }
     var scanStarted by remember(candidateKey) { mutableStateOf(false) }
     var pendingCheck by remember { mutableStateOf<VerificationCheck?>(null) }
     var machineName by remember { mutableStateOf("") }
+    var entryBrand by remember { mutableStateOf<String?>(null) }
     var message by remember { mutableStateOf("") }
     @Suppress("UNUSED_VARIABLE") val stateRefresh = refresh
 
@@ -419,15 +421,75 @@ fun ProductionScannerScreen(
             )
 
             if (candidates.isEmpty()) {
-                EmptyState(
-                    "Chưa có mã điều khiển phù hợp",
-                    "Chọn hãng khác hoặc nhập file .ir để tiếp tục.",
-                    Icons.Filled.Search,
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    SecondaryButton("Chọn hãng", Modifier.weight(1f), Icons.Filled.Refresh, onClick = onChangeBrand)
-                    SecondaryButton("Nhập .ir", Modifier.weight(1f), Icons.Filled.FileDownload, onClick = onImport)
+                SurfaceCard(Modifier.fillMaxWidth(), SoftHeroGradient) {
+                    Column(
+                        Modifier.padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            IconBubble(Icons.Outlined.Radio, size = 54)
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    "Chọn hãng máy lạnh",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = AppColors.navy,
+                                )
+                                Text(
+                                    "App sẽ thử lần lượt các mã điều khiển phù hợp với hãng bạn chọn.",
+                                    color = AppColors.navySoft,
+                                )
+                            }
+                        }
+
+                        if (popular.isEmpty()) {
+                            InfoBanner(
+                                "Thư viện hãng chưa sẵn sàng.",
+                                Icons.Filled.Info,
+                                AppColors.warning,
+                                AppColors.paleWarning,
+                            )
+                        } else {
+                            popular.take(12).chunked(4).forEach { rowBrands ->
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    rowBrands.forEach { brand ->
+                                        BrandTile(
+                                            brand = brand,
+                                            selected = entryBrand.equals(brand, true),
+                                            modifier = Modifier.weight(1f),
+                                        ) {
+                                            entryBrand = brand
+                                        }
+                                    }
+                                    repeat(4 - rowBrands.size) { Box(Modifier.weight(1f)) }
+                                }
+                            }
+                        }
+
+                        entryBrand?.let { brand ->
+                            PrimaryButton(
+                                "Bắt đầu dò $brand",
+                                Modifier.fillMaxWidth(),
+                                Icons.Filled.PlayArrow,
+                            ) {
+                                store.beginScan(RemoteQuery(brand = brand))
+                            }
+                        }
+                    }
                 }
+
+                SecondaryButton(
+                    "Nhập file .ir",
+                    Modifier.fillMaxWidth(),
+                    Icons.Filled.FileDownload,
+                    onClick = onImport,
+                )
                 return@PageColumn
             }
 
