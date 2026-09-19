@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FilterAlt
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Lightbulb
@@ -158,20 +159,34 @@ private fun HomeScreen(state: HomeUiState, diagnostics: IrHardwareDiagnostics, s
     var name by remember(renameTarget) { mutableStateOf(renameTarget?.displayName.orEmpty()) }
     AppScaffold("home", onTab) { padding ->
         PageColumn(padding) {
-            AppTopBar("Universal A/C Remote", "Điều khiển máy lạnh bằng hồng ngoại", actions = { IconButton(onClick = { onTab("settings") }) { Icon(Icons.Filled.Settings, "Cài đặt") } })
-            GradientHero { Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) { IconBubble(Icons.Filled.AcUnit, tint = Color.White, background = AppColors.blue, size = 70); Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) { Text("Remote của bạn", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold); Text(if (diagnostics.hasIrEmitter) "IR sẵn sàng để phát lệnh" else "Thiết bị chưa có bộ phát IR", color = AppColors.navySoft) } } }
-            PrimaryButton("Thêm máy lạnh", Modifier.fillMaxWidth(), Icons.Filled.Add) { navigate("add") }
+            BrandHeader {
+                HeaderIconButton(Icons.Filled.Search, "Tìm profile") { navigate("add") }
+                HeaderIconButton(Icons.Filled.Settings, "Cài đặt") { onTab("settings") }
+            }
+            GradientHero {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                        Text("Thêm máy lạnh", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, color = AppColors.navy)
+                        Text("Lưu remote mới hoặc dò tự động", color = AppColors.navySoft)
+                        PrimaryButton("Thêm máy lạnh", Modifier.fillMaxWidth(), Icons.Filled.Add) { navigate("add") }
+                    }
+                    IconBubble(Icons.Filled.AcUnit, tint = AppColors.blue, background = Color.White.copy(alpha = 0.8f), size = 92)
+                }
+            }
             if (state.loading) SurfaceCard(Modifier.fillMaxWidth()) { Row(Modifier.padding(22.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) { CircularProgressIndicator(Modifier.size(22.dp)); Text("Đang tải remote đã lưu…") } }
             else if (state.remotes.isEmpty()) EmptyState("Chưa có máy lạnh nào", "Thêm một máy lạnh để chọn profile, xác minh khả năng và lưu remote.", Icons.Filled.AcUnit)
             else {
-                SectionTitle("Máy lạnh đã lưu")
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    SectionTitle("Máy lạnh của bạn", Modifier.weight(1f))
+                    Text("${state.remotes.size} thiết bị", color = AppColors.navySoft, fontWeight = FontWeight.Bold)
+                }
                 state.remotes.forEach { remote ->
                     val profile = store.profileFor(remote.catalogProfileId)
                     val verified = verifiedChecks(remote)
                     val compatibility = when { remote.importedCommandsJson.isNotBlank() -> "Profile đã nhập"; profile == null -> "Cần kiểm tra lại profile"; verified.isEmpty() -> "Chưa xác minh"; else -> "${verified.size} chức năng đã xác minh" }
                     SurfaceCard(Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) { IconBubble(Icons.Outlined.AcUnit); Column(Modifier.weight(1f)) { Text(remote.displayName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold); Text(listOfNotNull(remote.brand, remote.acModel, remote.remoteModel).joinToString(" • "), color = AppColors.navySoft) }; Icon(Icons.Filled.ChevronRight, "Mở remote", tint = AppColors.navySoft) }
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(13.dp)) { IconBubble(Icons.Outlined.AcUnit, size = 72); Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) { Text(remote.displayName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold); Text(listOfNotNull(remote.brand, remote.acModel, remote.remoteModel).joinToString(" • "), color = AppColors.navySoft) }; Icon(Icons.Filled.ChevronRight, "Mở remote", tint = AppColors.navySoft) }
                             StatusChip(compatibility, if (verified.isNotEmpty()) Icons.Filled.CheckCircle else Icons.Filled.Info, if (verified.isNotEmpty()) AppColors.mint else AppColors.blue, if (verified.isNotEmpty()) AppColors.paleMint else AppColors.paleBlue)
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { PrimaryButton("Mở remote", Modifier.weight(1f), Icons.Filled.PlayArrow) { navigate("remote/${remote.id}") }; SecondaryButton("Chi tiết", Modifier.weight(1f), Icons.Filled.Info) { navigate("details/${remote.id}") } }
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { TextButton(onClick = { renameTarget = remote }, modifier = Modifier.weight(1f)) { Icon(Icons.Filled.Edit, null); Spacer(Modifier.size(6.dp)); Text("Đổi tên") }; TextButton(onClick = { deleteTarget = remote }, modifier = Modifier.weight(1f)) { Icon(Icons.Filled.DeleteOutline, null, tint = AppColors.danger); Spacer(Modifier.size(6.dp)); Text("Xóa", color = AppColors.danger) } }
@@ -179,6 +194,16 @@ private fun HomeScreen(state: HomeUiState, diagnostics: IrHardwareDiagnostics, s
                     }
                 }
             }
+            SectionTitle("Công cụ nhanh")
+            ResponsiveFeatureGrid(listOf("Dò remote 1000-in-1", "Nhập file .ir", "Chẩn đoán IR", "Cập nhật")) { tool ->
+                when (tool) {
+                    "Dò remote 1000-in-1" -> ToolCard(tool, Icons.Outlined.Radio, Modifier.fillMaxWidth()) { store.beginScan(); navigate("scan") }
+                    "Nhập file .ir" -> ToolCard(tool, Icons.Filled.FileDownload, Modifier.fillMaxWidth()) { navigate("import") }
+                    "Chẩn đoán IR" -> ToolCard(tool, Icons.Filled.SignalCellularAlt, Modifier.fillMaxWidth()) { onTab("settings") }
+                    else -> ToolCard(tool, Icons.Filled.Refresh, Modifier.fillMaxWidth()) { onTab("settings") }
+                }
+            }
+            InfoBanner(if (diagnostics.hasIrEmitter) "Mẹo: Đứng cách máy lạnh 2–5 m để phát IR ổn định hơn." else "Thiết bị này chưa báo có bộ phát IR.", Icons.Filled.Lightbulb, AppColors.warning, AppColors.paleWarning)
         }
     }
     RenameDialog(renameTarget, name, { name = it }, { renameTarget?.let { store.rename(it.id, name) }; renameTarget = null }, { renameTarget = null })
@@ -194,6 +219,15 @@ private fun AddScreen(store: SavedRemotesViewModel, catalog: CatalogUiState, onT
     AppScaffold("home", onTab) { padding ->
         PageColumn(padding) {
             AppTopBar("Thêm máy lạnh", "Chọn cách thiết lập phù hợp", onBack = { onTab("home") })
+            GradientHero {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("Thiết lập remote", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
+                        Text("Tìm theo hãng, model hoặc để app tự dò.", color = AppColors.navySoft)
+                    }
+                    IconBubble(Icons.Filled.Search, size = 72)
+                }
+            }
             SearchField(query, ::searchNow, "Tìm hãng, model máy hoặc remote")
             if (catalog.loading) InfoBanner("Đang tải Unified Catalog…", Icons.Filled.Refresh, AppColors.blue, AppColors.paleBlue)
             catalog.error?.let { InfoBanner(it, Icons.Filled.ErrorOutline, AppColors.danger, AppColors.paleDanger) }
@@ -205,19 +239,19 @@ private fun AddScreen(store: SavedRemotesViewModel, catalog: CatalogUiState, onT
             if (search.loading) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) { CircularProgressIndicator(Modifier.size(24.dp)) }
             if (query.isNotBlank() && !search.loading && search.results.isEmpty()) EmptyState("Không tìm thấy profile", "Kiểm tra lại hãng hoặc thử dò remote 1000-in-1.", Icons.Filled.Search)
             search.results.forEach { candidate -> CatalogResultCard(candidate) { store.beginScan(selected = candidate); navigate("scan") } }
-            SectionTitle("Thiết lập nhanh")
-            QuickActionCard("Tôi biết model", "Chọn model máy hoặc remote", Icons.Filled.Search, AppColors.paleBlue) { if (popular.isNotEmpty()) searchNow(popular.first()) }
-            QuickActionCard("Tôi không biết model", "Dò remote 1000-in-1", Icons.Outlined.Radio, AppColors.paleMint) { store.beginScan(); navigate("scan") }
-            SectionTitle("Nhập dữ liệu có sẵn")
-            QuickActionCard("Nhập file .ir", "Dùng hồ sơ IR từ Flipper hoặc nguồn bên ngoài", Icons.Filled.FileDownload, AppColors.paleBlue) { navigate("import") }
-            InfoBanner("Nếu chưa chắc model, bắt đầu bằng dò remote 1000-in-1.")
+            SectionTitle("Bạn muốn thiết lập thế nào?")
+            QuickActionCard("Tôi biết model", "Tìm hãng, model máy hoặc remote", Icons.Filled.Search, AppColors.paleBlue) { if (query.isBlank() && popular.isNotEmpty()) searchNow(popular.first()) }
+            QuickActionCard("Không biết model", "Dò remote 1000-in-1 từng hồ sơ", Icons.Outlined.Radio, AppColors.paleMint) { store.beginScan(); navigate("scan") }
+            QuickActionCard("Nhập file .ir", "Dùng hồ sơ từ Flipper hoặc nguồn bên ngoài", Icons.Filled.FileDownload, Color(0xFFF3F0FF)) { navigate("import") }
+            InfoBanner("Mẹo: Nếu chưa chắc model, hãy để máy lạnh bật trước khi bắt đầu dò.", Icons.Filled.Lightbulb, AppColors.warning, AppColors.paleWarning)
         }
     }
 }
 
 @Composable
 private fun CatalogResultCard(candidate: RemoteCandidate, onSelect: () -> Unit) {
-    SurfaceCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) { Row(verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text(candidate.brand, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold); candidate.displayModelLabel().takeIf(String::isNotBlank)?.let { Text(it, color = AppColors.navySoft) }; candidate.remoteModel?.let { Text(it, color = AppColors.navySoft) } }; StatusChip(if (CatalogTransmitter.supports(candidate)) "Sẵn sàng thử" else "Chưa khả dụng", Icons.Filled.SignalCellularAlt, if (CatalogTransmitter.supports(candidate)) AppColors.blue else AppColors.danger, if (CatalogTransmitter.supports(candidate)) AppColors.paleBlue else AppColors.paleDanger) }; if (CatalogTransmitter.supports(candidate)) PrimaryButton("Thử hồ sơ này", Modifier.fillMaxWidth(), Icons.Filled.PlayArrow, onClick = onSelect) else Text("Chưa có bộ phát tương thích trên thiết bị.", color = AppColors.danger, style = MaterialTheme.typography.bodySmall) } }
+    val transmittable = remember(candidate.id) { CatalogTransmitter.supports(candidate) }
+    SurfaceCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { Row(verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) { Text(candidate.brand, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold); candidate.displayModelLabel().takeIf(String::isNotBlank)?.let { Text(it, color = AppColors.navySoft) }; candidate.remoteModel?.let { Text("Remote $it", color = AppColors.navySoft) } }; StatusChip(if (transmittable) "Sẵn sàng thử" else "Chưa khả dụng", Icons.Filled.SignalCellularAlt, if (transmittable) AppColors.blue else AppColors.danger, if (transmittable) AppColors.paleBlue else AppColors.paleDanger) }; if (transmittable) PrimaryButton("Thử hồ sơ này", Modifier.fillMaxWidth(), Icons.Filled.PlayArrow, onClick = onSelect) else Text("Chưa có bộ phát tương thích trên thiết bị.", color = AppColors.danger, style = MaterialTheme.typography.bodySmall) } }
 }
 
 @Composable
@@ -339,8 +373,8 @@ private fun DetailsScreen(remote: SavedRemote, candidate: RemoteCandidate?, stor
 private fun SettingsScreen(diagnostics: IrHardwareDiagnostics, catalog: CatalogUiState, onTab: (String) -> Unit, openDiagnostics: () -> Unit, openImport: () -> Unit) {
     AppScaffold("settings", onTab) { padding ->
         PageColumn(padding) {
-            AppTopBar("Universal A/C Remote", "Thiết bị và dữ liệu", onBack = { onTab("home") })
-            GradientHero { Column(verticalArrangement = Arrangement.spacedBy(6.dp)) { Text("Cài đặt", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold); Text("Tùy chỉnh ứng dụng và cập nhật", color = AppColors.navySoft) } }
+            BrandHeader { HeaderIconButton(Icons.Filled.Home, "Trang chủ") { onTab("home") } }
+            GradientHero { Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) { Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) { Text("Cài đặt", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold); Text("Tùy chỉnh ứng dụng và cập nhật", color = AppColors.navySoft) }; IconBubble(Icons.Filled.Settings, size = 76) } }
             SectionTitle("Ứng dụng")
             SurfaceCard(Modifier.fillMaxWidth()) { Column { SourceInfoRow("Phiên bản ứng dụng", BuildConfig.VERSION_NAME, Icons.Filled.Build); SourceInfoRow("Unified Catalog", if (catalog.loading) "Đang tải…" else "${catalog.profileCount} profile", Icons.Filled.FilterAlt); SourceInfoRow("Thiết bị IR", if (diagnostics.hasIrEmitter) "Sẵn sàng" else "Không khả dụng", Icons.Filled.SignalCellularAlt, if (diagnostics.hasIrEmitter) AppColors.mint else AppColors.danger) } }
             SectionTitle("Cập nhật")

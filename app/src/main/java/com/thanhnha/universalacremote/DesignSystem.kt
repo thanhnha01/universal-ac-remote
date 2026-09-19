@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.WbSunny
@@ -54,7 +55,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -89,8 +90,8 @@ object AppColors {
     val cyan = Color(0xFF27C7D8)
     val paleBlue = Color(0xFFEAF5FF)
     val paleBlueStrong = Color(0xFFDCEEFF)
-    val page = Color(0xFFF7FBFF)
-    val line = Color(0xFFD8EAFB)
+    val page = Color(0xFFF4FAFF)
+    val line = Color(0xFFD5E8FA)
     val mint = Color(0xFF0BAA70)
     val paleMint = Color(0xFFE9FBF3)
     val danger = Color(0xFFE92955)
@@ -126,7 +127,7 @@ val SoftHeroGradient = Brush.linearGradient(listOf(Color(0xFFE7F6FF), Color(0xFF
 fun AppBackground(content: @Composable () -> Unit) {
     Box(
         modifier = Modifier.background(
-            Brush.verticalGradient(listOf(Color.White, AppColors.page, Color(0xFFF0F8FF)))
+            Brush.verticalGradient(listOf(Color.White, AppColors.page, Color(0xFFEAF6FF)))
         )
     ) { content() }
 }
@@ -160,7 +161,7 @@ fun AppBottomNavigation(selectedRoute: String?, onNavigate: (String) -> Unit) {
     NavigationBar(
         containerColor = Color.White.copy(alpha = 0.98f),
         tonalElevation = 0.dp,
-        modifier = Modifier.navigationBarsPadding(),
+        modifier = Modifier.shadow(8.dp).navigationBarsPadding(),
     ) {
         items.forEach { (route, item) ->
             val selected = selectedRoute == route
@@ -188,6 +189,38 @@ fun AppBottomNavigation(selectedRoute: String?, onNavigate: (String) -> Unit) {
     }
 }
 
+@Composable
+fun BrandHeader(actions: @Composable RowScope.() -> Unit = {}) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(
+            modifier = Modifier.size(64.dp).clip(RoundedCornerShape(20.dp)).background(PrimaryGradient),
+            contentAlignment = Alignment.Center,
+        ) { Icon(Icons.Filled.AcUnit, null, tint = Color.White, modifier = Modifier.size(38.dp)) }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text("Universal A/C Remote", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = AppColors.navy)
+            Surface(shape = RoundedCornerShape(18.dp), color = AppColors.paleBlue) {
+                Row(Modifier.padding(horizontal = 10.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Icon(Icons.Filled.SignalCellularAlt, null, tint = AppColors.blue, modifier = Modifier.size(15.dp))
+                    Text("OnePlus 15 IR", color = AppColors.blue, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                }
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), content = actions)
+    }
+}
+
+@Composable
+fun HeaderIconButton(icon: ImageVector, description: String, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier.size(48.dp).clip(RoundedCornerShape(24.dp)).clickable(onClick = onClick),
+        shape = RoundedCornerShape(24.dp), color = AppColors.paleBlue,
+    ) { Box(contentAlignment = Alignment.Center) { Icon(icon, description, tint = AppColors.navy, modifier = Modifier.size(25.dp)) } }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppTopBar(
@@ -196,9 +229,9 @@ fun AppTopBar(
     onBack: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
-    CenterAlignedTopAppBar(
+    TopAppBar(
         title = {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(horizontalAlignment = Alignment.Start) {
                 Text(title, fontWeight = FontWeight.ExtraBold, color = AppColors.navy)
                 subtitle?.takeIf { it.isNotBlank() }?.let {
                     Text(it, style = MaterialTheme.typography.bodySmall, color = AppColors.navySoft)
@@ -207,11 +240,13 @@ fun AppTopBar(
         },
         navigationIcon = {
             onBack?.let {
-                IconButton(onClick = it) { Icon(Icons.Filled.ArrowBack, "Quay lại", tint = AppColors.navy) }
+                Surface(shape = RoundedCornerShape(24.dp), color = AppColors.paleBlue) {
+                    IconButton(onClick = it) { Icon(Icons.Filled.ArrowBack, "Quay lại", tint = AppColors.navy) }
+                }
             }
         },
         actions = actions,
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent),
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
     )
 }
 
@@ -233,7 +268,7 @@ fun SurfaceCard(
     content: @Composable () -> Unit,
 ) {
     Card(
-        modifier = modifier.shadow(2.dp, RoundedCornerShape(24.dp), clip = false),
+        modifier = modifier.shadow(3.dp, RoundedCornerShape(24.dp), clip = false),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = containerColor),
         border = BorderStroke(1.dp, AppColors.line.copy(alpha = 0.7f)),
@@ -248,7 +283,7 @@ fun SurfaceCard(
     content: @Composable () -> Unit,
 ) {
     Card(
-        modifier = modifier.shadow(2.dp, RoundedCornerShape(24.dp), clip = false),
+        modifier = modifier.shadow(3.dp, RoundedCornerShape(24.dp), clip = false),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         border = BorderStroke(1.dp, AppColors.line.copy(alpha = 0.7f)),
@@ -324,7 +359,7 @@ fun IconBubble(icon: ImageVector, tint: Color = AppColors.blue, background: Colo
     Box(
         modifier = Modifier
             .size(size.dp)
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(percent = 50))
             .background(background),
         contentAlignment = Alignment.Center,
     ) { Icon(icon, null, tint = tint, modifier = Modifier.size((size * 0.52f).dp)) }
@@ -385,6 +420,7 @@ fun GradientHero(modifier: Modifier = Modifier, content: @Composable () -> Unit)
             .fillMaxWidth()
             .clip(RoundedCornerShape(26.dp))
             .background(SoftHeroGradient)
+            .shadow(3.dp, RoundedCornerShape(26.dp), clip = false)
             .padding(20.dp),
     ) { content() }
 }
@@ -408,7 +444,7 @@ fun LargePowerButton(enabled: Boolean, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier.size(112.dp),
+        modifier = Modifier.size(124.dp),
         shape = RoundedCornerShape(56.dp),
         colors = ButtonDefaults.buttonColors(containerColor = AppColors.blue),
         contentPadding = PaddingValues(0.dp),
