@@ -59,6 +59,19 @@ Kiểm thử tương thích máy lạnh về sau ghi tối thiểu: hãng/model,
 - App updater bỏ qua draft và xử lý prerelease đúng channel.
 - Asset sai tên/host/hash không được đề xuất cài đặt.
 
+## UI/UX acceptance
+
+Với mọi task redesign hoặc sửa flow production:
+
+- Không được kết luận hoàn tất chỉ vì Compose compile.
+- Rà toàn bộ clickable action trong các screen bị ảnh hưởng; không có `onClick = {}`, route chết hoặc CTA giả.
+- Add A/C, Scanner, Verification Wizard, Saved Remote và Remote phải dùng dữ liệu/runtime thật.
+- Remote control phải phát ngay trên thao tác điều khiển theo contract trong `UI_UX.md`.
+- Scanner phải kiểm tra safe probe, candidate lock, verification từng bước và Power cuối.
+- Technical exception không được hiển thị thô cho người dùng.
+- Cần tách rõ `CODE/CI VERIFIED` và `REQUIRES REAL DEVICE TEST`; build xanh không thay thế test OnePlus 15/máy lạnh thật.
+- Khi có ảnh tham chiếu từ người dùng, visual comparison với ảnh đó là acceptance criterion, không chỉ là gợi ý.
+
 ## CI gates dự kiến
 
 | Thay đổi | Gate tối thiểu |
