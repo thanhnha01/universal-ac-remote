@@ -149,9 +149,10 @@ fun ProductionHomeScreen(
                 )
                 else -> state.remotes.forEach { remote ->
                     val profile = store.profileFor(remote.catalogProfileId)
-                    val transmittable = remote.importedCommandsJson.isNotBlank() ||
+                    val imported = remote.importedCommandsJson.isNotBlank()
+                    val transmittable = imported ||
                         (profile != null && CatalogTransmitter.supports(profile))
-                    val verified = remote.verifiedCapabilities.isNotEmpty() && transmittable
+                    val verified = !imported && remote.verifiedCapabilities.isNotEmpty() && transmittable
                     SurfaceCard(
                         Modifier
                             .fillMaxWidth()
@@ -179,21 +180,24 @@ fun ProductionHomeScreen(
                                 )
                                 StatusChip(
                                     when {
+                                        imported -> "File IR"
                                         verified -> "Đã xác minh"
                                         transmittable -> "Sẵn sàng thử"
                                         else -> "Cần kiểm tra lại"
                                     },
                                     when {
-                                        verified -> Icons.Filled.CheckCircle
+                                        imported || verified -> Icons.Filled.CheckCircle
                                         transmittable -> Icons.Filled.SignalCellularAlt
                                         else -> Icons.Filled.Info
                                     },
                                     when {
+                                        imported -> AppColors.blue
                                         verified -> AppColors.mint
                                         transmittable -> AppColors.blue
                                         else -> AppColors.warning
                                     },
                                     when {
+                                        imported -> AppColors.paleBlue
                                         verified -> AppColors.paleMint
                                         transmittable -> AppColors.paleBlue
                                         else -> AppColors.paleWarning
