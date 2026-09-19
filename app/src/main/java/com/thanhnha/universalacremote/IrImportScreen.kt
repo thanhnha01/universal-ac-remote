@@ -97,7 +97,7 @@ fun IrImportScreen(
             fileName = displayName(context, uri)
             commands = it
             selectedIndex = it.indices.firstOrNull() ?: -1
-            feedback = "Đã đọc ${it.size} lệnh RAW hợp lệ."
+            feedback = "Đã đọc ${it.size} lệnh IR hợp lệ."
         }.onFailure {
             fileName = null
             commands = emptyList()
@@ -135,7 +135,7 @@ fun IrImportScreen(
                             Column(Modifier.weight(1f)) {
                                 Text(name, style = androidx.compose.material3.MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    StatusChip("RAW", Icons.Filled.Code)
+                                    StatusChip("File IR", Icons.Filled.Code)
                                     commands.firstOrNull()?.let { StatusChip("${it.transmission.carrierFrequencyHz / 1000} kHz", Icons.Filled.SignalCellularAlt, AppColors.mint, AppColors.paleMint) }
                                 }
                             }
@@ -161,8 +161,8 @@ fun IrImportScreen(
                         StatusChip("Chưa xác định", Icons.Filled.Info, AppColors.warning, AppColors.paleWarning)
                     }
                     ImportField("Tên remote", remoteName, { remoteName = it }, "Ví dụ: Remote phòng khách")
-                    ImportField("Hãng (tuỳ chọn)", brand, { brand = it }, "Không tự suy diễn từ file")
-                    ImportField("Model remote (tuỳ chọn)", remoteModel, { remoteModel = it }, "Không tự suy diễn từ file")
+                    ImportField("Hãng (tuỳ chọn)", brand, { brand = it }, "Để trống nếu không biết")
+                    ImportField("Model remote (tuỳ chọn)", remoteModel, { remoteModel = it }, "Để trống nếu không biết")
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
