@@ -110,12 +110,11 @@ fun RemoteApp(diagnostics: IrHardwareDiagnostics, store: SavedRemotesViewModel =
     val nav = rememberNavController()
     val home by store.state.collectAsState()
     val catalog by store.catalog.collectAsState()
-    val scanCandidates by store.scanCandidates.collectAsState()
 
     fun navigateTab(route: String) {
         val resolvedRoute = when (route) {
             "remote" -> home.remotes.firstOrNull()?.let { "remote/${it.id}" } ?: "add"
-            "scan" -> if (scanCandidates.isEmpty()) "add" else "scan"
+            "scan" -> "add"
             else -> route
         }
         nav.navigate(resolvedRoute) {
@@ -204,7 +203,12 @@ private fun AddScreen(store: SavedRemotesViewModel, catalog: CatalogUiState, onT
     val popular by store.popularBrands.collectAsState()
     val search by store.search.collectAsState()
     var query by remember { mutableStateOf("") }
-    fun searchNow(value: String) { query = value; store.updateSearchText(value) }
+    var selectedBrand by remember { mutableStateOf<String?>(null) }
+    fun searchNow(value: String) {
+        query = value
+        selectedBrand = popular.firstOrNull { it.equals(value.trim(), ignoreCase = true) }
+        store.updateSearchText(value)
+    }
     AppScaffold("home", onTab) { padding ->
         PageColumn(padding) {
             AppTopBar("Thêm máy lạnh", "Chọn cách thiết lập phù hợp", onBack = { onTab("home") })
@@ -214,15 +218,24 @@ private fun AddScreen(store: SavedRemotesViewModel, catalog: CatalogUiState, onT
             if (query.isBlank()) {
                 SectionTitle("Hãng phổ biến")
                 if (popular.isEmpty() && !catalog.loading) EmptyState("Chưa có hãng", "Catalog chưa cung cấp dữ liệu hãng.")
-                else ResponsiveGrid(popular, 4) { brand -> SurfaceCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(vertical = 18.dp, horizontal = 8.dp).clickable { searchNow(brand) }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) { IconBubble(Icons.Outlined.AcUnit, background = AppColors.paleBlue); Text(brand, textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, maxLines = 1) } } }
+                else ResponsiveGrid(popular, 4) { brand -> SurfaceCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(vertical = 18.dp, horizontal = 8.dp).clickable { selectedBrand = brand; query = brand; store.updateSearchText(brand) }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) { IconBubble(Icons.Outlined.AcUnit, background = AppColors.paleBlue); Text(brand, textAlign = TextAlign.Center, fontWeight = FontWeight.Bold, maxLines = 1) } } }
             }
             if (search.loading) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) { CircularProgressIndicator(Modifier.size(24.dp)) }
             if (query.isNotBlank() && !search.loading && search.results.isEmpty()) EmptyState("Không tìm thấy profile", "Kiểm tra lại hãng hoặc thử dò remote 1000-in-1.", Icons.Filled.Search)
             search.results.forEach { candidate -> CatalogResultCard(candidate) { store.beginScan(selected = candidate); navigate("scan") } }
             SectionTitle("Không biết model?")
-            QuickActionCard("Dò remote 1000-in-1", "Thử từng hồ sơ tương thích và xác minh chức năng", Icons.Outlined.Radio, AppColors.paleMint) { store.beginScan(); navigate("scan") }
+            selectedBrand?.let { brand ->
+                QuickActionCard("Dò remote $brand", "Thử các hồ sơ có thể phát của hãng này", Icons.Outlined.Radio, AppColors.paleMint) {
+                    store.beginScan(RemoteQuery(brand = brand))
+                    navigate("scan")
+                }
+            } ?: InfoBanner(
+                "Chọn một hãng ở phía trên trước khi dò 1000-in-1.",
+                Icons.Filled.Info,
+                AppColors.blue,
+                AppColors.paleBlue,
+            )
             QuickActionCard("Nhập file .ir", "Dùng file IR đã có trên máy", Icons.Filled.FileDownload, Color(0xFFF3F0FF)) { navigate("import") }
-            InfoBanner("Nếu biết model, chỉ cần dùng ô tìm kiếm phía trên. Nếu không biết, dùng Dò remote 1000-in-1.", Icons.Filled.Lightbulb, AppColors.warning, AppColors.paleWarning)
         }
     }
 }
