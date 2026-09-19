@@ -44,4 +44,21 @@ class RemoteCapabilitiesTest {
         assertEquals(listOf("LEFT", "RIGHT"), controls.horizontalSwing.positions)
         assertEquals(listOf("sleep"), controls.specialCapabilities)
     }
+    @Test fun singleRequiredCapabilityCanBeFullMatch() {
+        val controls = RemoteControls.from(
+            profile(
+                capabilities = setOf("power"),
+                vertical = SwingCapability(),
+                horizontal = SwingCapability(),
+            ).copy(
+                operationModes = emptyList(),
+                fanModes = emptyList(),
+                minimumTemperatureCelsius = null,
+                maximumTemperatureCelsius = null,
+            )
+        )
+        assertEquals(setOf(VerificationCheck.POWER), controls.verificationRequirements())
+        assertEquals(ScanResult.FULL_MATCH, controls.verificationResult(setOf(VerificationCheck.POWER)))
+    }
+
 }
