@@ -110,15 +110,22 @@ fun IrImportScreen(
 
     AppScaffold("home", onTab) { padding ->
         PageColumn(padding) {
-            AppTopBar("Nhập file .ir", "Dùng hồ sơ IR từ Flipper hoặc nguồn bên ngoài", onBack = onBack)
-            SectionTitle("Nguồn nhập")
-            BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val columns = if (maxWidth >= 380.dp) 3 else 2
-                ImportSourceGrid(columns, listOf(
-                    { ImportSourceCard("Chọn file từ máy", "Hỗ trợ file .ir", Icons.Filled.Folder, AppColors.paleBlue) { picker.launch(arrayOf("text/plain", "application/octet-stream", "*/*")) } },
-                    { ImportSourceCard("Chia sẻ từ ứng dụng khác", "Chưa bật nhận Share trực tiếp", Icons.Filled.Share, Color(0xFFF3F0FF), enabled = false) {} },
-                    { ImportSourceCard("Từ Flipper IRDB", "Chưa có profile usable", Icons.Filled.CloudDownload, AppColors.paleBlue, enabled = false) {} },
-                ))
+            AppTopBar("Nhập file .ir", "Dùng file IR có sẵn trên điện thoại", onBack = onBack)
+            SurfaceCard(Modifier.fillMaxWidth(), SoftHeroGradient) {
+                Row(
+                    Modifier.padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    IconBubble(Icons.Filled.Folder, size = 66)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Chọn file .ir", style = androidx.compose.material3.MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
+                        Text("Dùng file IR đã lưu trên điện thoại.", color = AppColors.navySoft)
+                    }
+                    SecondaryButton("Chọn file", Modifier, Icons.Filled.Folder) {
+                        picker.launch(arrayOf("text/plain", "application/octet-stream", "*/*"))
+                    }
+                }
             }
             fileName?.let { name ->
                 SurfaceCard(Modifier.fillMaxWidth()) {
@@ -167,50 +174,19 @@ fun IrImportScreen(
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                PrimaryButton("Kiểm tra remote", Modifier.weight(1f), Icons.Filled.PlayArrow, enabled = selectedIndex in commands.indices) {
+                PrimaryButton("Phát thử", Modifier.weight(1f), Icons.Filled.PlayArrow, enabled = selectedIndex in commands.indices) {
                     feedback = runCatching {
                         AndroidIrTransmitter.from(context).transmit(commands[selectedIndex].transmission)
                         "Đã phát lệnh kiểm tra."
                     }.getOrElse { it.message ?: "Không thể phát command." }
                 }
-                SecondaryButton("Lưu vào máy lạnh", Modifier.weight(1f), Icons.Filled.CheckCircle, enabled = commands.isNotEmpty() && remoteName.isNotBlank()) {
+                SecondaryButton("Lưu remote", Modifier.weight(1f), Icons.Filled.CheckCircle, enabled = commands.isNotEmpty() && remoteName.isNotBlank()) {
                     val payload = SavedRemoteConverters().encodeImportedCommands(commands.map { ImportedRawCommand(it.name, it.transmission) })
                     store.save(SavedRemote(UUID.randomUUID().toString(), remoteName.trim(), "imported:${UUID.randomUUID()}", brand.trim().ifBlank { "Imported" }, null, remoteModel.trim().takeIf(String::isNotBlank), null, null, emptyList(), payload))
                     onSaved()
                 }
             }
             if (feedback.isNotBlank()) InfoBanner(feedback, Icons.Filled.Info, AppColors.blue, AppColors.paleBlue)
-        }
-    }
-}
-
-@Composable
-private fun ImportSourceGrid(columns: Int, cards: List<@Composable () -> Unit>) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        cards.chunked(columns).forEach { rowCards ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                rowCards.forEach { card -> Box(Modifier.weight(1f)) { card() } }
-                repeat(columns - rowCards.size) { Spacer(Modifier.weight(1f)) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ImportSourceCard(title: String, subtitle: String, icon: ImageVector, background: Color, enabled: Boolean = true, onClick: () -> Unit) {
-    SurfaceCard(Modifier.fillMaxWidth()) {
-        Column(
-            Modifier
-                .clip(RoundedCornerShape(22.dp))
-                .background(if (enabled) background else AppColors.page)
-                .clickable(enabled = enabled, onClick = onClick)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(9.dp),
-        ) {
-            IconBubble(icon, tint = if (enabled) AppColors.blue else AppColors.navySoft, background = Color.White.copy(alpha = 0.72f), size = 54)
-            Text(title, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, color = if (enabled) AppColors.navy else AppColors.navySoft)
-            Text(subtitle, style = androidx.compose.material3.MaterialTheme.typography.bodySmall, color = AppColors.navySoft, textAlign = TextAlign.Center)
         }
     }
 }
