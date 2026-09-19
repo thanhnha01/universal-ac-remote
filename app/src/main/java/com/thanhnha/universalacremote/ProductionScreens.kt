@@ -519,7 +519,7 @@ fun ProductionScannerScreen(
                         ScannerInstruction("2", "Hướng đầu phát IR của điện thoại về máy lạnh.")
                         ScannerInstruction("3", "Mỗi lần app chỉ thử một mã điều khiển và chờ bạn xác nhận.")
                         InfoBanner(
-                            "Lệnh thử đầu tiên ưu tiên trạng thái BẬT an toàn, không dùng OFF làm probe ban đầu.",
+                            "Lần thử đầu tiên ưu tiên bật máy và không gửi lệnh tắt để quá trình dò không bị gián đoạn.",
                             Icons.Filled.Info,
                             AppColors.blue,
                             AppColors.paleBlue,
