@@ -701,7 +701,7 @@ fun ProductionSettingsScreen(
                     SourceInfoRow("Phiên bản ứng dụng", BuildConfig.VERSION_NAME, Icons.Filled.Build)
                     SourceInfoRow(
                         "Thư viện điều khiển",
-                        if (catalog.loading) "Đang tải…" else "${catalog.profileCount} hồ sơ",
+                        if (catalog.loading) "Đang tải…" else "${catalog.profileCount} mã điều khiển",
                         Icons.Filled.FilterAlt,
                     )
                     SourceInfoRow(
@@ -716,21 +716,25 @@ fun ProductionSettingsScreen(
             SectionTitle("Cập nhật")
             SurfaceCard(
                 Modifier.fillMaxWidth(),
-                Brush.linearGradient(listOf(Color(0xFFE8F5FF), Color(0xFFDDF0FF))),
+                Brush.linearGradient(listOf(Color(0xFFE8F5FF), Color(0xFFF4FAFF))),
             ) {
-                Row(
+                Column(
                     Modifier.padding(18.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    IconBubble(Icons.Filled.CloudDownload, size = 66, background = Color.White, tint = AppColors.blue)
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                        Text("Cập nhật ứng dụng", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
-                        Text("Bản mới bao gồm cả cập nhật thư viện IR.", color = AppColors.navySoft)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        IconBubble(Icons.Filled.CloudDownload, size = 62, background = Color.White, tint = AppColors.blue)
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Cập nhật ứng dụng", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
+                            Text("Kiểm tra bản mới và thư viện IR đi kèm.", color = AppColors.navySoft)
+                        }
                     }
+                    UpdatePanel()
                 }
             }
-            UpdatePanel()
 
             SectionTitle("Công cụ")
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -766,10 +770,10 @@ fun ProductionSettingsScreen(
             SectionTitle("Thông tin nguồn")
             SurfaceCard(Modifier.fillMaxWidth()) {
                 Column {
-                    ProductionSourceRow("IRremoteESP8266", "Bộ mã protocol máy lạnh")
-                    ProductionSourceRow("SmartIR", "Mã điều khiển cộng đồng")
-                    ProductionSourceRow("Flipper IRDB", "Nguồn file IR khi hợp lệ")
-                    ProductionSourceRow("irplus", "Nguồn mã điều khiển bổ sung")
+                    ProductionSourceRow("IRremoteESP8266", "Thư viện mã điều khiển máy lạnh")
+                    ProductionSourceRow("SmartIR", "Dữ liệu điều khiển cộng đồng")
+                    ProductionSourceRow("Flipper IRDB", "Nguồn file IR tương thích")
+                    ProductionSourceRow("irplus", "Dữ liệu tương thích bổ sung")
                 }
             }
         }
