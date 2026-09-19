@@ -438,7 +438,7 @@ private fun PageWithBack(title: String, subtitle: String?, onBack: () -> Unit, c
 
 @Composable private fun LoadingScreen(onBack: () -> Unit) = PageWithBack("Đang tải…", "Mở remote", onBack) { Box(Modifier.fillMaxWidth().padding(42.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() } }
 @Composable private fun MissingRemoteScreen(onBack: () -> Unit) = PageWithBack("Không tìm thấy remote", null, onBack) { EmptyState("Remote không tồn tại", "Quay lại danh sách để chọn một remote khác.") }
-@Composable private fun MissingProfileScreen(remote: SavedRemote, onRecheck: () -> Unit) = PageWithBack(remote.displayName, "Cần kiểm tra lại profile", onRecheck) { EmptyState("Không tìm thấy profile", "Profile không còn trong catalog hiện tại. Hãy kiểm tra lại để chọn profile tương thích."); PrimaryButton("Kiểm tra lại", Modifier.fillMaxWidth(), Icons.Filled.Refresh, onClick = onRecheck) }
+@Composable private fun MissingProfileScreen(remote: SavedRemote, onRecheck: () -> Unit) = PageWithBack(remote.displayName, "Cần kiểm tra lại remote", onRecheck) { EmptyState("Dữ liệu điều khiển đã thay đổi", "Remote đã lưu không còn khớp với thư viện hiện tại. Hãy dò lại để chọn mã điều khiển phù hợp."); PrimaryButton("Dò lại remote", Modifier.fillMaxWidth(), Icons.Filled.Refresh, onClick = onRecheck) }
 
 @Composable
 private fun QuickActionCard(title: String, subtitle: String, icon: androidx.compose.ui.graphics.vector.ImageVector, background: Color, onClick: () -> Unit) {
