@@ -223,7 +223,6 @@ fun ProductionAddScreen(
     }
 
     val usableResults = search.results.filter { CatalogTransmitter.supports(it) }
-    val unavailableCount = search.results.size - usableResults.size
 
     AppScaffold("home", onTab) { padding ->
         PageColumn(padding) {
@@ -264,13 +263,23 @@ fun ProductionAddScreen(
                 if (popular.isEmpty() && !catalog.loading) {
                     EmptyState("Chưa có dữ liệu hãng", "Thư viện điều khiển chưa sẵn sàng.")
                 } else {
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        items(popular.take(12)) { brand ->
-                            BrandChoiceChip(brand, selectedBrand.equals(brand, true)) {
-                                selectedBrand = brand
-                                query = brand
-                                store.updateSearchText(brand)
+                    popular.take(8).chunked(4).forEach { rowBrands ->
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            rowBrands.forEach { brand ->
+                                BrandTile(
+                                    brand = brand,
+                                    selected = selectedBrand.equals(brand, true),
+                                    modifier = Modifier.weight(1f),
+                                ) {
+                                    selectedBrand = brand
+                                    query = brand
+                                    store.updateSearchText(brand)
+                                }
                             }
+                            repeat(4 - rowBrands.size) { Box(Modifier.weight(1f)) }
                         }
                     }
                 }
@@ -283,11 +292,11 @@ fun ProductionAddScreen(
             }
 
             if (query.isNotBlank() && !search.loading) {
-                SectionTitle("Hồ sơ phù hợp")
+                SectionTitle("Kết quả phù hợp")
                 if (usableResults.isEmpty()) {
                     EmptyState(
-                        "Chưa có hồ sơ có thể phát",
-                        "Bạn có thể thử dò theo hãng hoặc nhập file .ir.",
+                        "Chưa có remote phù hợp",
+                        "Bạn có thể dò theo hãng hoặc nhập file .ir.",
                         Icons.Filled.Search,
                     )
                 } else {
@@ -297,13 +306,6 @@ fun ProductionAddScreen(
                             navigate("scan")
                         }
                     }
-                }
-                if (unavailableCount > 0) {
-                    Text(
-                        "$unavailableCount hồ sơ khác chưa có đường phát tương thích nên được ẩn khỏi danh sách.",
-                        color = AppColors.navySoft,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
                 }
             }
 
@@ -413,7 +415,7 @@ fun ProductionScannerScreen(
 
             if (candidates.isEmpty()) {
                 EmptyState(
-                    "Chưa có hồ sơ có thể phát",
+                    "Chưa có mã điều khiển phù hợp",
                     "Chọn hãng khác hoặc nhập file .ir để tiếp tục.",
                     Icons.Filled.Search,
                 )
@@ -439,7 +441,7 @@ fun ProductionScannerScreen(
                         Text("Chuẩn bị trước khi dò", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
                         ScannerInstruction("1", "Bật máy lạnh bằng remote gốc hoặc nút trên máy.")
                         ScannerInstruction("2", "Hướng đầu phát IR của điện thoại về máy lạnh.")
-                        ScannerInstruction("3", "Mỗi lần app chỉ thử một hồ sơ và chờ bạn xác nhận.")
+                        ScannerInstruction("3", "Mỗi lần app chỉ thử một mã điều khiển và chờ bạn xác nhận.")
                         InfoBanner(
                             "Lệnh thử đầu tiên ưu tiên trạng thái BẬT an toàn, không dùng OFF làm probe ban đầu.",
                             Icons.Filled.Info,
@@ -462,7 +464,7 @@ fun ProductionScannerScreen(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                "Hồ sơ ${scanner.cursor + 1} / ${candidates.size}",
+                                "Mã ${scanner.cursor + 1} / ${candidates.size}",
                                 modifier = Modifier.weight(1f),
                                 fontWeight = FontWeight.ExtraBold,
                                 color = AppColors.navy,
@@ -529,12 +531,12 @@ fun ProductionScannerScreen(
                                 PrimaryButton("Có phản ứng", Modifier.weight(1f), Icons.Filled.Check) {
                                     scanner.reportReaction()
                                     pendingCheck = null
-                                    message = "Đã giữ hồ sơ này. Tiếp tục xác minh từng chức năng."
+                                    message = "Đã giữ mã này. Tiếp tục kiểm tra từng chức năng."
                                     refresh++
                                 }
                                 SecondaryButton("Không", Modifier.weight(1f), Icons.Filled.Close) {
                                     scanner.reportNoReaction()
-                                    message = if (scanner.state == ScanState.COMPLETE) "Đã thử hết hồ sơ." else "Chuyển sang hồ sơ tiếp theo."
+                                    message = if (scanner.state == ScanState.COMPLETE) "Đã thử hết hồ sơ." else "Chuyển sang mã tiếp theo."
                                     refresh++
                                 }
                             }
@@ -603,9 +605,9 @@ fun ProductionScannerScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             val title = when (scanResult) {
-                                ScanResult.FULL_MATCH -> "Hồ sơ phù hợp"
-                                ScanResult.PARTIAL_MATCH -> "Hồ sơ hoạt động một phần"
-                                else -> "Chưa tìm thấy hồ sơ phù hợp"
+                                ScanResult.FULL_MATCH -> "Mã phù hợp"
+                                ScanResult.PARTIAL_MATCH -> "Mã hoạt động một phần"
+                                else -> "Chưa tìm thấy remote phù hợp"
                             }
                             Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
                             when (scanResult) {
@@ -634,7 +636,7 @@ fun ProductionScannerScreen(
                                         onDone()
                                     }
                                     if (scanner.cursor + 1 < candidates.size) {
-                                        SecondaryButton("Thử hồ sơ khác", Modifier.fillMaxWidth(), Icons.Filled.Refresh) {
+                                        SecondaryButton("Thử mã khác", Modifier.fillMaxWidth(), Icons.Filled.Refresh) {
                                             scanner.continueAfterResult()
                                             pendingCheck = null
                                             message = ""
@@ -760,7 +762,7 @@ fun ProductionSettingsScreen(
             SurfaceCard(Modifier.fillMaxWidth()) {
                 Column {
                     ProductionSourceRow("IRremoteESP8266", "Bộ mã protocol máy lạnh")
-                    ProductionSourceRow("SmartIR", "Hồ sơ điều khiển cộng đồng")
+                    ProductionSourceRow("SmartIR", "Mã điều khiển cộng đồng")
                     ProductionSourceRow("Flipper IRDB", "Nguồn file IR khi hợp lệ")
                     ProductionSourceRow("irplus", "Nguồn profile bổ sung")
                 }
@@ -793,6 +795,43 @@ fun AcWallUnitArt(brand: String, modifier: Modifier = Modifier) {
                     .height(8.dp)
                     .clip(RoundedCornerShape(5.dp))
                     .background(AppColors.paleBlueStrong)
+            )
+        }
+    }
+}
+
+@Composable
+private fun BrandTile(
+    brand: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = modifier
+            .height(84.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(18.dp),
+        color = if (selected) AppColors.paleBlue else Color.White,
+        border = BorderStroke(1.dp, if (selected) AppColors.blue else AppColors.line),
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Icon(
+                Icons.Filled.AcUnit,
+                null,
+                tint = AppColors.blue,
+                modifier = Modifier.size(24.dp),
+            )
+            Text(
+                brand,
+                modifier = Modifier.padding(top = 6.dp),
+                color = AppColors.navy,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 1,
             )
         }
     }
