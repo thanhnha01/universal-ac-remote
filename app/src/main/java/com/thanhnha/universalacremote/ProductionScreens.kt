@@ -152,7 +152,7 @@ fun ProductionHomeScreen(
                     val imported = remote.importedCommandsJson.isNotBlank()
                     val transmittable = imported ||
                         (profile != null && CatalogTransmitter.supports(profile))
-                    val verified = !imported && remote.verifiedCapabilities.isNotEmpty() && transmittable
+                    val verification = remote.verificationState(profile)
                     SurfaceCard(
                         Modifier
                             .fillMaxWidth()
@@ -181,24 +181,28 @@ fun ProductionHomeScreen(
                                 StatusChip(
                                     when {
                                         imported -> "File IR"
-                                        verified -> "Đã xác minh"
+                                        verification == SavedVerificationState.FULL -> "Đã xác minh"
+                                        verification == SavedVerificationState.PARTIAL -> "Đã kiểm tra một phần"
                                         transmittable -> "Sẵn sàng thử"
                                         else -> "Cần kiểm tra lại"
                                     },
                                     when {
-                                        imported || verified -> Icons.Filled.CheckCircle
+                                        imported || verification == SavedVerificationState.FULL -> Icons.Filled.CheckCircle
+                                        verification == SavedVerificationState.PARTIAL -> Icons.Filled.Info
                                         transmittable -> Icons.Filled.SignalCellularAlt
                                         else -> Icons.Filled.Info
                                     },
                                     when {
                                         imported -> AppColors.blue
-                                        verified -> AppColors.mint
+                                        verification == SavedVerificationState.FULL -> AppColors.mint
+                                        verification == SavedVerificationState.PARTIAL -> AppColors.warning
                                         transmittable -> AppColors.blue
                                         else -> AppColors.warning
                                     },
                                     when {
                                         imported -> AppColors.paleBlue
-                                        verified -> AppColors.paleMint
+                                        verification == SavedVerificationState.FULL -> AppColors.paleMint
+                                        verification == SavedVerificationState.PARTIAL -> AppColors.paleWarning
                                         transmittable -> AppColors.paleBlue
                                         else -> AppColors.paleWarning
                                     },
