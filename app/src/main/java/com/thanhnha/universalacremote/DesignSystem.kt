@@ -101,7 +101,7 @@ fun UniversalAcTheme(content: @Composable () -> Unit) {
 }
 
 val PrimaryGradient = Brush.horizontalGradient(listOf(AppColors.blue, AppColors.cyan))
-val SoftHeroGradient = Brush.linearGradient(listOf(Color(0xFFF0F7FF), Color(0xFFF8FCFF)))
+val SoftHeroGradient = Brush.linearGradient(listOf(Color(0xFFEAF5FF), Color(0xFFFAFDFF)))
 
 @Composable
 fun AppBackground(content: @Composable () -> Unit) {
@@ -262,7 +262,7 @@ fun SurfaceCard(
 ) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = containerColor),
         border = BorderStroke(1.dp, AppColors.line),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -278,7 +278,7 @@ fun SurfaceCard(
 ) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         border = BorderStroke(1.dp, AppColors.line),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -342,12 +342,12 @@ fun StatusChip(
 ) {
     Surface(shape = RoundedCornerShape(999.dp), color = background) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+            modifier = Modifier.padding(horizontal = 11.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Icon(icon, null, tint = color, modifier = Modifier.size(17.dp))
-            Text(text, color = color, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelLarge)
+            Text(text, color = color, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium)
         }
     }
 }
@@ -440,9 +440,9 @@ fun PageColumn(padding: PaddingValues, content: @Composable ColumnScope.() -> Un
         modifier = Modifier
             .fillMaxWidth()
             .padding(padding)
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 10.dp)
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         content = content,
     )
 }
