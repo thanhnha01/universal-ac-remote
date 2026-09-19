@@ -187,6 +187,10 @@ class SavedRemotesViewModel(application: Application) : AndroidViewModel(applica
         else resolver?.scannerCandidates(query, canTransmit).orEmpty()
     }
 
+    fun clearScan() {
+        mutableScanCandidates.value = emptyList()
+    }
+
     fun profileFor(id: String): RemoteCandidate? = resolver?.findById(id)
 
     fun save(remote: SavedRemote) = viewModelScope.launch { dao.save(remote) }
