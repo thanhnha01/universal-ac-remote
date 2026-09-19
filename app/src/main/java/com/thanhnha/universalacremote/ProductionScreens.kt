@@ -426,7 +426,9 @@ fun ProductionScannerScreen(
 
     val current = scanner.selected ?: candidates.getOrNull(scanner.cursor)
     val controls = current?.let(RemoteControls::from)
-    val requirements = controls?.verificationOrder().orEmpty()
+    val requirements = current?.let { candidate ->
+        controls?.verificationOrder().orEmpty().filter { CatalogTransmitter.verificationState(candidate, it) != null }
+    }.orEmpty()
     val nextCheck = if (scanner.state == ScanState.VERIFYING) scanner.nextVerificationCheck() else null
     val safeProbe = current?.let { CatalogTransmitter.safeProbe(it) }
 
@@ -678,7 +680,8 @@ fun ProductionScannerScreen(
                                     AndroidIrTransmitter.from(context).transmit(
                                         CatalogTransmitter.encode(
                                             selected,
-                                            scannerVerificationState(selected, nextCheck, RemoteControls.from(selected)),
+                                            CatalogTransmitter.verificationState(selected, nextCheck)
+                                                ?: error("No encodable verification state."),
                                         )
                                     )
                                     pendingCheck = nextCheck
@@ -1199,34 +1202,6 @@ private fun VerificationWizardCard(
                 TextButton(onClick = onSkip, modifier = Modifier.fillMaxWidth()) { Text("Bỏ qua bước này") }
             }
         }
-    }
-}
-
-private fun scannerVerificationState(
-    candidate: RemoteCandidate,
-    check: VerificationCheck,
-    controls: RemoteControls,
-): AcState {
-    val definition = CatalogTransmitter.protocol(candidate)
-    val modes = controls.modes.mapNotNull(CatalogTransmitter::mode)
-        .filter { definition == null || it in definition.modes }
-    val fans = controls.fanModes.mapNotNull(CatalogTransmitter::fan)
-        .filter { definition == null || it in definition.fanSpeeds }
-    val mode = modes.firstOrNull() ?: definition?.modes?.firstOrNull() ?: AcMode.COOL
-    val fan = fans.firstOrNull() ?: definition?.fanSpeeds?.firstOrNull() ?: AcFan.AUTO
-    val range = controls.temperatureRange
-        ?: definition?.let { it.minTemperatureCelsius..it.maxTemperatureCelsius }
-        ?: 16..30
-    val baseTemp = 24.coerceIn(range.first, range.last)
-    val changedTemp = if (range.first < range.last) (baseTemp + 1).coerceAtMost(range.last) else baseTemp
-
-    return when (check) {
-        VerificationCheck.POWER -> AcState(false, baseTemp, mode, fan)
-        VerificationCheck.TEMPERATURE_CHANGED -> AcState(true, changedTemp, mode, fan)
-        VerificationCheck.MODE -> AcState(true, baseTemp, modes.getOrNull(1) ?: mode, fan)
-        VerificationCheck.FAN -> AcState(true, baseTemp, mode, fans.getOrNull(1) ?: fan)
-        VerificationCheck.SWING_VERTICAL -> AcState(true, baseTemp, mode, fan, swingVertical = true)
-        VerificationCheck.SWING_HORIZONTAL -> AcState(true, baseTemp, mode, fan, swingHorizontal = true)
     }
 }
 
