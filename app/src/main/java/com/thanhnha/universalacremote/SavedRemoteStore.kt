@@ -115,6 +115,8 @@ class SavedRemotesViewModel(application: Application) : AndroidViewModel(applica
     val catalog: StateFlow<CatalogUiState> = mutableCatalog.asStateFlow()
     private val mutablePopularBrands = MutableStateFlow<List<String>>(emptyList())
     val popularBrands: StateFlow<List<String>> = mutablePopularBrands.asStateFlow()
+    private val mutableScannerBrands = MutableStateFlow<List<String>>(emptyList())
+    val scannerBrands: StateFlow<List<String>> = mutableScannerBrands.asStateFlow()
     private val mutableSearch = MutableStateFlow(CatalogSearchState())
     val search: StateFlow<CatalogSearchState> = mutableSearch.asStateFlow()
     private val mutableScanCandidates = MutableStateFlow<List<RemoteCandidate>>(emptyList())
@@ -133,6 +135,7 @@ class SavedRemotesViewModel(application: Application) : AndroidViewModel(applica
                 resolver = loaded
                 mutableCatalog.value = CatalogUiState(loading = false, profileCount = loaded.profileCount)
                 mutablePopularBrands.value = loaded.popularBrands()
+                mutableScannerBrands.value = loaded.scannerBrands { CatalogTransmitter.supports(it) }
             }.onFailure { error ->
                 mutableCatalog.value = CatalogUiState(loading = false, error = error.message ?: "Không thể tải danh mục máy lạnh.")
             }
