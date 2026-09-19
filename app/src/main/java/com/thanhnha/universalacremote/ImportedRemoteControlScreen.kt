@@ -37,7 +37,6 @@ import com.thanhnha.universalacremote.ir.AndroidIrTransmitter
 @Composable
 fun ImportedRemoteControlScreen(
     remote: SavedRemote,
-    store: SavedRemotesViewModel,
     onTab: (String) -> Unit,
     onDetails: () -> Unit,
     onBack: () -> Unit,
