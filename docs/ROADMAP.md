@@ -67,13 +67,16 @@ Các milestone tuần tự; không tự động bắt đầu milestone kế ti�
 
 **Exit:** database có version, audit được và chỉ chứa record validated.
 
-## M8 — Universal AC profile scanner
+## M8 — Universal AC profile scanner + production UX
 
 - Candidate ranking, rate limit, checkpoint, stop/cancel và resume.
-- UX xác nhận thủ công và lưu profile thành công.
+- Hoàn thiện UX production cho Add A/C, Scanner, Verification Wizard, Saved Remote và Remote screen theo [UI_UX.md](UI_UX.md).
+- Scanner phải dùng wizard từng bước, safe probe, khóa candidate sau phản ứng và test Power cuối cùng.
+- Remote production phải bấm control là phát lệnh ngay; không có nút "Gửi lệnh" chung nếu không có use case kỹ thuật bắt buộc.
+- Không để CTA giả, onClick rỗng, placeholder kỹ thuật hoặc màn debug lẫn vào flow người dùng.
 - Hardware safety/lifecycle tests.
 
-**Exit:** scan có kiểm soát, không brute-force parameter và dừng tức thời.
+**Exit:** flow thêm máy → dò/chọn profile → xác minh → lưu → mở remote → điều khiển usable trên thiết bị thật, và visual/interaction đạt tiêu chí UI_UX.md.
 
 ## M9 — Import thêm các định dạng IR khác
 
@@ -91,10 +94,11 @@ Các milestone tuần tự; không tự động bắt đầu milestone kế ti�
 
 **Exit:** cập nhật database độc lập an toàn, failure tự rollback.
 
-## M11 — UI hoàn thiện và hardening
+## M11 — Release hardening cuối
 
-- Hoàn thiện Compose UX, accessibility, localization và diagnostics cục bộ.
-- Performance, battery/network policy, threat review và release hardening.
+- Không phải milestone đầu tiên mới được làm UI. UI production đã phải usable từ M8 và được cải tiến ở mọi task có liên quan.
+- Accessibility, localization, performance, battery/network policy, threat review và release hardening.
+- Rà visual consistency cuối, nhưng không trì hoãn redesign/UX fix đã được yêu cầu trực tiếp.
 - Mở rộng hardware/model compatibility matrix dựa trên bằng chứng.
 
 **Exit:** release candidate ổn định cho sử dụng cá nhân, tài liệu giới hạn rõ ràng.
