@@ -62,4 +62,26 @@ class CatalogTransmitterTest {
         assertEquals(true, CatalogTransmitter.supports(profile))
     }
 
+    @Test
+    fun verificationStateFindsSparseSmartIrModeFanCombination() {
+        val commandA = "JgAEAAECAwQ="
+        val commandB = "JgAEAAQDAgE="
+        val profile = RemoteCandidate(
+            id = "smartir:sparse", brand = "Example", acModel = "Sparse", remoteModel = null,
+            protocolId = null, protocolModel = null, encodingType = "RAW_PROFILE",
+            capabilities = setOf("power", "mode:cool", "mode:dry", "fan:auto", "fan:low"),
+            evidence = emptyList(), priority = 0,
+            minimumTemperatureCelsius = 16, maximumTemperatureCelsius = 30,
+            operationModes = listOf("cool", "dry"), fanModes = listOf("auto", "low"),
+            verificationStatus = "transmittable",
+            rawCommandsJson = """{"off":"$commandA","cool":{"auto":{"24":"$commandA"}},"dry":{"low":{"24":"$commandB"}}}""",
+            sourceMetadataJson = """{"supportedController":"Broadlink","commandsEncoding":"Base64"}""",
+        )
+
+        val state = CatalogTransmitter.verificationState(profile, VerificationCheck.MODE)!!
+        assertEquals(AcMode.DRY, state.mode)
+        assertEquals(AcFan.MIN, state.fan)
+        assertEquals(listOf(131, 98, 65, 32), CatalogTransmitter.encode(profile, state).timingsMicros)
+    }
+
 }
