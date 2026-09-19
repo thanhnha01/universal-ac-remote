@@ -35,4 +35,31 @@ class CatalogTransmitterTest {
         val profile = smartProfile(status = "unsupported", commands = "{\"off\":\"not-base64\"}")
         assertEquals(false, CatalogTransmitter.supports(profile))
     }
+    @Test
+    fun smartIrProfileWithSwingLayerSelectsExactBranch() {
+        val commandA = "JgAEAAECAwQ="
+        val commandB = "JgAEAAQDAgE="
+        val commands = """{"off":"$commandA","cool":{"auto":{"off":{"24":"$commandA"},"vertical":{"24":"$commandB"},"horizontal":{"24":"$commandA"},"both":{"24":"$commandB"}}}}"""
+        val profile = RemoteCandidate(
+            id = "smartir:3240", brand = "Casper", acModel = "SC-09FS32", remoteModel = null,
+            protocolId = null, protocolModel = null, encodingType = "RAW_PROFILE",
+            capabilities = setOf("power", "mode:cool", "fan:auto", "swing:vertical", "swing:horizontal"),
+            evidence = emptyList(), priority = 0,
+            minimumTemperatureCelsius = 16, maximumTemperatureCelsius = 32,
+            operationModes = listOf("cool"), fanModes = listOf("auto"),
+            verticalSwing = SwingCapability("ON_OFF"), horizontalSwing = SwingCapability("ON_OFF"),
+            verificationStatus = "transmittable", rawCommandsJson = commands,
+            sourceMetadataJson = """{"supportedController":"Broadlink","commandsEncoding":"Base64","swingModes":["off","vertical","horizontal","both"]}""",
+        )
+
+        val noSwing = CatalogTransmitter.encode(profile, AcState(true, 24, AcMode.COOL, AcFan.AUTO))
+        val vertical = CatalogTransmitter.encode(profile, AcState(true, 24, AcMode.COOL, AcFan.AUTO, swingVertical = true))
+        val both = CatalogTransmitter.encode(profile, AcState(true, 24, AcMode.COOL, AcFan.AUTO, swingVertical = true, swingHorizontal = true))
+
+        assertEquals(listOf(32, 65, 98, 131), noSwing.timingsMicros)
+        assertEquals(listOf(131, 98, 65, 32), vertical.timingsMicros)
+        assertEquals(listOf(131, 98, 65, 32), both.timingsMicros)
+        assertEquals(true, CatalogTransmitter.supports(profile))
+    }
+
 }
