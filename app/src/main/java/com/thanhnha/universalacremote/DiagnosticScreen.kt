@@ -74,7 +74,7 @@ fun DiagnosticScreen(
                 }
 
                 InfoBanner(
-                    "Màn hình này chỉ kiểm tra khả năng phần cứng Android. Việc một profile máy lạnh có phát được hay không còn phụ thuộc encoder/profile tương ứng.",
+                    "Màn hình này chỉ kiểm tra phần cứng IR của điện thoại. Khả năng điều khiển từng máy lạnh còn phụ thuộc remote đã chọn.",
                     Icons.Filled.SignalCellularAlt,
                     AppColors.blue,
                     AppColors.paleBlue,
