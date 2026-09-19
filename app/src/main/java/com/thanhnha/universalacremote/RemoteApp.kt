@@ -126,10 +126,10 @@ fun RemoteApp(diagnostics: IrHardwareDiagnostics, store: SavedRemotesViewModel =
 
     UniversalAcTheme {
         NavHost(navController = nav, startDestination = "home") {
-            composable("home") { HomeScreen(home, diagnostics, store, ::navigateTab) { route -> nav.navigate(route) } }
-            composable("add") { AddScreen(store, catalog, ::navigateTab) { route -> nav.navigate(route) } }
+            composable("home") { ProductionHomeScreen(home, diagnostics, store, ::navigateTab) { route -> nav.navigate(route) } }
+            composable("add") { ProductionAddScreen(store, catalog, ::navigateTab) { route -> nav.navigate(route) } }
             composable("import") { IrImportScreen(store, ::navigateTab, onBack = { nav.popBackStack() }, onSaved = { nav.popBackStack("home", false) }) }
-            composable("scan") { ScannerScreen(store, ::navigateTab, onDone = { nav.popBackStack("home", false) }, onChangeBrand = { nav.navigate("add") }, onImport = { nav.navigate("import") }) }
+            composable("scan") { ProductionScannerScreen(store, ::navigateTab, onDone = { nav.popBackStack("home", false) }, onChangeBrand = { nav.navigate("add") }, onImport = { nav.navigate("import") }) }
             composable("remote/{id}", arguments = listOf(navArgument("id") { type = NavType.StringType })) {
                 val remote = home.remotes.find { saved -> saved.id == it.arguments?.getString("id") }
                 if (remote == null) MissingRemoteScreen { nav.popBackStack("home", false) }
@@ -148,7 +148,7 @@ fun RemoteApp(diagnostics: IrHardwareDiagnostics, store: SavedRemotesViewModel =
                     DetailsScreen(remote, store.profileFor(remote.catalogProfileId), store, { nav.navigate("remote/${remote.id}") }, { store.beginScan(RemoteQuery(brand = remote.brand)); nav.navigate("scan") }, { nav.popBackStack() })
                 }
             }
-            composable("settings") { SettingsScreen(diagnostics, catalog, ::navigateTab, { nav.navigate("diagnostics") }, { nav.navigate("import") }) }
+            composable("settings") { ProductionSettingsScreen(diagnostics, catalog, ::navigateTab, { nav.navigate("diagnostics") }, { nav.navigate("import") }) }
             composable("diagnostics") { DiagnosticScreen(diagnostics, onBack = { nav.popBackStack() }) }
         }
     }
