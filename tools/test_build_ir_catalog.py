@@ -158,7 +158,9 @@ class CatalogTests(unittest.TestCase):
 
     def test_casper_3240_maps_swing_axes_and_is_transmittable(self):
         path = catalog.ROOT / "data/upstreams/snapshots/smartir/codes/climate/3240.json"
-        record = catalog.parse_smartir(path, catalog.json.loads((catalog.ROOT / "upstream-lock.json").read_text(encoding="utf-8"))["sources"][1]["commitSha"])[0]
+        lock = catalog.json.loads((catalog.ROOT / "upstream-lock.json").read_text(encoding="utf-8"))
+        smartir_sha = next(source["commitSha"] for source in lock["sources"] if source["name"] == "smartir")
+        record = catalog.parse_smartir(path, smartir_sha)[0]
         self.assertEqual(record["brand"], "Casper")
         self.assertEqual(record["acModel"], "SC-09FS32")
         self.assertEqual(record["verticalSwingCapabilities"]["type"], "ON_OFF")
