@@ -139,13 +139,13 @@ fun RemoteApp(diagnostics: IrHardwareDiagnostics, store: SavedRemotesViewModel =
                     when {
                         catalog.loading -> LoadingScreen { nav.popBackStack() }
                         profile == null -> MissingProfileScreen(remote) { store.beginScan(); nav.navigate("scan") }
-                        else -> RemoteControlScreen(remote, profile, diagnostics, ::navigateTab) { nav.popBackStack() }
+                        else -> RemoteControlScreen(remote, profile, diagnostics, ::navigateTab, { nav.navigate("details/${remote.id}") }) { nav.popBackStack() }
                     }
                 }
             }
             composable("details/{id}", arguments = listOf(navArgument("id") { type = NavType.StringType })) {
                 home.remotes.find { remote -> remote.id == it.arguments?.getString("id") }?.let { remote ->
-                    DetailsScreen(remote, store.profileFor(remote.catalogProfileId), store, { nav.navigate("remote/${remote.id}") }, { store.beginScan(RemoteQuery(brand = remote.brand)); nav.navigate("scan") }, { nav.popBackStack() })
+                    ProductionDetailsScreen(remote, store.profileFor(remote.catalogProfileId), store, { nav.navigate("remote/${remote.id}") }, { store.beginScan(RemoteQuery(brand = remote.brand)); nav.navigate("scan") }, { nav.popBackStack() })
                 }
             }
             composable("settings") { ProductionSettingsScreen(diagnostics, catalog, ::navigateTab, { nav.navigate("diagnostics") }, { nav.navigate("import") }) }
