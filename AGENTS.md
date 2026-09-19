@@ -29,6 +29,8 @@ Các ràng buộc không được phá vỡ:
 - Chỉ chạy test liên quan đến code vừa thay đổi.
 - Dừng ngay khi đạt acceptance criteria.
 - Không tự ý làm milestone tương lai nếu chưa được yêu cầu.
+- Nếu người dùng yêu cầu trực tiếp sửa/nâng cấp UI/UX, đó là scope hiện tại và phải được triển khai ngay; không được viện ROADMAP/M11 để hoãn hoặc chỉ chỉnh tài liệu.
+- Với task UI/UX, phải sửa production Compose code và nối vào dữ liệu/runtime thật; không được chỉ thêm mockup, Preview, placeholder hoặc CTA không hoạt động.
 - Không commit signing key, password hoặc secret.
 - Không đưa ESP32 vào dự án.
 
@@ -50,7 +52,8 @@ Các ràng buộc không được phá vỡ:
 
 ## Giới hạn theo milestone
 
-- Chỉ làm đúng milestone/task được yêu cầu và không triển khai trước milestone sau.
+- ROADMAP là kế hoạch tham chiếu, không phải cơ chế chặn một yêu cầu trực tiếp của người dùng. Task được yêu cầu rõ ràng có quyền thực hiện phần UI/UX, scanner, transmitter hoặc persistence cần thiết dù roadmap lịch sử đặt phần polish ở milestone sau.
+- Chỉ làm đúng milestone/task được yêu cầu và không tự triển khai feature khác ngoài scope.
 - Nếu một task được xác định rõ là M0, thì M0 chỉ gồm tài liệu, chính sách repository và thiết kế CI/CD; không dò phần cứng, không phát IR, không nhập database lớn, không tạo ứng dụng production.
 - Quy tắc M0 ở dòng trên chỉ áp dụng cho task M0; không phải ràng buộc toàn cục của repository sau khi đã qua M0.
 - Mọi thay đổi ảnh hưởng an toàn phát IR, signing, updater hoặc supply chain phải được nêu rõ trong pull request.
