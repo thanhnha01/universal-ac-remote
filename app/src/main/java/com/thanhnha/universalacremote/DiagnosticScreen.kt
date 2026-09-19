@@ -49,27 +49,30 @@ fun DiagnosticScreen(
                 SectionTitle("Trạng thái")
                 SurfaceCard(Modifier.fillMaxWidth()) {
                     Column {
-                        DiagnosticStatusRow("Tính năng Consumer IR", diagnostics.featureDeclared)
-                        DiagnosticStatusRow("Dịch vụ ConsumerIrManager", diagnostics.managerAvailable)
+                        DiagnosticStatusRow("Hệ thống hỗ trợ IR", diagnostics.featureDeclared)
+                        DiagnosticStatusRow("Dịch vụ phát IR", diagnostics.managerAvailable)
                         DiagnosticStatusRow("Bộ phát IR", diagnostics.hasIrEmitter)
                     }
                 }
 
-                SectionTitle("Dải tần hỗ trợ")
-                if (diagnostics.carrierFrequencyRanges.isEmpty()) {
-                    EmptyState("Chưa có dữ liệu dải tần", "Android không trả về danh sách carrier frequency.", Icons.Filled.Tune)
-                } else {
-                    SurfaceCard(Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            diagnostics.carrierFrequencyRanges.forEachIndexed { index, range ->
-                                SourceInfoRow(
-                                    "Dải ${index + 1}",
-                                    "${range.minFrequencyHz / 1000}–${range.maxFrequencyHz / 1000} kHz",
-                                    Icons.Filled.SignalCellularAlt,
-                                    AppColors.blue,
-                                )
-                            }
-                        }
+                SectionTitle("Thông tin tín hiệu")
+                SurfaceCard(Modifier.fillMaxWidth()) {
+                    Column {
+                        SourceInfoRow(
+                            "Khả năng phát IR",
+                            if (diagnostics.hasIrEmitter) "Đã nhận diện" else "Chưa nhận diện",
+                            Icons.Filled.SignalCellularAlt,
+                            if (diagnostics.hasIrEmitter) AppColors.mint else AppColors.danger,
+                        )
+                        SourceInfoRow(
+                            "Thông tin dải phát",
+                            if (diagnostics.carrierFrequencyRanges.isEmpty())
+                                "Thiết bị không cung cấp chi tiết"
+                            else
+                                "${diagnostics.carrierFrequencyRanges.size} dải được nhận diện",
+                            Icons.Filled.Tune,
+                            AppColors.navySoft,
+                        )
                     }
                 }
 
