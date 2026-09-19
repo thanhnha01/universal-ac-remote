@@ -156,5 +156,16 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(indexed["verticalSwingCapabilities"]["type"], "ON_OFF")
         self.assertNotIn("rawCommands", indexed)
 
+    def test_casper_3240_maps_swing_axes_and_is_transmittable(self):
+        path = catalog.ROOT / "data/upstreams/snapshots/smartir/codes/climate/3240.json"
+        record = catalog.parse_smartir(path, catalog.json.loads((catalog.ROOT / "upstream-lock.json").read_text(encoding="utf-8"))["sources"][1]["commitSha"])[0]
+        self.assertEqual(record["brand"], "Casper")
+        self.assertEqual(record["acModel"], "SC-09FS32")
+        self.assertEqual(record["verticalSwingCapabilities"]["type"], "ON_OFF")
+        self.assertEqual(record["horizontalSwingCapabilities"]["type"], "ON_OFF")
+        self.assertIn("swing:vertical", record["capabilities"])
+        self.assertIn("swing:horizontal", record["capabilities"])
+        self.assertTrue(catalog.is_transmittable(record))
+
 
 if __name__ == "__main__": unittest.main()
