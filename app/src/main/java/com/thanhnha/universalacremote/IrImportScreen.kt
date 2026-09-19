@@ -141,7 +141,7 @@ fun IrImportScreen(
                             }
                         }
                         StatusChip("${commands.size} lệnh hợp lệ", Icons.Filled.CheckCircle, AppColors.mint, AppColors.paleMint)
-                        InfoBanner("Profile RAW chỉ có các lệnh đã đọc được; app không tự suy diễn thêm chức năng.", Icons.Filled.WarningAmber, AppColors.warning, AppColors.paleWarning)
+                        InfoBanner("App chỉ dùng các lệnh đọc được từ file; không tự thêm chức năng chưa có.", Icons.Filled.WarningAmber, AppColors.warning, AppColors.paleWarning)
                     }
                 }
             }
@@ -153,7 +153,7 @@ fun IrImportScreen(
                         feedback = runCatching {
                             AndroidIrTransmitter.from(context).transmit(commands[selectedIndex].transmission)
                             "Đã phát ${commands[selectedIndex].name}."
-                        }.getOrElse { it.message ?: "Không thể phát command." }
+                        }.getOrElse { it.message ?: "Không thể phát lệnh IR." }
                     }
                 }
             }
@@ -178,7 +178,7 @@ fun IrImportScreen(
                     feedback = runCatching {
                         AndroidIrTransmitter.from(context).transmit(commands[selectedIndex].transmission)
                         "Đã phát lệnh kiểm tra."
-                    }.getOrElse { it.message ?: "Không thể phát command." }
+                    }.getOrElse { it.message ?: "Không thể phát lệnh IR." }
                 }
                 SecondaryButton("Lưu remote", Modifier.weight(1f), Icons.Filled.CheckCircle, enabled = commands.isNotEmpty() && remoteName.isNotBlank()) {
                     val payload = SavedRemoteConverters().encodeImportedCommands(commands.map { ImportedRawCommand(it.name, it.transmission) })
@@ -223,7 +223,7 @@ private fun ImportCommandTile(command: FlipperRawCommand, selected: Boolean, mod
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Icon(commandIcon(command.name), null, tint = AppColors.blue, modifier = Modifier.size(29.dp))
-            Text(command.name.ifBlank { "RAW command" }, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, maxLines = 2)
+            Text(command.name.ifBlank { "Lệnh IR" }, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, maxLines = 2)
         }
     }
 }
