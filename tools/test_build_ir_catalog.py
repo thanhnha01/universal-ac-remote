@@ -93,17 +93,20 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(report["profilesBySource"]["irplus"], 0)
         self.assertTrue(all(p["source"] != "irplus" for p in profiles))
 
-    def test_smartir_profile_retains_commands_and_untyped_swing(self):
+    def test_smartir_profile_retains_commands_and_maps_explicit_swing_axes(self):
         import json, tempfile
         with tempfile.TemporaryDirectory() as td:
             p = Path(td) / "123.json"
             p.write_text(json.dumps({"manufacturer":"Example", "supportedModels":["M1"], "commandsEncoding":"Base64", "minTemperature":16.5,
-                "maxTemperature":30.5,"operationModes":["cool"],"fanModes":["low"],"swingModes":["auto","Top","Bottom"],
-                "commands":{"off":"c29tZQ==","cool":{"low":{"22":"Y29kZQ=="}},"sleep":"c2xlZXA="}}), encoding="utf-8")
+                "maxTemperature":30.5,"operationModes":["cool"],"fanModes":["low"],"swingModes":["off","vertical","horizontal","both"],
+                "commands":{"off":"c29tZQ==","cool":{"low":{"off":{"22":"Y29kZQ=="}}},"sleep":"c2xlZXA="}}), encoding="utf-8")
             record = catalog.parse_smartir(p, SHA)[0]
             self.assertEqual(record["rawCommands"]["off"], "c29tZQ==")
-            self.assertEqual(record["verticalSwingCapabilities"], {"type":"NONE","positions":[]})
-            self.assertEqual(record["sourceMetadata"]["swingModes"], ["auto","Top","Bottom"])
+            self.assertEqual(record["verticalSwingCapabilities"], {"type":"ON_OFF","positions":[]})
+            self.assertEqual(record["horizontalSwingCapabilities"], {"type":"ON_OFF","positions":[]})
+            self.assertIn("swing:vertical", record["capabilities"])
+            self.assertIn("swing:horizontal", record["capabilities"])
+            self.assertEqual(record["sourceMetadata"]["swingModes"], ["off","vertical","horizontal","both"])
             self.assertIn("sleep", record["specialCapabilities"])
             self.assertIn("special:sleep", record["capabilities"])
 
