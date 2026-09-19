@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AcUnit
@@ -44,6 +45,9 @@ fun ProductionDetailsScreen(
     var renameOpen by remember { mutableStateOf(false) }
     var deleteOpen by remember { mutableStateOf(false) }
     var newName by remember(remote.id, remote.displayName) { mutableStateOf(remote.displayName) }
+    val transmittable = remote.importedCommandsJson.isNotBlank() ||
+        (candidate != null && com.thanhnha.universalacremote.ir.CatalogTransmitter.supports(candidate))
+    val verified = verified && transmittable
 
     AppScaffold(selectedRoute = null, onNavigate = {}, bottomBar = false) { padding ->
         PageColumn(padding) {
@@ -58,7 +62,7 @@ fun ProductionDetailsScreen(
                     Modifier.padding(18.dp),
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    AcWallUnitArt(remote.brand, Modifier.weight(0.42f))
+                    AcWallUnitArt(remote.brand, Modifier.weight(0.42f).height(86.dp))
                     Column(Modifier.weight(0.58f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                         Text(
                             remote.displayName,
@@ -74,10 +78,10 @@ fun ProductionDetailsScreen(
                             color = AppColors.navySoft,
                         )
                         StatusChip(
-                            if (remote.verifiedCapabilities.isNotEmpty()) "Đã xác minh" else "Chưa xác minh",
+                            if (verified) "Đã xác minh" else "Chưa xác minh",
                             Icons.Filled.CheckCircle,
-                            if (remote.verifiedCapabilities.isNotEmpty()) AppColors.mint else AppColors.warning,
-                            if (remote.verifiedCapabilities.isNotEmpty()) AppColors.paleMint else AppColors.paleWarning,
+                            if (verified) AppColors.mint else AppColors.warning,
+                            if (verified) AppColors.paleMint else AppColors.paleWarning,
                         )
                     }
                 }
@@ -110,7 +114,7 @@ fun ProductionDetailsScreen(
                     SourceInfoRow("Hãng", remote.brand.ifBlank { "Không rõ" }, Icons.Filled.AcUnit)
                     SourceInfoRow(
                         "Model",
-                        candidate?.displayModelLabel()?.ifBlank { null }
+                        candidate?.displayModelLabel()?.takeIf(String::isNotBlank)
                             ?: remote.acModel
                             ?: remote.remoteModel
                             ?: "Không rõ",
