@@ -66,4 +66,32 @@ class UniversalAcScannerTest {
         assertEquals(setOf(VerificationCheck.POWER), scanner.verifiedCapabilities)
         assertEquals(ScanResult.PARTIAL_MATCH, scanner.finishVerification())
     }
+
+    @Test fun verificationOrderKeepsPowerLastAndReactionLocksCandidate() {
+        val scanner = UniversalAcScanner(listOf(candidate, candidate)) {}
+        scanner.tryCurrent(0)
+        scanner.reportReaction()
+
+        assertEquals(VerificationCheck.TEMPERATURE_CHANGED, scanner.nextVerificationCheck())
+        scanner.recordVerification(VerificationCheck.TEMPERATURE_CHANGED)
+        assertEquals(VerificationCheck.SWING_VERTICAL, scanner.nextVerificationCheck())
+        scanner.recordVerification(VerificationCheck.SWING_VERTICAL)
+        assertEquals(VerificationCheck.POWER, scanner.nextVerificationCheck())
+        org.junit.Assert.assertThrows(IllegalStateException::class.java) { scanner.tryCurrent(2_000) }
+    }
+
+    @Test fun failedAndSkippedVerificationStatusesAreRetained() {
+        val modeCandidate = candidate.copy(
+            capabilities = candidate.capabilities + "mode:dry",
+            operationModes = listOf("cool", "dry"),
+        )
+        val scanner = UniversalAcScanner(listOf(modeCandidate)) {}
+        scanner.tryCurrent(0)
+        scanner.reportReaction()
+        scanner.recordVerification(VerificationCheck.TEMPERATURE_CHANGED, supported = false)
+        scanner.skipVerification(VerificationCheck.MODE)
+
+        assertEquals(VerificationStatus.FAILED, scanner.verificationStatuses[VerificationCheck.TEMPERATURE_CHANGED])
+        assertEquals(VerificationStatus.SKIPPED, scanner.verificationStatuses[VerificationCheck.MODE])
+    }
 }
