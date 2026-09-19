@@ -148,14 +148,6 @@ fun IrImportScreen(
             if (commands.isNotEmpty()) {
                 SectionTitle("Lệnh đã đọc")
                 ImportCommandGrid(commands, selectedIndex) { selectedIndex = it }
-                if (selectedIndex in commands.indices) {
-                    SecondaryButton("Phát lệnh đã chọn", Modifier.fillMaxWidth(), Icons.Filled.PlayArrow) {
-                        feedback = runCatching {
-                            AndroidIrTransmitter.from(context).transmit(commands[selectedIndex].transmission)
-                            "Đã phát ${commands[selectedIndex].name}."
-                        }.getOrElse { it.message ?: "Không thể phát lệnh IR." }
-                    }
-                }
             }
             SectionTitle("Áp dụng cho thiết bị")
             SurfaceCard(Modifier.fillMaxWidth()) {
@@ -182,7 +174,7 @@ fun IrImportScreen(
                 }
                 SecondaryButton("Lưu remote", Modifier.weight(1f), Icons.Filled.CheckCircle, enabled = commands.isNotEmpty() && remoteName.isNotBlank()) {
                     val payload = SavedRemoteConverters().encodeImportedCommands(commands.map { ImportedRawCommand(it.name, it.transmission) })
-                    store.save(SavedRemote(UUID.randomUUID().toString(), remoteName.trim(), "imported:${UUID.randomUUID()}", brand.trim().ifBlank { "Imported" }, null, remoteModel.trim().takeIf(String::isNotBlank), null, null, emptyList(), payload))
+                    store.save(SavedRemote(UUID.randomUUID().toString(), remoteName.trim(), "imported:${UUID.randomUUID()}", brand.trim().ifBlank { "Không rõ hãng" }, null, remoteModel.trim().takeIf(String::isNotBlank), null, null, emptyList(), payload))
                     onSaved()
                 }
             }
@@ -248,4 +240,4 @@ private fun displayName(context: Context, uri: Uri): String = runCatching {
     context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
         if (cursor.moveToFirst()) cursor.getString(0) else null
     }
-}.getOrNull()?.takeIf(String::isNotBlank) ?: uri.lastPathSegment?.substringAfterLast('/') ?: "profile.ir"
+}.getOrNull()?.takeIf(String::isNotBlank) ?: uri.lastPathSegment?.substringAfterLast('/') ?: "remote.ir"
