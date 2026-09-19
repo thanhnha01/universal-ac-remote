@@ -613,12 +613,22 @@ fun ProductionScannerScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(14.dp),
                             ) {
-                                AcWallUnitArt(current.brand, Modifier.width(126.dp).height(78.dp))
-                                Column(Modifier.weight(1f)) {
-                                    Text(current.brand, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
+                                AcWallUnitArt(current.brand, Modifier.width(98.dp).height(66.dp))
+                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                     Text(
-                                        current.displayModelLabel().ifBlank { "Model chưa xác định" },
+                                        current.brand,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = AppColors.navy,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    Text(
+                                        current.compactDisplayModelLabel().ifBlank { "Model chưa xác định" },
                                         color = AppColors.navySoft,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
                                     )
                                 }
                             }
