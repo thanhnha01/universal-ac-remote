@@ -131,9 +131,44 @@ object CatalogTransmitter {
             val mode = commands.opt(modeKey) ?: unsupportedState("mode '$modeKey' is not present in this profile.")
             val fanKey = smartIrFanKey(candidate, state.fan)
             val fan = selectKey(mode, fanKey, "fan '$fanKey'")
-            selectTemperature(fan, state.temperatureCelsius)
+            selectSmartIrCommand(candidate, fan, state)
         }
         return BroadlinkDecoder.decodeBase64(encoded)
+    }
+
+    /**
+     * SmartIR climate profiles are not fully uniform. Some profiles use
+     * mode -> fan -> temperature, while others (including Casper 3240) use
+     * mode -> fan -> swing -> temperature. Select the exact branch declared
+     * by the profile instead of assuming temperature is always directly below
+     * the fan node.
+     */
+    private fun selectSmartIrCommand(candidate: RemoteCandidate, fanNode: Any, state: AcState): String {
+        selectTemperatureOrNull(fanNode, state.temperatureCelsius)?.let { return it }
+
+        val objectValue = fanNode as? JSONObject
+            ?: unsupportedState("temperature ${state.temperatureCelsius} is not present in this profile.")
+        val swingModes = candidate.sourceMetadataJson?.let(::JSONObject)
+            ?.optJSONArray("swingModes")
+            ?.let { array -> (0 until array.length()).mapNotNull { index -> array.optString(index).takeIf(String::isNotBlank) } }
+            .orEmpty()
+
+        val requestedSwing = when {
+            state.swingVertical && state.swingHorizontal -> listOf("both")
+            state.swingVertical -> listOf("vertical")
+            state.swingHorizontal -> listOf("horizontal")
+            else -> listOf("off", "none")
+        }
+
+        val swingKey = requestedSwing.firstNotNullOfOrNull { requested ->
+            swingModes.firstOrNull { it.equals(requested, true) }
+                ?: objectValue.keys().asSequence().firstOrNull { it.equals(requested, true) }
+        } ?: unsupportedState(
+            "swing state vertical=${state.swingVertical}, horizontal=${state.swingHorizontal} is not present in this profile."
+        )
+
+        val swingNode = selectKey(objectValue, swingKey, "swing '$swingKey'")
+        return selectTemperature(swingNode, state.temperatureCelsius)
     }
 
     private fun smartIrModeKey(candidate: RemoteCandidate, mode: AcMode): String {
@@ -165,11 +200,16 @@ object CatalogTransmitter {
             ?.let(objectValue::opt) ?: unsupportedState("$description is not present in this profile.")
     }
 
-    private fun selectTemperature(value: Any, temperature: Int): String {
-        val objectValue = value as? JSONObject ?: unsupportedState("temperature $temperature is not present in this profile.")
-        val exact = objectValue.keys().asSequence().firstOrNull { key -> key.toDoubleOrNull()?.let { it == temperature.toDouble() } == true }
-        return (exact?.let(objectValue::opt) as? String)
+    private fun selectTemperature(value: Any, temperature: Int): String =
+        selectTemperatureOrNull(value, temperature)
             ?: unsupportedState("temperature $temperature is not present in this profile.")
+
+    private fun selectTemperatureOrNull(value: Any, temperature: Int): String? {
+        val objectValue = value as? JSONObject ?: return null
+        val exact = objectValue.keys().asSequence().firstOrNull { key ->
+            key.toDoubleOrNull()?.let { it == temperature.toDouble() } == true
+        }
+        return exact?.let(objectValue::opt) as? String
     }
 
     private fun unsupportedState(detail: String): Nothing = throw IllegalArgumentException("Unsupported state: $detail")

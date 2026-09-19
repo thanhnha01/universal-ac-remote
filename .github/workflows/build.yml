@@ -47,8 +47,10 @@ jobs:
       - name: Make Gradle Wrapper executable
         run: chmod +x gradlew
 
-      - name: Run Python catalog tests
-        run: python3 tools/test_build_ir_catalog.py
+      - name: Rebuild and test IR catalog
+        run: |
+          python3 tools/build_ir_catalog.py
+          python3 tools/test_build_ir_catalog.py
 
       - name: Run debug unit tests
         run: ./gradlew :app:testDebugUnitTest
