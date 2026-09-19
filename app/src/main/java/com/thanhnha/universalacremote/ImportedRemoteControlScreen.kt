@@ -13,7 +13,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Air
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Thermostat
@@ -40,6 +39,7 @@ fun ImportedRemoteControlScreen(
     remote: SavedRemote,
     store: SavedRemotesViewModel,
     onTab: (String) -> Unit,
+    onDetails: () -> Unit,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -55,6 +55,9 @@ fun ImportedRemoteControlScreen(
                 title = remote.displayName,
                 subtitle = listOf(remote.brand, remote.remoteModel).filterNotNull().filter(String::isNotBlank).joinToString(" • "),
                 onBack = onBack,
+                actions = {
+                    HeaderIconButton(Icons.Filled.Tune, "Chi tiết remote", onDetails)
+                },
             )
 
             GradientHero {
@@ -108,10 +111,6 @@ fun ImportedRemoteControlScreen(
                 )
             }
 
-            SecondaryButton("Xóa remote", Modifier.fillMaxWidth(), Icons.Filled.DeleteOutline) {
-                store.delete(remote.id)
-                onBack()
-            }
         }
     }
 }
