@@ -104,7 +104,7 @@ fun RemoteControlScreen(
     val ready = hardwareReady && transmittable
     val showVerticalSwing = controls.verticalSwing.type == "ON_OFF" || controls.verticalSwing.type == "AUTO_AND_POSITIONS"
     val showHorizontalSwing = controls.horizontalSwing.type == "ON_OFF" || controls.horizontalSwing.type == "AUTO_AND_POSITIONS"
-    val verified = remote.verifiedCapabilities.isNotEmpty() && transmittable
+    val verification = remote.verificationState(candidate)
 
     fun transmit(
         nextPower: Boolean = power ?: true,
@@ -224,8 +224,8 @@ fun RemoteControlScreen(
             RemoteTopHeader(
                 remote = remote,
                 candidate = candidate,
-                verified = verified,
-                ready = ready,
+                verification = verification,
+                irReady = hardwareReady,
                 onDetails = onDetails,
                 onBack = onBack,
             )
@@ -328,8 +328,8 @@ fun RemoteControlScreen(
 private fun RemoteTopHeader(
     remote: SavedRemote,
     candidate: RemoteCandidate,
-    verified: Boolean,
-    ready: Boolean,
+    verification: SavedVerificationState,
+    irReady: Boolean,
     onDetails: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -368,16 +368,32 @@ private fun RemoteTopHeader(
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             StatusChip(
-                if (verified) "Đã xác minh" else "Chưa xác minh",
-                if (verified) Icons.Filled.CheckCircle else Icons.Filled.Refresh,
-                if (verified) AppColors.mint else AppColors.warning,
-                if (verified) AppColors.paleMint else AppColors.paleWarning,
+                when (verification) {
+                    SavedVerificationState.FULL -> "Đã xác minh"
+                    SavedVerificationState.PARTIAL -> "Đã kiểm tra một phần"
+                    SavedVerificationState.NONE -> "Chưa xác minh"
+                },
+                when (verification) {
+                    SavedVerificationState.FULL -> Icons.Filled.CheckCircle
+                    SavedVerificationState.PARTIAL -> Icons.Filled.Info
+                    SavedVerificationState.NONE -> Icons.Filled.Refresh
+                },
+                when (verification) {
+                    SavedVerificationState.FULL -> AppColors.mint
+                    SavedVerificationState.PARTIAL -> AppColors.warning
+                    SavedVerificationState.NONE -> AppColors.warning
+                },
+                when (verification) {
+                    SavedVerificationState.FULL -> AppColors.paleMint
+                    SavedVerificationState.PARTIAL -> AppColors.paleWarning
+                    SavedVerificationState.NONE -> AppColors.paleWarning
+                },
             )
             StatusChip(
-                if (ready) "IR sẵn sàng" else "IR chưa sẵn sàng",
+                if (irReady) "IR sẵn sàng" else "IR chưa sẵn sàng",
                 Icons.Filled.SignalCellularAlt,
-                if (ready) AppColors.blue else AppColors.danger,
-                if (ready) AppColors.paleBlue else AppColors.paleDanger,
+                if (irReady) AppColors.blue else AppColors.danger,
+                if (irReady) AppColors.paleBlue else AppColors.paleDanger,
             )
         }
     }
