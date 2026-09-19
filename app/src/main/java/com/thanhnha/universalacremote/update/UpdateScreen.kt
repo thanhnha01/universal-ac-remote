@@ -112,11 +112,18 @@ fun UpdatePanel() {
                                     isError = false
                                 } else {
                                     val uri = FileProvider.getUriForFile(context, "${context.packageName}.updates", apk)
-                                    context.startActivity(
-                                        Intent(Intent.ACTION_INSTALL_PACKAGE)
-                                            .setData(uri)
-                                            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                    )
+                                    val viewIntent = Intent(Intent.ACTION_VIEW)
+                                        .setDataAndType(uri, "application/vnd.android.package-archive")
+                                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    val installIntent = Intent(Intent.ACTION_INSTALL_PACKAGE)
+                                        .setData(uri)
+                                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    val installer = listOf(viewIntent, installIntent)
+                                        .firstOrNull { it.resolveActivity(context.packageManager) != null }
+                                        ?: error("No Android package installer available")
+                                    context.startActivity(installer)
                                 }
                             }.onFailure {
                                 message = "Không thể mở trình cài đặt Android."
