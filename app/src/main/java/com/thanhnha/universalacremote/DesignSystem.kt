@@ -61,6 +61,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 object AppColors {
@@ -225,9 +226,21 @@ fun AppTopBar(
     TopAppBar(
         title = {
             Column(horizontalAlignment = Alignment.Start) {
-                Text(title, fontWeight = FontWeight.Bold, color = AppColors.navy)
+                Text(
+                    title,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.navy,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 subtitle?.takeIf { it.isNotBlank() }?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, color = AppColors.navySoft)
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppColors.navySoft,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
         },
@@ -307,7 +320,12 @@ fun PrimaryButton(
         contentPadding = PaddingValues(horizontal = 18.dp),
     ) {
         icon?.let { Icon(it, null); Spacer(Modifier.size(8.dp)) }
-        Text(text, fontWeight = FontWeight.SemiBold)
+        Text(
+            text,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -329,7 +347,12 @@ fun SecondaryButton(
         contentPadding = PaddingValues(horizontal = 16.dp),
     ) {
         icon?.let { Icon(it, null); Spacer(Modifier.size(8.dp)) }
-        Text(text, fontWeight = FontWeight.SemiBold)
+        Text(
+            text,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -347,7 +370,14 @@ fun StatusChip(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Icon(icon, null, tint = color, modifier = Modifier.size(17.dp))
-            Text(text, color = color, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium)
+            Text(
+                text,
+                color = color,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
