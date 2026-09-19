@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import com.thanhnha.universalacremote.AppColors
 import com.thanhnha.universalacremote.BuildConfig
@@ -67,7 +68,7 @@ fun UpdatePanel() {
         if (System.currentTimeMillis() - lastCheck >= TimeUnit.HOURS.toMillis(24)) checkForUpdate()
     }
 
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(androidx.compose.ui.unit.dp(10))) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         PrimaryButton(
             text = if (busy) "Đang kiểm tra…" else "Kiểm tra cập nhật",
             modifier = Modifier.fillMaxWidth(),
