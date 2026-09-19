@@ -147,7 +147,7 @@ fun RemoteApp(diagnostics: IrHardwareDiagnostics, store: SavedRemotesViewModel =
                 }
             }
             composable("settings") { SettingsScreen(diagnostics, catalog, ::navigateTab, { nav.navigate("diagnostics") }, { nav.navigate("import") }) }
-            composable("diagnostics") { DiagnosticScreen(diagnostics) }
+            composable("diagnostics") { DiagnosticScreen(diagnostics) { nav.popBackStack() } }
         }
     }
 }
@@ -205,15 +205,6 @@ private fun AddScreen(store: SavedRemotesViewModel, catalog: CatalogUiState, onT
     AppScaffold("home", onTab) { padding ->
         PageColumn(padding) {
             AppTopBar("Thêm máy lạnh", "Chọn cách thiết lập phù hợp", onBack = { onTab("home") })
-            GradientHero {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Thiết lập remote", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
-                        Text("Tìm theo hãng, model hoặc để app tự dò.", color = AppColors.navySoft)
-                    }
-                    IconBubble(Icons.Filled.Search, size = 72)
-                }
-            }
             SearchField(query, ::searchNow, "Tìm hãng, model máy hoặc remote")
             if (catalog.loading) InfoBanner("Đang tải Unified Catalog…", Icons.Filled.Refresh, AppColors.blue, AppColors.paleBlue)
             catalog.error?.let { InfoBanner(it, Icons.Filled.ErrorOutline, AppColors.danger, AppColors.paleDanger) }
@@ -343,7 +334,7 @@ private fun DetailsScreen(remote: SavedRemote, candidate: RemoteCandidate?, stor
         SurfaceCard(Modifier.fillMaxWidth(), SoftHeroGradient) { Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) { IconBubble(Icons.Filled.AcUnit, size = 76); Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) { Text(remote.displayName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold); Text(listOfNotNull(remote.brand, candidate?.acModel ?: remote.acModel).joinToString(" • "), color = AppColors.navySoft); Text(listOfNotNull(candidate?.protocolId, candidate?.remoteModel, candidate?.protocolModel).joinToString(" / ").ifBlank { "Profile ${remote.catalogProfileId}" }, color = AppColors.navySoft, style = MaterialTheme.typography.bodySmall) }; StatusChip(if (verified.isNotEmpty()) "Khớp tốt" else "Chưa xác minh", if (verified.isNotEmpty()) Icons.Filled.SignalCellularAlt else Icons.Filled.Info) } }
         SectionTitle("Chức năng đã xác minh")
         if (verified.isEmpty()) EmptyState("Chưa có xác minh", "Hãy mở scanner để kiểm tra các capability thật của profile.", Icons.Filled.Info) else verified.forEach { check -> CapabilityRow(check.label(), "Đã xác nhận", Icons.Filled.CheckCircle, AppColors.mint, "OK") }
-        SectionTitle("Thông tin hồ sơ")
+        SectionTitle("Thông tin kỹ thuật")
         SurfaceCard(Modifier.fillMaxWidth()) { Column { SourceInfoRow("Encoding", candidate?.encodingType ?: "—", Icons.Filled.Code); SourceInfoRow("Source", candidate?.source?.let(::sourceLabel) ?: "—", Icons.Filled.Description); SourceInfoRow("Database revision", candidate?.sourceCommitSha?.shortSha() ?: "Catalog runtime", Icons.Filled.FilterAlt); SourceInfoRow("Kiểm tra gần nhất", "Chưa ghi nhận", Icons.Filled.CalendarToday) } }
         SectionTitle("Quản lý")
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { PrimaryButton("Mở remote", Modifier.weight(1f), Icons.Filled.PlayArrow, enabled = candidate != null) { openRemote() }; SecondaryButton("Kiểm tra lại", Modifier.weight(1f), Icons.Filled.Refresh) { recheck() } }
@@ -361,16 +352,14 @@ private fun SettingsScreen(diagnostics: IrHardwareDiagnostics, catalog: CatalogU
             BrandHeader { HeaderIconButton(Icons.Filled.Home, "Trang chủ") { onTab("home") } }
             GradientHero { Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) { Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) { Text("Cài đặt", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold); Text("Tùy chỉnh ứng dụng và cập nhật", color = AppColors.navySoft) }; IconBubble(Icons.Filled.Settings, size = 76) } }
             SectionTitle("Ứng dụng")
-            SurfaceCard(Modifier.fillMaxWidth()) { Column { SourceInfoRow("Phiên bản ứng dụng", BuildConfig.VERSION_NAME, Icons.Filled.Build); SourceInfoRow("Unified Catalog", if (catalog.loading) "Đang tải…" else "${catalog.profileCount} profile", Icons.Filled.FilterAlt); SourceInfoRow("Thiết bị IR", if (diagnostics.hasIrEmitter) "Sẵn sàng" else "Không khả dụng", Icons.Filled.SignalCellularAlt, if (diagnostics.hasIrEmitter) AppColors.mint else AppColors.danger) } }
+            SurfaceCard(Modifier.fillMaxWidth()) { Column { SourceInfoRow("Phiên bản ứng dụng", BuildConfig.VERSION_NAME, Icons.Filled.Build); SourceInfoRow("Thư viện điều khiển", if (catalog.loading) "Đang tải…" else "${catalog.profileCount} hồ sơ", Icons.Filled.FilterAlt); SourceInfoRow("Thiết bị IR", if (diagnostics.hasIrEmitter) "Sẵn sàng" else "Không khả dụng", Icons.Filled.SignalCellularAlt, if (diagnostics.hasIrEmitter) AppColors.mint else AppColors.danger) } }
             SectionTitle("Cập nhật")
-            SurfaceCard(Modifier.fillMaxWidth(), SoftHeroGradient) { Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { Text("Cập nhật ứng dụng", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold); Text("Database/catalog mới được phát hành cùng APK khi updater hiện tại tìm thấy release.", color = AppColors.navySoft); UpdatePanel() } }
+            SurfaceCard(Modifier.fillMaxWidth(), SoftHeroGradient) { Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { Text("Cập nhật ứng dụng", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold); Text("Kiểm tra và cài bản ứng dụng mới khi có.", color = AppColors.navySoft); UpdatePanel() } }
             SectionTitle("Công cụ")
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 ToolCard("Kiểm tra phần cứng IR", Icons.Filled.SignalCellularAlt, Modifier.weight(1f)) { openDiagnostics() }
                 ToolCard("Nhập file .ir", Icons.Filled.FileDownload, Modifier.weight(1f)) { openImport() }
             }
-            SectionTitle("Thông tin nguồn")
-            SurfaceCard(Modifier.fillMaxWidth()) { Column { SourceInfoRow("Catalog runtime", "Unified Catalog", Icons.Filled.Code); SourceInfoRow("IR hardware", "Android ConsumerIrManager", Icons.Filled.SignalCellularAlt); SourceInfoRow("Upstream provenance", "Xem upstream-lock.json", Icons.Filled.Description) } }
         }
     }
 }
