@@ -38,7 +38,7 @@ object SafeProbePolicy {
         val description = if (mode == AcMode.COOL) "Thử làm lạnh ${temperature}°C" else "Thử bật máy"
         val warning = if (candidate.encodingType.equals("RAW_PROFILE", true) &&
             hasToggleOnlyRawProfile(candidate)) {
-            "Hồ sơ này chỉ có lệnh bật/tắt. Máy có thể đổi trạng thái khi thử."
+            "Mã điều khiển này chỉ có lệnh bật/tắt. Máy có thể đổi trạng thái khi thử."
         } else null
         return SafeProbe(state, description, warning)
     }

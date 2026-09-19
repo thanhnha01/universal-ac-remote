@@ -36,7 +36,7 @@ data class RemoteControls(
     fun verificationResult(verified: Set<VerificationCheck>): ScanResult {
         if (verified.isEmpty()) return ScanResult.NO_MATCH
         val required = verificationRequirements()
-        return if (required.size > 1 && verified.containsAll(required)) ScanResult.FULL_MATCH
+        return if (required.isNotEmpty() && verified.containsAll(required)) ScanResult.FULL_MATCH
         else ScanResult.PARTIAL_MATCH
     }
 

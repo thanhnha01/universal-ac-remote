@@ -97,12 +97,12 @@ fun IrImportScreen(
             fileName = displayName(context, uri)
             commands = it
             selectedIndex = it.indices.firstOrNull() ?: -1
-            feedback = "Đã đọc ${it.size} lệnh RAW hợp lệ."
+            feedback = "Đã đọc ${it.size} lệnh IR hợp lệ."
         }.onFailure {
             fileName = null
             commands = emptyList()
             selectedIndex = -1
-            feedback = it.message ?: "File .ir không hợp lệ."
+            feedback = "Không thể đọc file .ir này. Hãy chọn một file IR hợp lệ."
         }
     }
 
@@ -110,15 +110,22 @@ fun IrImportScreen(
 
     AppScaffold("home", onTab) { padding ->
         PageColumn(padding) {
-            AppTopBar("Nhập file .ir", "Dùng hồ sơ IR từ Flipper hoặc nguồn bên ngoài", onBack = onBack)
-            SectionTitle("Nguồn nhập")
-            BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val columns = if (maxWidth >= 380.dp) 3 else 2
-                ImportSourceGrid(columns, listOf(
-                    { ImportSourceCard("Chọn file từ máy", "Hỗ trợ file .ir", Icons.Filled.Folder, AppColors.paleBlue) { picker.launch(arrayOf("text/plain", "application/octet-stream", "*/*")) } },
-                    { ImportSourceCard("Chia sẻ từ ứng dụng khác", "Chưa bật nhận Share trực tiếp", Icons.Filled.Share, Color(0xFFF3F0FF), enabled = false) {} },
-                    { ImportSourceCard("Từ Flipper IRDB", "Chưa có profile usable", Icons.Filled.CloudDownload, AppColors.paleBlue, enabled = false) {} },
-                ))
+            AppTopBar("Nhập file .ir", "Dùng file IR có sẵn trên điện thoại", onBack = onBack)
+            SurfaceCard(Modifier.fillMaxWidth(), SoftHeroGradient) {
+                Row(
+                    Modifier.padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    IconBubble(Icons.Filled.Folder, size = 66)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Chọn file .ir", style = androidx.compose.material3.MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
+                        Text("Dùng file IR đã lưu trên điện thoại.", color = AppColors.navySoft)
+                    }
+                    SecondaryButton("Chọn file", Modifier, Icons.Filled.Folder) {
+                        picker.launch(arrayOf("text/plain", "application/octet-stream", "*/*"))
+                    }
+                }
             }
             fileName?.let { name ->
                 SurfaceCard(Modifier.fillMaxWidth()) {
@@ -128,27 +135,19 @@ fun IrImportScreen(
                             Column(Modifier.weight(1f)) {
                                 Text(name, style = androidx.compose.material3.MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    StatusChip("RAW", Icons.Filled.Code)
+                                    StatusChip("File IR", Icons.Filled.Code)
                                     commands.firstOrNull()?.let { StatusChip("${it.transmission.carrierFrequencyHz / 1000} kHz", Icons.Filled.SignalCellularAlt, AppColors.mint, AppColors.paleMint) }
                                 }
                             }
                         }
                         StatusChip("${commands.size} lệnh hợp lệ", Icons.Filled.CheckCircle, AppColors.mint, AppColors.paleMint)
-                        InfoBanner("Profile RAW chỉ có các lệnh đã đọc được; app không tự suy diễn thêm chức năng.", Icons.Filled.WarningAmber, AppColors.warning, AppColors.paleWarning)
+                        InfoBanner("App chỉ dùng các lệnh đọc được từ file; không tự thêm chức năng chưa có.", Icons.Filled.WarningAmber, AppColors.warning, AppColors.paleWarning)
                     }
                 }
             }
             if (commands.isNotEmpty()) {
                 SectionTitle("Lệnh đã đọc")
                 ImportCommandGrid(commands, selectedIndex) { selectedIndex = it }
-                if (selectedIndex in commands.indices) {
-                    SecondaryButton("Phát lệnh đã chọn", Modifier.fillMaxWidth(), Icons.Filled.PlayArrow) {
-                        feedback = runCatching {
-                            AndroidIrTransmitter.from(context).transmit(commands[selectedIndex].transmission)
-                            "Đã phát ${commands[selectedIndex].name}."
-                        }.getOrElse { it.message ?: "Không thể phát command." }
-                    }
-                }
             }
             SectionTitle("Áp dụng cho thiết bị")
             SurfaceCard(Modifier.fillMaxWidth()) {
@@ -162,55 +161,24 @@ fun IrImportScreen(
                         StatusChip("Chưa xác định", Icons.Filled.Info, AppColors.warning, AppColors.paleWarning)
                     }
                     ImportField("Tên remote", remoteName, { remoteName = it }, "Ví dụ: Remote phòng khách")
-                    ImportField("Hãng (tuỳ chọn)", brand, { brand = it }, "Không tự suy diễn từ file")
-                    ImportField("Model remote (tuỳ chọn)", remoteModel, { remoteModel = it }, "Không tự suy diễn từ file")
+                    ImportField("Hãng (tuỳ chọn)", brand, { brand = it }, "Để trống nếu không biết")
+                    ImportField("Model remote (tuỳ chọn)", remoteModel, { remoteModel = it }, "Để trống nếu không biết")
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                PrimaryButton("Kiểm tra remote", Modifier.weight(1f), Icons.Filled.PlayArrow, enabled = selectedIndex in commands.indices) {
+                PrimaryButton("Phát thử", Modifier.weight(1f), Icons.Filled.PlayArrow, enabled = selectedIndex in commands.indices) {
                     feedback = runCatching {
                         AndroidIrTransmitter.from(context).transmit(commands[selectedIndex].transmission)
                         "Đã phát lệnh kiểm tra."
-                    }.getOrElse { it.message ?: "Không thể phát command." }
+                    }.getOrElse { "Không thể phát lệnh IR. Hãy kiểm tra bộ phát IR và thử lại." }
                 }
-                SecondaryButton("Lưu vào máy lạnh", Modifier.weight(1f), Icons.Filled.CheckCircle, enabled = commands.isNotEmpty() && remoteName.isNotBlank()) {
+                SecondaryButton("Lưu remote", Modifier.weight(1f), Icons.Filled.CheckCircle, enabled = commands.isNotEmpty() && remoteName.isNotBlank()) {
                     val payload = SavedRemoteConverters().encodeImportedCommands(commands.map { ImportedRawCommand(it.name, it.transmission) })
-                    store.save(SavedRemote(UUID.randomUUID().toString(), remoteName.trim(), "imported:${UUID.randomUUID()}", brand.trim().ifBlank { "Imported" }, null, remoteModel.trim().takeIf(String::isNotBlank), null, null, emptyList(), payload))
+                    store.save(SavedRemote(UUID.randomUUID().toString(), remoteName.trim(), "imported:${UUID.randomUUID()}", brand.trim().ifBlank { "Không rõ hãng" }, null, remoteModel.trim().takeIf(String::isNotBlank), null, null, emptyList(), payload))
                     onSaved()
                 }
             }
             if (feedback.isNotBlank()) InfoBanner(feedback, Icons.Filled.Info, AppColors.blue, AppColors.paleBlue)
-        }
-    }
-}
-
-@Composable
-private fun ImportSourceGrid(columns: Int, cards: List<@Composable () -> Unit>) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        cards.chunked(columns).forEach { rowCards ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                rowCards.forEach { card -> Box(Modifier.weight(1f)) { card() } }
-                repeat(columns - rowCards.size) { Spacer(Modifier.weight(1f)) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ImportSourceCard(title: String, subtitle: String, icon: ImageVector, background: Color, enabled: Boolean = true, onClick: () -> Unit) {
-    SurfaceCard(Modifier.fillMaxWidth()) {
-        Column(
-            Modifier
-                .clip(RoundedCornerShape(22.dp))
-                .background(if (enabled) background else AppColors.page)
-                .clickable(enabled = enabled, onClick = onClick)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(9.dp),
-        ) {
-            IconBubble(icon, tint = if (enabled) AppColors.blue else AppColors.navySoft, background = Color.White.copy(alpha = 0.72f), size = 54)
-            Text(title, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, color = if (enabled) AppColors.navy else AppColors.navySoft)
-            Text(subtitle, style = androidx.compose.material3.MaterialTheme.typography.bodySmall, color = AppColors.navySoft, textAlign = TextAlign.Center)
         }
     }
 }
@@ -247,7 +215,7 @@ private fun ImportCommandTile(command: FlipperRawCommand, selected: Boolean, mod
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Icon(commandIcon(command.name), null, tint = AppColors.blue, modifier = Modifier.size(29.dp))
-            Text(command.name.ifBlank { "RAW command" }, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, maxLines = 2)
+            Text(command.name.ifBlank { "Lệnh IR" }, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, maxLines = 2)
         }
     }
 }
@@ -272,4 +240,4 @@ private fun displayName(context: Context, uri: Uri): String = runCatching {
     context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
         if (cursor.moveToFirst()) cursor.getString(0) else null
     }
-}.getOrNull()?.takeIf(String::isNotBlank) ?: uri.lastPathSegment?.substringAfterLast('/') ?: "profile.ir"
+}.getOrNull()?.takeIf(String::isNotBlank) ?: uri.lastPathSegment?.substringAfterLast('/') ?: "remote.ir"
