@@ -366,17 +366,50 @@ private fun DetailsScreen(remote: SavedRemote, candidate: RemoteCandidate?, stor
 private fun SettingsScreen(diagnostics: IrHardwareDiagnostics, catalog: CatalogUiState, onTab: (String) -> Unit, openDiagnostics: () -> Unit, openImport: () -> Unit) {
     AppScaffold("settings", onTab) { padding ->
         PageColumn(padding) {
-            BrandHeader { HeaderIconButton(Icons.Filled.Home, "Trang chủ") { onTab("home") } }
-            GradientHero { Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) { Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) { Text("Cài đặt", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold); Text("Tùy chỉnh ứng dụng và cập nhật", color = AppColors.navySoft) }; IconBubble(Icons.Filled.Settings, size = 76) } }
-            SectionTitle("Ứng dụng")
-            SurfaceCard(Modifier.fillMaxWidth()) { Column { SourceInfoRow("Phiên bản ứng dụng", BuildConfig.VERSION_NAME, Icons.Filled.Build); SourceInfoRow("Thư viện điều khiển", if (catalog.loading) "Đang tải…" else "${catalog.profileCount} hồ sơ", Icons.Filled.FilterAlt); SourceInfoRow("Thiết bị IR", if (diagnostics.hasIrEmitter) "Sẵn sàng" else "Không khả dụng", Icons.Filled.SignalCellularAlt, if (diagnostics.hasIrEmitter) AppColors.mint else AppColors.danger) } }
-            SectionTitle("Cập nhật")
-            SurfaceCard(Modifier.fillMaxWidth(), SoftHeroGradient) { Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { Text("Cập nhật ứng dụng", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold); Text("Kiểm tra và cài bản ứng dụng mới khi có.", color = AppColors.navySoft); UpdatePanel() } }
-            SectionTitle("Công cụ")
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                ToolCard("Kiểm tra phần cứng IR", Icons.Filled.SignalCellularAlt, Modifier.weight(1f)) { openDiagnostics() }
-                ToolCard("Nhập file .ir", Icons.Filled.FileDownload, Modifier.weight(1f)) { openImport() }
+            AppTopBar("Cài đặt", "Thiết bị, dữ liệu và cập nhật")
+
+            SectionTitle("Thiết bị")
+            SurfaceCard(Modifier.fillMaxWidth()) {
+                Column {
+                    SourceInfoRow(
+                        "Bộ phát IR",
+                        if (diagnostics.hasIrEmitter) "Sẵn sàng" else "Không khả dụng",
+                        Icons.Filled.SignalCellularAlt,
+                        if (diagnostics.hasIrEmitter) AppColors.mint else AppColors.danger,
+                    )
+                    SourceInfoRow(
+                        "Thư viện điều khiển",
+                        if (catalog.loading) "Đang tải…" else "${catalog.profileCount} hồ sơ",
+                        Icons.Filled.FilterAlt,
+                    )
+                    SourceInfoRow("Phiên bản", BuildConfig.VERSION_NAME, Icons.Filled.Build)
+                }
             }
+
+            SectionTitle("Cập nhật ứng dụng")
+            SurfaceCard(Modifier.fillMaxWidth()) {
+                Column(
+                    Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Text("Giữ app và thư viện IR ở bản mới nhất.", color = AppColors.navySoft)
+                    UpdatePanel()
+                }
+            }
+
+            SectionTitle("Công cụ")
+            SettingsActionRow(
+                title = "Kiểm tra phần cứng IR",
+                subtitle = "Xem bộ phát và dải tần Android hỗ trợ",
+                icon = Icons.Filled.SignalCellularAlt,
+                onClick = openDiagnostics,
+            )
+            SettingsActionRow(
+                title = "Nhập file .ir",
+                subtitle = "Thêm remote từ file IR trên điện thoại",
+                icon = Icons.Filled.FileDownload,
+                onClick = openImport,
+            )
         }
     }
 }
@@ -412,6 +445,33 @@ private fun QuickActionCard(title: String, subtitle: String, icon: androidx.comp
 @Composable
 private fun ResponsiveGrid(items: List<String>, columns: Int, content: @Composable (String) -> Unit) { items.chunked(columns).forEach { rowItems -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) { rowItems.forEach { value -> Box(Modifier.weight(1f)) { content(value) } }; repeat(columns - rowItems.size) { Spacer(Modifier.weight(1f)) } } } }
 @Composable private fun ResponsiveFeatureGrid(items: List<String>, content: @Composable (String) -> Unit) = ResponsiveGrid(items, 2, content)
+
+
+@Composable
+private fun SettingsActionRow(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit,
+) {
+    SurfaceCard(Modifier.fillMaxWidth()) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            IconBubble(icon, size = 46)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(title, fontWeight = FontWeight.Bold, color = AppColors.navy)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = AppColors.navySoft)
+            }
+            Icon(Icons.Filled.ChevronRight, null, tint = AppColors.navySoft)
+        }
+    }
+}
 
 @Composable
 private fun OptionRow(values: List<String>, selected: String, label: (String) -> String, icon: androidx.compose.ui.graphics.vector.ImageVector, onSelect: (String) -> Unit) {
