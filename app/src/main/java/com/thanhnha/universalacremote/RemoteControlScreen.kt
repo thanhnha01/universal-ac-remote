@@ -61,6 +61,7 @@ fun RemoteControlScreen(
     candidate: RemoteCandidate,
     diagnostics: IrHardwareDiagnostics,
     onTab: (String) -> Unit,
+    onDetails: () -> Unit,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -222,6 +223,7 @@ fun RemoteControlScreen(
                 candidate = candidate,
                 verified = verified,
                 ready = ready,
+                onDetails = onDetails,
                 onBack = onBack,
             )
 
@@ -320,49 +322,56 @@ private fun RemoteTopHeader(
     candidate: RemoteCandidate,
     verified: Boolean,
     ready: Boolean,
+    onDetails: () -> Unit,
     onBack: () -> Unit,
 ) {
-    Row(
-        Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Surface(
-            modifier = Modifier.size(48.dp).clickable(onClick = onBack),
-            shape = RoundedCornerShape(24.dp),
-            color = Color.White,
-            border = BorderStroke(1.dp, AppColors.line),
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(Icons.Filled.ArrowBack, "Quay lại", tint = AppColors.navy)
+            Surface(
+                modifier = Modifier.size(48.dp).clickable(onClick = onBack),
+                shape = RoundedCornerShape(24.dp),
+                color = Color.White,
+                border = BorderStroke(1.dp, AppColors.line),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Filled.ArrowBack, "Quay lại", tint = AppColors.navy)
+                }
             }
+
+            Column(Modifier.weight(1f)) {
+                Text(
+                    remote.displayName,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = AppColors.navy,
+                )
+                Text(
+                    listOfNotNull(remote.brand, candidate.displayModelLabel().takeIf(String::isNotBlank)).joinToString(" • "),
+                    color = AppColors.navySoft,
+                )
+            }
+
+            HeaderIconButton(Icons.Filled.Tune, "Chi tiết máy lạnh", onDetails)
         }
 
-        Column(Modifier.weight(1f)) {
-            Text(
-                remote.displayName,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.ExtraBold,
-                color = AppColors.navy,
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatusChip(
+                if (verified) "Đã xác minh" else "Chưa xác minh",
+                if (verified) Icons.Filled.CheckCircle else Icons.Filled.Refresh,
+                if (verified) AppColors.mint else AppColors.warning,
+                if (verified) AppColors.paleMint else AppColors.paleWarning,
             )
-            Text(
-                listOfNotNull(remote.brand, candidate.displayModelLabel().takeIf(String::isNotBlank)).joinToString(" • "),
-                color = AppColors.navySoft,
+            StatusChip(
+                if (ready) "IR sẵn sàng" else "IR chưa sẵn sàng",
+                Icons.Filled.SignalCellularAlt,
+                if (ready) AppColors.blue else AppColors.danger,
+                if (ready) AppColors.paleBlue else AppColors.paleDanger,
             )
         }
-
-        StatusChip(
-            if (verified) "Đã xác minh" else "Chưa xác minh",
-            if (verified) Icons.Filled.CheckCircle else Icons.Filled.Refresh,
-            if (verified) AppColors.mint else AppColors.warning,
-            if (verified) AppColors.paleMint else AppColors.paleWarning,
-        )
-        StatusChip(
-            if (ready) "IR sẵn sàng" else "IR chưa sẵn sàng",
-            Icons.Filled.SignalCellularAlt,
-            if (ready) AppColors.blue else AppColors.danger,
-            if (ready) AppColors.paleBlue else AppColors.paleDanger,
-        )
     }
 }
 
@@ -393,7 +402,7 @@ private fun RemoteHeroCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                AcWallUnitArt(brand, Modifier.width(150.dp).height(88.dp))
+                AcWallUnitArt(brand, Modifier.width(112.dp).height(78.dp))
 
                 Column(
                     Modifier.weight(1f),
@@ -414,8 +423,8 @@ private fun RemoteHeroCard(
                 }
 
                 Surface(
-                    modifier = Modifier.size(92.dp).clickable(enabled = powerEnabled, onClick = onPower),
-                    shape = RoundedCornerShape(46.dp),
+                    modifier = Modifier.size(82.dp).clickable(enabled = powerEnabled, onClick = onPower),
+                    shape = RoundedCornerShape(41.dp),
                     color = if (power) AppColors.mint else AppColors.blue,
                 ) {
                     Box(contentAlignment = Alignment.Center) {
@@ -423,7 +432,7 @@ private fun RemoteHeroCard(
                             Icons.Filled.PowerSettingsNew,
                             "Bật hoặc tắt",
                             tint = Color.White,
-                            modifier = Modifier.size(44.dp),
+                            modifier = Modifier.size(40.dp),
                         )
                     }
                 }
