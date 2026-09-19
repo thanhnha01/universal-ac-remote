@@ -110,11 +110,14 @@ fun RemoteApp(diagnostics: IrHardwareDiagnostics, store: SavedRemotesViewModel =
     val nav = rememberNavController()
     val home by store.state.collectAsState()
     val catalog by store.catalog.collectAsState()
+    val scanCandidates by store.scanCandidates.collectAsState()
 
     fun navigateTab(route: String) {
-        val resolvedRoute = if (route == "remote") {
-            home.remotes.firstOrNull()?.let { "remote/${it.id}" } ?: "add"
-        } else route
+        val resolvedRoute = when (route) {
+            "remote" -> home.remotes.firstOrNull()?.let { "remote/${it.id}" } ?: "add"
+            "scan" -> if (scanCandidates.isEmpty()) "add" else "scan"
+            else -> route
+        }
         nav.navigate(resolvedRoute) {
             popUpTo("home") { saveState = true }
             launchSingleTop = true
