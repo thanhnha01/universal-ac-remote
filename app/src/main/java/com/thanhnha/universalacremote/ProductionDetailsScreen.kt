@@ -46,8 +46,6 @@ fun ProductionDetailsScreen(
     var deleteOpen by remember { mutableStateOf(false) }
     var newName by remember(remote.id, remote.displayName) { mutableStateOf(remote.displayName) }
     val imported = remote.importedCommandsJson.isNotBlank()
-    val transmittable = imported ||
-        (candidate != null && com.thanhnha.universalacremote.ir.CatalogTransmitter.supports(candidate))
     val verification = remote.verificationState(candidate)
 
     AppScaffold(selectedRoute = null, onNavigate = {}, bottomBar = false) { padding ->
@@ -115,14 +113,15 @@ fun ProductionDetailsScreen(
                 )
             } else {
                 SectionTitle("Chức năng đã xác minh")
-                if (remote.verifiedCapabilities.isEmpty()) {
+                val verifiedChecks = remote.verifiedChecksSet()
+                if (verifiedChecks.isEmpty()) {
                     EmptyState(
                         "Chưa có chức năng được xác minh",
                         "Bạn có thể kiểm tra lại remote để xác nhận từng chức năng.",
                         Icons.Filled.Tune,
                     )
                 } else {
-                    remote.verifiedChecksSet().forEach { check ->
+                    verifiedChecks.forEach { check ->
                         CapabilityRow(
                             title = detailCheckLabel(check),
                             detail = "Đã xác nhận trên máy lạnh",
