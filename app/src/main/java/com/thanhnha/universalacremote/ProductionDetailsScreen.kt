@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AcUnit
 import androidx.compose.material.icons.filled.Air
@@ -48,7 +47,7 @@ fun ProductionDetailsScreen(
     var newName by remember(remote.id, remote.displayName) { mutableStateOf(remote.displayName) }
     val transmittable = remote.importedCommandsJson.isNotBlank() ||
         (candidate != null && com.thanhnha.universalacremote.ir.CatalogTransmitter.supports(candidate))
-    val verified = verified && transmittable
+    val verified = remote.verifiedCapabilities.isNotEmpty() && transmittable
 
     AppScaffold(selectedRoute = null, onNavigate = {}, bottomBar = false) { padding ->
         PageColumn(padding) {
