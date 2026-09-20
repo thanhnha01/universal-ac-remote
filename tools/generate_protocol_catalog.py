@@ -26,7 +26,7 @@ def text(value: str) -> str:
 
 
 def main() -> None:
-    source = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "docs/SupportedProtocols.upstream.md"
+    source = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "data/upstreams/snapshots/irremoteesp8266/SupportedProtocols.md"
     output = Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "docs/PROTOCOL_CATALOG.md"
     protocol_rows: dict[str, dict[str, set[str]]] = defaultdict(lambda: {"brands": set(), "models": set(), "ac_models": set()})
     detailed_ids: set[str] = set()
