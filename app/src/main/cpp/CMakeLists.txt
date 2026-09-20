@@ -33,7 +33,10 @@ target_compile_definitions(irremote_ac_protocols PRIVATE
     SEND_MITSUBISHI_AC=1
     SEND_SAMSUNG_AC=1)
 target_compile_options(irremote_ac_protocols PRIVATE -ffunction-sections -fdata-sections -include Arduino.h)
-target_link_options(irremote_ac_protocols PRIVATE -Wl,--gc-sections)
+target_link_options(irremote_ac_protocols PRIVATE
+    -Wl,--gc-sections
+    -Wl,-z,max-page-size=16384
+    -Wl,-z,common-page-size=16384)
 
 find_library(android_log log)
 find_library(cxx_shared c++_shared REQUIRED)
