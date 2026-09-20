@@ -296,8 +296,8 @@ private data class AppNavDestination(
 
 private val appNavDestinations = listOf(
     AppNavDestination("home", "Trang chủ", Icons.Outlined.Home),
-    AppNavDestination("remote", "Remote", Icons.Outlined.AcUnit),
-    AppNavDestination("scan", "Dò mã", Icons.Outlined.Radio),
+    AppNavDestination("remote", "Thiết bị", Icons.Outlined.AcUnit),
+    AppNavDestination("scan", "Khám phá", Icons.Outlined.Radio),
     AppNavDestination("settings", "Cài đặt", Icons.Outlined.Settings),
 )
 
