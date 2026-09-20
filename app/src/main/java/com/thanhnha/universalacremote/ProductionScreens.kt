@@ -575,23 +575,7 @@ fun ProductionAddScreen(
                 }
 
                 selectedBrand != null -> {
-                    resumableBrand?.let { brand ->
-                    InfoBanner(
-                        "Có phiên dò $brand chưa hoàn tất.",
-                        Icons.Filled.Refresh,
-                        AppColors.blue,
-                        AppColors.paleBlue,
-                    )
-                    PrimaryButton(
-                        "Tiếp tục dò $brand",
-                        Modifier.fillMaxWidth(),
-                        Icons.Filled.PlayArrow,
-                    ) {
-                        store.beginScan(RemoteQuery(brand = brand))
-                    }
-                }
-
-                SurfaceCard(Modifier.fillMaxWidth(), SoftHeroGradient) {
+                    SurfaceCard(Modifier.fillMaxWidth(), SoftHeroGradient) {
                         Row(
                             Modifier.padding(18.dp),
                             verticalAlignment = Alignment.CenterVertically,
