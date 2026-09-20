@@ -12,7 +12,9 @@ class AndroidIrTransmitter(
         check(irManager.hasIrEmitter()) { "This device does not report an IR emitter." }
 
         val supportedRanges = irManager.carrierFrequencies.orEmpty()
-        check(supportedRanges.any { transmission.carrierFrequencyHz in it.minFrequency..it.maxFrequency }) {
+        check(supportedRanges.isEmpty() || supportedRanges.any {
+            transmission.carrierFrequencyHz in it.minFrequency..it.maxFrequency
+        }) {
             "Carrier frequency ${transmission.carrierFrequencyHz} Hz is outside the device's reported ranges."
         }
 

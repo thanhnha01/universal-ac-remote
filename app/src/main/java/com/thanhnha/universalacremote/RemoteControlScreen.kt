@@ -234,6 +234,15 @@ fun RemoteControlScreen(
                     onSuccess = {
                         power = true
                         hasSentState = true
+                        val sentState = safeState?.copy(power = true) ?: AcState(
+                            power = true,
+                            temperatureCelsius = temperature,
+                            mode = selectedMode(mode) ?: AcMode.COOL,
+                            fan = selectedFan(fan) ?: AcFan.AUTO,
+                            swingVertical = swingVertical,
+                            swingHorizontal = swingHorizontal,
+                        )
+                        store.updateLastSentState(remote.id, sentState)
                         feedback = "Đã gửi lệnh bật."
                         feedbackError = false
                         true
