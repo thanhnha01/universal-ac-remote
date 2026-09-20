@@ -45,3 +45,11 @@ private fun seriesName(candidate: RemoteCandidate): String {
         .takeIf(String::isNotBlank)
     return prefix?.let { "Dòng $it" } ?: "Các model khác"
 }
+
+
+internal fun sourceDisplayLabel(candidate: RemoteCandidate): String = when (candidate.source?.lowercase()) {
+    "irremoteesp8266" -> "IRremoteESP8266"
+    "smartir" -> "SmartIR"
+    "flipper-irdb" -> "Flipper IRDB"
+    else -> candidate.source.orEmpty()
+}
