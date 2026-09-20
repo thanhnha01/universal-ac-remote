@@ -1228,6 +1228,7 @@ fun ProductionScannerScreen(
 fun ProductionSettingsScreen(
     diagnostics: IrHardwareDiagnostics,
     catalog: CatalogUiState,
+    store: SavedRemotesViewModel,
     onTab: (String) -> Unit,
     openDiagnostics: () -> Unit,
     openImport: () -> Unit,
@@ -1274,6 +1275,26 @@ fun ProductionSettingsScreen(
                         }
                     }
                     UpdatePanel()
+                }
+            }
+
+            SectionTitle("Sao lưu dữ liệu")
+            SurfaceCard(Modifier.fillMaxWidth()) {
+                Column(
+                    Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Text(
+                        "Remote, phòng, yêu thích và trạng thái lần cuối đã gửi",
+                        fontWeight = FontWeight.ExtraBold,
+                        color = AppColors.navy,
+                    )
+                    Text(
+                        "Backup được lưu thành file JSON trên thiết bị. Khôi phục sẽ thay thế danh sách remote hiện tại.",
+                        color = AppColors.navySoft,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    BackupPanel(store)
                 }
             }
 
