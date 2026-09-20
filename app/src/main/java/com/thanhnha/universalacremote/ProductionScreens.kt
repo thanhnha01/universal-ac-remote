@@ -40,7 +40,6 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.outlined.AcUnit
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.Radio
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
