@@ -2,7 +2,7 @@
 """Generate the pinned upstream Detailed A/C catalog and generic-readiness report.
 
 Usage: python tools/generate_protocol_catalog.py [SupportedProtocols.md] [output.md]
-The default input is the reviewed snapshot in docs/SupportedProtocols.upstream.md.
+The default input is the reviewed snapshot in data/upstreams/snapshots/irremoteesp8266/SupportedProtocols.md.
 This tool intentionally reports candidates; it never enables an unreviewed sender.
 """
 from __future__ import annotations
@@ -26,7 +26,7 @@ def text(value: str) -> str:
 
 
 def main() -> None:
-    source = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "docs/SupportedProtocols.upstream.md"
+    source = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "data/upstreams/snapshots/irremoteesp8266/SupportedProtocols.md"
     output = Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "docs/PROTOCOL_CATALOG.md"
     protocol_rows: dict[str, dict[str, set[str]]] = defaultdict(lambda: {"brands": set(), "models": set(), "ac_models": set()})
     detailed_ids: set[str] = set()
