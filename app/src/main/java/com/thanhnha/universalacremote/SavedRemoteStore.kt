@@ -46,6 +46,7 @@ data class SavedRemote(
     @ColumnInfo(defaultValue = "''") val roomName: String = "",
     @ColumnInfo(defaultValue = "0") val favorite: Boolean = false,
     @ColumnInfo(defaultValue = "0") val lastUsedAtEpochMs: Long = 0L,
+    @ColumnInfo(defaultValue = "''") val lastSentStateJson: String = "",
 )
 
 class SavedRemoteConverters {
@@ -92,11 +93,14 @@ interface SavedRemoteDao {
     @Query("UPDATE saved_remotes SET lastUsedAtEpochMs = :lastUsedAtEpochMs WHERE id = :id")
     suspend fun markUsed(id: String, lastUsedAtEpochMs: Long)
 
+    @Query("UPDATE saved_remotes SET lastSentStateJson = :stateJson WHERE id = :id")
+    suspend fun updateLastSentState(id: String, stateJson: String)
+
     @Query("DELETE FROM saved_remotes WHERE id = :id")
     suspend fun delete(id: String)
 }
 
-@Database(entities = [SavedRemote::class], version = 3, exportSchema = false)
+@Database(entities = [SavedRemote::class], version = 4, exportSchema = false)
 @TypeConverters(SavedRemoteConverters::class)
 abstract class SavedRemoteDatabase : RoomDatabase() {
     abstract fun savedRemoteDao(): SavedRemoteDao
@@ -116,6 +120,11 @@ abstract class SavedRemoteDatabase : RoomDatabase() {
                             db.execSQL("ALTER TABLE saved_remotes ADD COLUMN roomName TEXT NOT NULL DEFAULT ''")
                             db.execSQL("ALTER TABLE saved_remotes ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0")
                             db.execSQL("ALTER TABLE saved_remotes ADD COLUMN lastUsedAtEpochMs INTEGER NOT NULL DEFAULT 0")
+                        }
+                    },
+                    object : androidx.room.migration.Migration(3, 4) {
+                        override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                            db.execSQL("ALTER TABLE saved_remotes ADD COLUMN lastSentStateJson TEXT NOT NULL DEFAULT ''")
                         }
                     },
                 )
@@ -283,9 +292,36 @@ class SavedRemotesViewModel(application: Application) : AndroidViewModel(applica
     fun markUsed(id: String, atEpochMs: Long = System.currentTimeMillis()) = viewModelScope.launch {
         dao.markUsed(id, atEpochMs)
     }
+    fun updateLastSentState(id: String, state: com.thanhnha.universalacremote.ir.AcState) = viewModelScope.launch {
+        dao.updateLastSentState(id, encodeLastSentState(state))
+    }
     fun delete(id: String) = viewModelScope.launch { dao.delete(id) }
 }
 
 private fun RemoteCandidate.verifiedScannerCapabilityCount(): Int =
     runCatching { com.thanhnha.universalacremote.ir.RemoteControls.from(this).verificationRequirements().size }
         .getOrDefault(0)
+
+
+fun encodeLastSentState(state: com.thanhnha.universalacremote.ir.AcState): String =
+    JSONObject()
+        .put("power", state.power)
+        .put("temperatureCelsius", state.temperatureCelsius)
+        .put("mode", state.mode.name)
+        .put("fan", state.fan.name)
+        .put("swingVertical", state.swingVertical)
+        .put("swingHorizontal", state.swingHorizontal)
+        .toString()
+
+fun decodeLastSentState(value: String): com.thanhnha.universalacremote.ir.AcState? = runCatching {
+    if (value.isBlank()) return@runCatching null
+    val json = JSONObject(value)
+    com.thanhnha.universalacremote.ir.AcState(
+        power = json.getBoolean("power"),
+        temperatureCelsius = json.getInt("temperatureCelsius"),
+        mode = com.thanhnha.universalacremote.ir.AcMode.valueOf(json.getString("mode")),
+        fan = com.thanhnha.universalacremote.ir.AcFan.valueOf(json.getString("fan")),
+        swingVertical = json.optBoolean("swingVertical", false),
+        swingHorizontal = json.optBoolean("swingHorizontal", false),
+    )
+}.getOrNull()
