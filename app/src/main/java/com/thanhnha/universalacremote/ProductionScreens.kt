@@ -770,11 +770,15 @@ fun ProductionScannerScreen(
     onImport: () -> Unit,
 ) {
     val context = LocalContext.current
+    val sessionStore = remember(context) { ScannerSessionStore(context) }
     val candidates by store.scanCandidates.collectAsState()
     val scannerBrands by store.scannerBrands.collectAsState()
     val candidateKey = candidates.joinToString("|") { it.id }
+    val persistedSession = remember(candidateKey) {
+        sessionStore.load(candidates.map(RemoteCandidate::id).toSet())
+    }
     var refresh by remember { mutableIntStateOf(0) }
-    var scanStarted by remember(candidateKey) { mutableStateOf(false) }
+    var scanStarted by remember(candidateKey) { mutableStateOf(persistedSession != null && candidates.isNotEmpty()) }
     var pendingCheck by remember { mutableStateOf<VerificationCheck?>(null) }
     var machineName by remember { mutableStateOf("") }
     var entryBrand by remember(candidateKey) { mutableStateOf<String?>(null) }
@@ -785,6 +789,8 @@ fun ProductionScannerScreen(
     val scanner = remember(candidateKey) {
         UniversalAcScanner(candidates) { candidate ->
             AndroidIrTransmitter.from(context).transmit(CatalogTransmitter.encodeSafeProbe(candidate))
+        }.also { active ->
+            persistedSession?.second?.let(active::restore)
         }
     }
 
@@ -805,10 +811,27 @@ fun ProductionScannerScreen(
             )
 
             if (candidates.isEmpty()) {
+                val resumableBrand = sessionStore.load(emptySet())?.first
                 val matchingBrands = scannerBrands.filter {
                     brandFilter.isBlank() || it.contains(brandFilter.trim(), ignoreCase = true)
                 }
                 val visibleBrands = matchingBrands.take(24)
+
+                resumableBrand?.let { brand ->
+                    InfoBanner(
+                        "Có phiên dò $brand chưa hoàn tất.",
+                        Icons.Filled.Refresh,
+                        AppColors.blue,
+                        AppColors.paleBlue,
+                    )
+                    PrimaryButton(
+                        "Tiếp tục dò $brand",
+                        Modifier.fillMaxWidth(),
+                        Icons.Filled.PlayArrow,
+                    ) {
+                        store.beginScan(RemoteQuery(brand = brand))
+                    }
+                }
 
                 SurfaceCard(Modifier.fillMaxWidth(), SoftHeroGradient) {
                     Column(
@@ -898,6 +921,7 @@ fun ProductionScannerScreen(
                                 Modifier.fillMaxWidth(),
                                 Icons.Filled.PlayArrow,
                             ) {
+                                sessionStore.clear()
                                 store.beginScan(RemoteQuery(brand = brand))
                             }
                         }
@@ -916,7 +940,10 @@ fun ProductionScannerScreen(
             ScannerBrandHero(
                 brand = current?.brand.orEmpty(),
                 model = current?.compactDisplayModelLabel().orEmpty(),
-                onChangeBrand = onChangeBrand,
+                onChangeBrand = {
+                    sessionStore.clear()
+                    onChangeBrand()
+                },
             )
 
             if (!scanStarted && scanner.state == ScanState.READY) {
@@ -937,6 +964,7 @@ fun ProductionScannerScreen(
                         )
                         PrimaryButton("Bắt đầu dò", Modifier.fillMaxWidth(), Icons.Filled.PlayArrow) {
                             scanStarted = true
+                            sessionStore.save(current?.brand, scanner.snapshot())
                         }
                     }
                 }
@@ -1027,12 +1055,18 @@ fun ProductionScannerScreen(
                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 PrimaryButton("Có phản ứng", Modifier.weight(1f), Icons.Filled.Check) {
                                     scanner.reportReaction()
+                                    sessionStore.save(current?.brand, scanner.snapshot())
                                     pendingCheck = null
                                     message = "Đã giữ mã này. Tiếp tục kiểm tra từng chức năng."
                                     refresh++
                                 }
                                 SecondaryButton("Không", Modifier.weight(1f), Icons.Filled.Close) {
                                     scanner.reportNoReaction()
+                                    if (scanner.state == ScanState.COMPLETE) {
+                                        sessionStore.clear()
+                                    } else {
+                                        sessionStore.save(current?.brand, scanner.snapshot())
+                                    }
                                     message = if (scanner.state == ScanState.COMPLETE) "Đã thử hết mã điều khiển." else "Chuyển sang mã tiếp theo."
                                     refresh++
                                 }
@@ -1068,6 +1102,7 @@ fun ProductionScannerScreen(
                             onPass = {
                                 val selected = scanner.selected
                                 scanner.recordVerification(nextCheck, supported = true)
+                                sessionStore.save(current?.brand, scanner.snapshot())
                                 pendingCheck = null
                                 if (nextCheck == VerificationCheck.POWER && selected != null) {
                                     val restored = runCatching {
@@ -1083,11 +1118,13 @@ fun ProductionScannerScreen(
                             },
                             onFail = {
                                 scanner.recordVerification(nextCheck, supported = false)
+                                sessionStore.save(current?.brand, scanner.snapshot())
                                 pendingCheck = null
                                 refresh++
                             },
                             onSkip = {
                                 scanner.skipVerification(nextCheck)
+                                sessionStore.save(current?.brand, scanner.snapshot())
                                 pendingCheck = null
                                 refresh++
                             },
@@ -1095,6 +1132,7 @@ fun ProductionScannerScreen(
                     } else {
                         PrimaryButton("Xem kết quả", Modifier.fillMaxWidth(), Icons.Filled.CheckCircle) {
                             scanner.finishVerification()
+                            sessionStore.save(current?.brand, scanner.snapshot())
                             refresh++
                         }
                     }
@@ -1136,11 +1174,13 @@ fun ProductionScannerScreen(
                                                 verifiedCapabilities = scanner.verifiedCapabilities.map { it.name },
                                             )
                                         )
+                                        sessionStore.clear()
                                         onDone()
                                     }
                                     if (scanner.cursor + 1 < candidates.size) {
                                         SecondaryButton("Thử mã khác", Modifier.fillMaxWidth(), Icons.Filled.Refresh) {
                                             scanner.continueAfterResult()
+                                            sessionStore.save(current?.brand, scanner.snapshot())
                                             pendingCheck = null
                                             message = ""
                                             refresh++
@@ -1148,7 +1188,10 @@ fun ProductionScannerScreen(
                                     }
                                 }
                                 else -> {
-                                    SecondaryButton("Chọn hãng khác", Modifier.fillMaxWidth(), Icons.Filled.Refresh, onClick = onChangeBrand)
+                                    SecondaryButton("Chọn hãng khác", Modifier.fillMaxWidth(), Icons.Filled.Refresh) {
+                                        sessionStore.clear()
+                                        onChangeBrand()
+                                    }
                                 }
                             }
                         }
