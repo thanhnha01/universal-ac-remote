@@ -77,16 +77,16 @@ def base_profile(*, source: str, sha: str, path: str, source_id: str,
 def parse_protocol_registry(text: str, state_text: str | None = None) -> list[dict]:
     """Read the reviewed app allowlist used by both native encoding and catalog import."""
     state_text = state_text if state_text is not None else STATE.read_text(encoding="utf-8")
-    mode_match = re.search(r"enum class AcMode[^\\{]*\\{([^}]+)\\}", state_text)
-    fan_match = re.search(r"enum class AcFan[^\\{]*\\{([^}]+)\\}", state_text)
+    mode_match = re.search(r"enum class AcMode[^\{]*\{([^}]+)\}", state_text)
+    fan_match = re.search(r"enum class AcFan[^\{]*\{([^}]+)\}", state_text)
     if not mode_match or not fan_match:
         raise ValueError("Could not read AcMode/AcFan registry enums")
-    modes = [v.lower() for v in re.findall(r"\\b([A-Z][A-Z0-9_]*)\\s*\\(", mode_match.group(1))]
-    fans = ["low" if v == "min" else v.lower() for v in re.findall(r"\\b([A-Z][A-Z0-9_]*)\\s*\\(", fan_match.group(1))]
+    modes = [v.lower() for v in re.findall(r"\b([A-Z][A-Z0-9_]*)\s*\(", mode_match.group(1))]
+    fans = ["low" if v == "min" else v.lower() for v in re.findall(r"\b([A-Z][A-Z0-9_]*)\s*\(", fan_match.group(1))]
     pattern = re.compile(
-        r'ProtocolDefinition\\("([^"]+)",\\s*"([^"]+)",\\s*"([^"]+)",\\s*"([^"]+)",\\s*'
-        r'(null|"[^"]+")?,\\s*(setOf\\([^)]*\\)|emptySet\\(\\)),\\s*(\\d+),\\s*(\\d+),\\s*'
-        r'commonModes,\\s*commonFans,\\s*(true|false),\\s*(true|false)\\)'
+        r'ProtocolDefinition\("([^"]+)",\s*"([^"]+)",\s*"([^"]+)",\s*"([^"]+)",\s*'
+        r'(null|"[^"]+")?,\s*(setOf\([^)]*\)|emptySet\(\)),\s*(\d+),\s*(\d+),\s*'
+        r'commonModes,\s*commonFans,\s*(true|false),\s*(true|false)\)'
     )
     definitions = []
     for match in pattern.finditer(text):
@@ -150,8 +150,8 @@ def parse_irremote_registry(text: str, sha: str = PINNED_IRREMOTE_SHA, state_tex
 
 
 def _irremote_text(value: str) -> str:
-    value = re.sub(r"\\[([^]]+)\\]\\([^)]*\\)", r"\\1", value)
-    value = re.sub(r"\\*\\*", "", value)
+    value = re.sub(r"\[([^]]+)\]\([^)]*\)", r"\1", value)
+    value = re.sub(r"\*\*", "", value)
     return html.unescape(value).strip()
 
 
@@ -160,20 +160,20 @@ def _irremote_family_key(upstream_protocol: str) -> str:
 
 
 def _supported_send_ids(text: str) -> set[str]:
-    section = re.search(r"## Send & decodable protocols:\\s*\\n(.*?)(?=\\n## |\\Z)", text, re.S)
+    section = re.search(r"## Send & decodable protocols:\s*\n(.*?)(?=\n## |\Z)", text, re.S)
     if not section:
         raise ValueError("Could not locate IRremoteESP8266 send protocol inventory")
     return set(re.findall(r"^- ([A-Z0-9_]+)$", section.group(1), re.M))
 
 
 def _annotation_protocol_ids(device_text: str, send_ids: set[str]) -> list[str]:
-    annotations = " ".join(re.findall(r"\\(([^)]*)\\)", device_text))
-    tokens = re.findall(r"\\b[A-Z][A-Z0-9_]+\\b", annotations)
+    annotations = " ".join(re.findall(r"\(([^)]*)\)", device_text))
+    tokens = re.findall(r"\b[A-Z][A-Z0-9_]+\b", annotations)
     return [token for token in tokens if token in send_ids]
 
 
 def _model_variant(device_text: str, definition: dict) -> str | None:
-    annotations = " ".join(re.findall(r"\\(([^)]*)\\)", device_text))
+    annotations = " ".join(re.findall(r"\(([^)]*)\)", device_text))
     for model in sorted(definition["modelIds"], key=len, reverse=True):
         if re.search(rf"(?<![A-Za-z0-9]){re.escape(model)}(?![A-Za-z0-9])", annotations, re.I):
             return model
@@ -185,14 +185,14 @@ def _has_unknown_explicit_variant(device_text: str, definition: dict) -> bool:
     if not definition["modelIds"]:
         return False
     upstream = definition["upstreamProtocol"]
-    for annotation in re.findall(r"\\(([^)]*)\\)", device_text):
+    for annotation in re.findall(r"\(([^)]*)\)", device_text):
         if not re.search(rf"(?<![A-Z0-9_]){re.escape(upstream)}(?![A-Z0-9_])", annotation):
             continue
         if any(re.search(rf"(?<![A-Za-z0-9]){re.escape(model)}(?![A-Za-z0-9])", annotation, re.I)
                for model in definition["modelIds"]):
             return False
         remainder = re.sub(rf"(?<![A-Z0-9_]){re.escape(upstream)}(?![A-Z0-9_])", "", annotation)
-        remainder = re.sub(r"^[\\s\\-:/]+|[\\s\\-:/]+$", "", remainder)
+        remainder = re.sub(r"^[\s\-:/]+|[\s\-:/]+$", "", remainder)
         if re.search(r"[A-Za-z]", remainder):
             return True
     return False
@@ -202,17 +202,17 @@ def _clean_irremote_device_label(device_text: str, definition: dict, send_ids: s
     model_ids = set(definition["modelIds"])
     def keep_or_drop(match: re.Match[str]) -> str:
         inner = match.group(1)
-        tokens = set(re.findall(r"\\b[A-Z][A-Z0-9_]+\\b", inner))
+        tokens = set(re.findall(r"\b[A-Z][A-Z0-9_]+\b", inner))
         if tokens & send_ids:
             return ""
         if any(re.search(rf"(?<![A-Za-z0-9]){re.escape(model)}(?![A-Za-z0-9])", inner, re.I)
                for model in model_ids):
             return ""
         return match.group(0)
-    label = re.sub(r"\\(([^)]*)\\)", keep_or_drop, device_text)
-    label = re.sub(r"\\bremote\\b", "", label, flags=re.I)
-    label = re.sub(r"\\bA/C\\b", "", label, flags=re.I)
-    label = re.sub(r"\\s{2,}", " ", label).strip(" -;/")
+    label = re.sub(r"\(([^)]*)\)", keep_or_drop, device_text)
+    label = re.sub(r"\bremote\b", "", label, flags=re.I)
+    label = re.sub(r"\bA/C\b", "", label, flags=re.I)
+    label = re.sub(r"\s{2,}", " ", label).strip(" -;/")
     return label
 
 
@@ -245,11 +245,11 @@ def parse_irremote_supported_protocols(
         brand = _irremote_text(brand_raw)
         fallback = family_map.get(normalize_brand(family))
 
-        for raw_item in re.split(r"<BR\\s*/?>", models_raw, flags=re.I):
+        for raw_item in re.split(r"<BR\s*/?>", models_raw, flags=re.I):
             device_text = _irremote_text(raw_item)
             if not device_text:
                 continue
-            if re.search(r"\\b(projector|\\bTV\\b|stand fan|soundbar|blu-?ray|transmitter IC|cooker hood|toilet)\\b",
+            if re.search(r"\b(projector|\bTV\b|stand fan|soundbar|blu-?ray|transmitter IC|cooker hood|toilet)\b",
                          device_text, re.I):
                 continue
 
@@ -265,7 +265,7 @@ def parse_irremote_supported_protocols(
             label = _clean_irremote_device_label(device_text, definition, send_ids)
             if not label:
                 continue
-            is_remote = re.search(r"\\bremote\\b", device_text, re.I) is not None
+            is_remote = re.search(r"\bremote\b", device_text, re.I) is not None
             identity = "|".join([
                 family, brand, label, definition["upstreamProtocol"], variant or "", "remote" if is_remote else "ac"
             ])
