@@ -8,13 +8,15 @@ This tool intentionally reports candidates; it never enables an unreviewed sende
 from __future__ import annotations
 
 import html
+import json
 import re
 import sys
 from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PIN = "1e2f0f3ef0a93cbf2a8ddb2e95130f8f4c584b3f"
+LOCK = json.loads((ROOT / "upstream-lock.json").read_text(encoding="utf-8"))
+PIN = next(source["commitSha"] for source in LOCK["sources"] if source["name"] == "irremoteesp8266")
 REGISTRY = ROOT / "app/src/main/java/com/thanhnha/universalacremote/ir/ProtocolRegistry.kt"
 IRAC = ROOT / "app/src/main/cpp/upstream/IRac.cpp"
 
