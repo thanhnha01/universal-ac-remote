@@ -833,6 +833,22 @@ fun ProductionScannerScreen(
                 }
                 val visibleBrands = matchingBrands.take(24)
 
+                resumableBrand?.let { brand ->
+                    InfoBanner(
+                        "Có phiên dò $brand chưa hoàn tất.",
+                        Icons.Filled.Refresh,
+                        AppColors.blue,
+                        AppColors.paleBlue,
+                    )
+                    PrimaryButton(
+                        "Tiếp tục dò $brand",
+                        Modifier.fillMaxWidth(),
+                        Icons.Filled.PlayArrow,
+                    ) {
+                        store.beginScan(RemoteQuery(brand = brand))
+                    }
+                }
+
                 SurfaceCard(Modifier.fillMaxWidth(), SoftHeroGradient) {
                     Column(
                         Modifier.padding(18.dp),
@@ -940,7 +956,10 @@ fun ProductionScannerScreen(
             ScannerBrandHero(
                 brand = current?.brand.orEmpty(),
                 model = current?.compactDisplayModelLabel().orEmpty(),
-                onChangeBrand = onChangeBrand,
+                onChangeBrand = {
+                    sessionStore.clear()
+                    onChangeBrand()
+                },
             )
 
             if (!scanStarted && scanner.state == ScanState.READY) {
@@ -1059,7 +1078,11 @@ fun ProductionScannerScreen(
                                 }
                                 SecondaryButton("Không", Modifier.weight(1f), Icons.Filled.Close) {
                                     scanner.reportNoReaction()
-                                    sessionStore.save(current?.brand, scanner.snapshot())
+                                    if (scanner.state == ScanState.COMPLETE) {
+                                        sessionStore.clear()
+                                    } else {
+                                        sessionStore.save(current?.brand, scanner.snapshot())
+                                    }
                                     message = if (scanner.state == ScanState.COMPLETE) "Đã thử hết mã điều khiển." else "Chuyển sang mã tiếp theo."
                                     refresh++
                                 }
@@ -1181,7 +1204,10 @@ fun ProductionScannerScreen(
                                     }
                                 }
                                 else -> {
-                                    SecondaryButton("Chọn hãng khác", Modifier.fillMaxWidth(), Icons.Filled.Refresh, onClick = onChangeBrand)
+                                    SecondaryButton("Chọn hãng khác", Modifier.fillMaxWidth(), Icons.Filled.Refresh) {
+                                        sessionStore.clear()
+                                        onChangeBrand()
+                                    }
                                 }
                             }
                         }
