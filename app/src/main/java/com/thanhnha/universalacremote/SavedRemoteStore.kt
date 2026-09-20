@@ -15,6 +15,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
+import androidx.room.Transaction
 import com.thanhnha.universalacremote.ir.CatalogTransmitter
 import com.thanhnha.universalacremote.ir.RemoteCandidate
 import com.thanhnha.universalacremote.ir.RemoteQuery
@@ -81,6 +82,9 @@ interface SavedRemoteDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun save(remote: SavedRemote)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun saveAll(remotes: List<SavedRemote>)
+
     @Query("UPDATE saved_remotes SET displayName = :name WHERE id = :id")
     suspend fun rename(id: String, name: String)
 
@@ -98,6 +102,15 @@ interface SavedRemoteDao {
 
     @Query("DELETE FROM saved_remotes WHERE id = :id")
     suspend fun delete(id: String)
+
+    @Query("DELETE FROM saved_remotes")
+    suspend fun deleteAll()
+
+    @Transaction
+    suspend fun replaceAll(remotes: List<SavedRemote>) {
+        deleteAll()
+        saveAll(remotes)
+    }
 }
 
 @Database(entities = [SavedRemote::class], version = 4, exportSchema = false)
@@ -294,6 +307,9 @@ class SavedRemotesViewModel(application: Application) : AndroidViewModel(applica
     }
     fun updateLastSentState(id: String, state: com.thanhnha.universalacremote.ir.AcState) = viewModelScope.launch {
         dao.updateLastSentState(id, encodeLastSentState(state))
+    }
+    fun restoreBackup(bundle: BackupBundle) = viewModelScope.launch {
+        dao.replaceAll(bundle.remotes)
     }
     fun delete(id: String) = viewModelScope.launch { dao.delete(id) }
 }
