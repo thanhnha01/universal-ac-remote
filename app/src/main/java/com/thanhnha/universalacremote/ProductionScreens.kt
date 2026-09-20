@@ -640,7 +640,10 @@ fun ProductionAddScreen(
                                                     overflow = TextOverflow.Ellipsis,
                                                 )
                                                 Text(
-                                                    candidate.remoteModel?.let { "Remote " + it } ?: "Profile điều khiển",
+                                                    buildList {
+                                                        candidate.remoteModel?.let { add("Remote " + it) }
+                                                        sourceDisplayLabel(candidate).takeIf(String::isNotBlank)?.let(::add)
+                                                    }.joinToString(" • ").ifBlank { "Profile điều khiển" },
                                                     color = AppColors.navySoft,
                                                     style = MaterialTheme.typography.bodySmall,
                                                     maxLines = 1,
@@ -1533,16 +1536,21 @@ private fun UserProfileCard(candidate: RemoteCandidate, onClick: () -> Unit) {
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-                candidate.remoteModel?.takeIf(String::isNotBlank)?.let {
-                    Text(
-                        "Remote $it",
-                        color = AppColors.navySoft,
-                        style = MaterialTheme.typography.bodySmall,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                StatusChip("Sẵn sàng thử", Icons.Filled.SignalCellularAlt)
+                Text(
+                    buildList {
+                        candidate.remoteModel?.takeIf(String::isNotBlank)?.let { add("Remote $it") }
+                        sourceDisplayLabel(candidate).takeIf(String::isNotBlank)?.let(::add)
+                        candidate.protocolId?.takeIf(String::isNotBlank)?.let { add(it) }
+                    }.joinToString(" • "),
+                    color = AppColors.navySoft,
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                StatusChip(
+                    if (candidate.source.equals("irremoteesp8266", true)) "IRremoteESP8266 · Sẵn sàng thử" else "Sẵn sàng thử",
+                    Icons.Filled.SignalCellularAlt,
+                )
             }
             Icon(Icons.Filled.ArrowForward, null, tint = AppColors.navySoft)
         }
