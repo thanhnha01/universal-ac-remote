@@ -258,9 +258,7 @@ class SavedRemotesViewModel(application: Application) : AndroidViewModel(applica
     fun canTransmit(candidate: RemoteCandidate): Boolean = candidate.id in scannerCapableIds
 
     fun browseBrand(brand: String) {
-        mutableBrandProfiles.value = resolver?.brandCandidates(brand)
-            .orEmpty()
-            .filter(::canTransmit)
+        mutableBrandProfiles.value = resolver?.brandCandidates(brand).orEmpty()
     }
 
     fun clearBrandBrowse() {

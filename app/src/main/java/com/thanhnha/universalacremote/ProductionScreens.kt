@@ -518,7 +518,7 @@ fun ProductionAddScreen(
         store.browseBrand(brand)
     }
 
-    val usableResults = search.results.filter(store::canTransmit)
+    val visibleResults = search.results
     val sections = remember(allBrands) { brandSections(allBrands) }
     val visibleBrands = remember(sections, selectedLetter) {
         sections.firstOrNull { it.letter == selectedLetter }?.brands.orEmpty()
@@ -557,17 +557,20 @@ fun ProductionAddScreen(
                         }
                     } else {
                         SectionTitle("Kết quả phù hợp")
-                        if (usableResults.isEmpty()) {
+                        if (visibleResults.isEmpty()) {
                             EmptyState(
                                 "Không tìm thấy mã phù hợp",
                                 "Thử tên hãng, model máy hoặc model remote khác.",
                                 Icons.Filled.Search,
                             )
                         } else {
-                            usableResults.take(20).forEach { candidate ->
-                                UserProfileCard(candidate) {
-                                    store.beginScan(selected = candidate)
-                                    navigate("scan")
+                            visibleResults.take(30).forEach { candidate ->
+                                val canTransmit = store.canTransmit(candidate)
+                                UserProfileCard(candidate, canTransmit) {
+                                    if (canTransmit) {
+                                        store.beginScan(selected = candidate)
+                                        navigate("scan")
+                                    }
                                 }
                             }
                         }
@@ -590,7 +593,13 @@ fun ProductionAddScreen(
                                     color = AppColors.navy,
                                 )
                                 Text(
-                                    brandProfiles.size.toString() + " profile có thể phát",
+                                    buildString {
+                                        val usable = brandProfiles.count(store::canTransmit)
+                                        append(usable)
+                                        append(" có thể phát")
+                                        val references = brandProfiles.size - usable
+                                        if (references > 0) append(" • ").append(references).append(" có trong thư viện")
+                                    },
                                     color = AppColors.navySoft,
                                 )
                             }
@@ -618,11 +627,12 @@ fun ProductionAddScreen(
                                         color = AppColors.navy,
                                     )
                                     group.profiles.take(8).forEach { candidate ->
+                                        val canTransmit = store.canTransmit(candidate)
                                         Row(
                                             Modifier
                                                 .fillMaxWidth()
                                                 .clip(RoundedCornerShape(18.dp))
-                                                .clickable {
+                                                .clickable(enabled = canTransmit) {
                                                     store.beginScan(selected = candidate)
                                                     navigate("scan")
                                                 }
@@ -640,7 +650,12 @@ fun ProductionAddScreen(
                                                     overflow = TextOverflow.Ellipsis,
                                                 )
                                                 Text(
-                                                    candidate.remoteModel?.let { "Remote " + it } ?: "Profile điều khiển",
+                                                    buildList {
+                                                        candidate.remoteModel?.let { add("Remote " + it) }
+                                                        sourceDisplayLabel(candidate).takeIf(String::isNotBlank)?.let(::add)
+                                                        candidate.protocolId?.takeIf(String::isNotBlank)?.let(::add)
+                                                        if (!canTransmit) add("Chưa hỗ trợ phát")
+                                                    }.joinToString(" • ").ifBlank { "Profile điều khiển" },
                                                     color = AppColors.navySoft,
                                                     style = MaterialTheme.typography.bodySmall,
                                                     maxLines = 1,
@@ -662,10 +677,12 @@ fun ProductionAddScreen(
                         }
                     }
 
+                    val hasTransmittable = brandProfiles.any(store::canTransmit)
                     PrimaryButton(
                         "Dò tất cả mã " + selectedBrand,
                         Modifier.fillMaxWidth(),
                         Icons.Filled.PlayArrow,
+                        enabled = hasTransmittable,
                     ) {
                         store.beginScan(RemoteQuery(brand = selectedBrand))
                         navigate("scan")
@@ -1507,11 +1524,11 @@ private fun BrandChoiceChip(brand: String, selected: Boolean, onClick: () -> Uni
 }
 
 @Composable
-private fun UserProfileCard(candidate: RemoteCandidate, onClick: () -> Unit) {
+private fun UserProfileCard(candidate: RemoteCandidate, enabled: Boolean = true, onClick: () -> Unit) {
     SurfaceCard(
         Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
     ) {
         Row(
             Modifier.padding(16.dp),
@@ -1533,16 +1550,26 @@ private fun UserProfileCard(candidate: RemoteCandidate, onClick: () -> Unit) {
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-                candidate.remoteModel?.takeIf(String::isNotBlank)?.let {
-                    Text(
-                        "Remote $it",
-                        color = AppColors.navySoft,
-                        style = MaterialTheme.typography.bodySmall,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                StatusChip("Sẵn sàng thử", Icons.Filled.SignalCellularAlt)
+                Text(
+                    buildList {
+                        candidate.remoteModel?.takeIf(String::isNotBlank)?.let { add("Remote $it") }
+                        sourceDisplayLabel(candidate).takeIf(String::isNotBlank)?.let(::add)
+                        candidate.protocolId?.takeIf(String::isNotBlank)?.let { add(it) }
+                    }.joinToString(" • "),
+                    color = AppColors.navySoft,
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                StatusChip(
+                    when {
+                        enabled && candidate.source.equals("irremoteesp8266", true) -> "IRremoteESP8266 · Sẵn sàng thử"
+                        enabled -> "Sẵn sàng thử"
+                        candidate.source.equals("irremoteesp8266", true) -> "IRremoteESP8266 · Chưa hỗ trợ phát"
+                        else -> "Chưa hỗ trợ phát"
+                    },
+                    if (enabled) Icons.Filled.SignalCellularAlt else Icons.Filled.Info,
+                )
             }
             Icon(Icons.Filled.ArrowForward, null, tint = AppColors.navySoft)
         }

@@ -22,6 +22,59 @@ class CatalogTests(unittest.TestCase):
         self.assertTrue(all(r["sourceCommitSha"] == SHA and r["sourcePath"].endswith("ProtocolRegistry.kt") for r in records))
         with self.assertRaises(ValueError): catalog.base_profile(source="x", sha="main", path="x", source_id="x", brand="X", ac_model=None, remote_model=None, protocol_id=None, variant=None, encoding="PROTOCOL", capabilities=[], temp=None, fans=[], modes=[], v_swing={"type":"NONE","positions":[]}, h_swing={"type":"NONE","positions":[]}, special=[], verification="candidate")
 
+    def test_irremote_supported_models_are_imported_for_enabled_protocols_only(self):
+        supported = """## Send & decodable protocols:
+- MIDEA
+- LG
+- LG2
+
+| Protocol | Brand | Models | A/C models | Detailed A/C Support |
+|---|---|---|---|---|
+| Midea | **[Midea](x)** | RG57H4(B)BGEF remote (MIDEA)<BR>MS12FU-18HRFN1 A/C (MIDEA) |  | Yes |
+| LG | **[LG](x)** | 6711AR2853M remote (LG - GE6711AR2853M)<BR>A4UW30GFA2 A/C (LG2 - AKB74955603) |  | Yes |
+"""
+        records = catalog.parse_irremote_supported_protocols(
+            supported,
+            catalog.REGISTRY.read_text(encoding="utf-8"),
+        )
+        by_label = {(record["acModel"], record["remoteModel"]): record for record in records}
+        self.assertIn((None, "RG57H4(B)BGEF"), by_label)
+        self.assertIn(("MS12FU-18HRFN1", None), by_label)
+        self.assertIn((None, "6711AR2853M"), by_label)
+        self.assertNotIn(("A4UW30GFA2", None), by_label)
+        self.assertEqual(by_label[(None, "RG57H4(B)BGEF")]["protocolId"], "MIDEA")
+        self.assertEqual(by_label[(None, "6711AR2853M")]["protocolId"], "LG")
+        self.assertEqual(by_label[(None, "6711AR2853M")]["protocolModel"], "GE6711AR2853M")
+        self.assertTrue(all(record["sourcePath"].endswith("SupportedProtocols.md") for record in records))
+
+    def test_real_irremote_snapshot_adds_user_facing_catalog_entries(self):
+        records = catalog.parse_irremote_supported_protocols(
+            catalog.IRREMOTE_SUPPORTED.read_text(encoding="utf-8"),
+            catalog.REGISTRY.read_text(encoding="utf-8"),
+        )
+        self.assertGreater(len(records), 20)
+        # Upstream's detailed MIDEA A/C rows are mostly OEM/rebrand devices
+        # (Comfee, Danby, Kaysun, Keystone, etc.). The only direct Midea row at
+        # this pin is a MIDEA24 stand fan, which the A/C importer intentionally excludes.
+        self.assertTrue(any(record["brand"] == "Comfee" and record["protocolId"] == "MIDEA" for record in records))
+        self.assertTrue(any(record["brand"] == "Gree" and record["protocolId"] == "GREE" for record in records))
+        self.assertTrue(any(record["brand"] == "Fujitsu" and record["protocolId"] == "FUJITSU_AC" for record in records))
+        lg2 = [record for record in records if record["protocolId"] == "LG2"]
+        self.assertTrue(lg2)
+        self.assertTrue(all(record["encodingType"] == "IRREMOTE_REFERENCE" for record in lg2))
+        self.assertTrue(all(record["verificationStatus"] == "needsSupport" for record in lg2))
+
+    def test_full_irremote_inventory_keeps_not_yet_enabled_families_searchable(self):
+        records = catalog.parse_irremote_supported_protocols(
+            catalog.IRREMOTE_SUPPORTED.read_text(encoding="utf-8"),
+            catalog.REGISTRY.read_text(encoding="utf-8"),
+        )
+        haier = [record for record in records if record["brand"] == "Haier"]
+        self.assertTrue(haier)
+        self.assertTrue(any(record["protocolId"] in {"HAIER_AC", "HAIER_AC160", "HAIER_AC176", "HAIER_AC_YRW02"} for record in haier))
+        self.assertTrue(all(record["encodingType"] == "IRREMOTE_REFERENCE" for record in haier))
+        self.assertTrue(all(record["verificationStatus"] == "needsSupport" for record in haier))
+
     def test_swing_support_is_explicit_and_never_inferred_as_positions(self):
         records = catalog.parse_irremote_registry(catalog.REGISTRY.read_text(encoding="utf-8"))
         for record in records:
@@ -138,6 +191,10 @@ class CatalogTests(unittest.TestCase):
         self.assertGreater(len(smart), 0)
         self.assertTrue(all(p["sourcePath"].startswith("codes/climate/") for p in smart))
         self.assertEqual(report["validationStatus"], "PASS")
+        self.assertGreater(report["irremoteesp8266CatalogProfiles"], 100)
+        self.assertGreater(report["irremoteesp8266UsableCatalogProfiles"], 20)
+        self.assertGreater(report["irremoteesp8266ReferenceProfiles"], 20)
+        self.assertEqual(report["irremoteesp8266GenericProfiles"], 8)
         self.assertEqual(report["smartirTotal"], report["smartirTransmittable"] + report["smartirUnsupported"])
         self.assertGreater(report["transmittableBrands"], 0)
         self.assertLessEqual(report["transmittableBrands"], report["totalBrands"])
