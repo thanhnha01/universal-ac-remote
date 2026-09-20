@@ -3,7 +3,8 @@ package com.thanhnha.universalacremote.update
 import org.json.JSONObject
 import java.io.File
 import java.security.MessageDigest
-import java.util.Base64
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 data class DatabaseUpdateManifest(
     val databaseVersion: Int,
@@ -14,6 +15,7 @@ data class DatabaseUpdateManifest(
     val signatureBase64: String,
 )
 
+@OptIn(ExperimentalEncodingApi::class)
 object DatabaseUpdateManifestParser {
     fun parse(json: String): DatabaseUpdateManifest {
         val obj = JSONObject(json)
@@ -27,12 +29,13 @@ object DatabaseUpdateManifestParser {
             require(it.matches(Regex("[0-9a-f]{64}"))) { "Invalid database SHA-256" }
         }
         val signature = obj.getString("signature").also {
-            require(runCatching { Base64.getDecoder().decode(it) }.getOrNull()?.isNotEmpty() == true) { "Invalid signature" }
+            require(runCatching { Base64.Default.decode(it) }.getOrNull()?.isNotEmpty() == true) { "Invalid signature" }
         }
         return DatabaseUpdateManifest(databaseVersion, schemaVersion, minAppVersionCode, fileName, sha256, signature)
     }
 }
 
+@OptIn(ExperimentalEncodingApi::class)
 class DatabaseUpdateInstaller(
     private val verifySignature: (payload: ByteArray, signature: ByteArray) -> Boolean,
 ) {
@@ -45,7 +48,7 @@ class DatabaseUpdateInstaller(
         require(installedAppVersionCode >= manifest.minAppVersionCode) { "App version is not compatible with this database." }
         require(payload.size <= 64 * 1024 * 1024) { "Database payload is too large." }
         require(payload.sha256Hex().equals(manifest.sha256, ignoreCase = true)) { "Database SHA-256 mismatch." }
-        val signature = Base64.getDecoder().decode(manifest.signatureBase64)
+        val signature = Base64.Default.decode(manifest.signatureBase64)
         require(verifySignature(payload, signature)) { "Database signature verification failed." }
 
         target.parentFile?.mkdirs()
