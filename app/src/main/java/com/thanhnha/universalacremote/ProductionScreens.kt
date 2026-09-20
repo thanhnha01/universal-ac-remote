@@ -30,6 +30,8 @@ import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
@@ -38,6 +40,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.outlined.AcUnit
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material.icons.outlined.Radio
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -93,6 +96,10 @@ fun ProductionHomeScreen(
     onTab: (String) -> Unit,
     navigate: (String) -> Unit,
 ) {
+    val favorites = remember(state.remotes) { favoriteRemotes(state.remotes) }
+    val recent = remember(state.remotes) { recentRemotes(state.remotes) }
+    val rooms = remember(state.remotes) { roomSummaries(state.remotes) }
+
     AppScaffold("home", onTab) { padding ->
         PageColumn(padding) {
             BrandHeader {
@@ -100,39 +107,54 @@ fun ProductionHomeScreen(
             }
 
             SurfaceCard(Modifier.fillMaxWidth(), SoftHeroGradient) {
-                Row(
-                    Modifier.padding(18.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                Column(
+                    Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    IconBubble(Icons.Filled.AcUnit, size = 62)
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            if (state.remotes.isEmpty()) "Thêm máy lạnh đầu tiên" else "Điều khiển nhanh",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = AppColors.navy,
-                        )
-                        Text(
-                            if (state.remotes.isEmpty()) "Tìm model, dò 1000-in-1 hoặc nhập file .ir."
-                            else "${state.remotes.size} remote đã lưu trên thiết bị.",
-                            color = AppColors.navySoft,
-                        )
+                    Text(
+                        if (state.remotes.isEmpty()) "Ngôi nhà mát hơn bắt đầu ở đây"
+                        else "Điều khiển mọi phòng trong một chạm",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = AppColors.navy,
+                    )
+                    Text(
+                        if (state.remotes.isEmpty()) "Thêm máy lạnh đầu tiên bằng model, dò mã hoặc file .ir."
+                        else state.remotes.size.toString() + " thiết bị • " + rooms.size + " khu vực",
+                        color = AppColors.navySoft,
+                    )
+                    if (state.remotes.isEmpty()) {
+                        PrimaryButton(
+                            "Thêm máy lạnh",
+                            Modifier.fillMaxWidth(),
+                            Icons.Filled.Add,
+                        ) { navigate("add") }
+                    } else {
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            PrimaryButton(
+                                "Mở thiết bị",
+                                Modifier.weight(1f),
+                                Icons.Filled.AcUnit,
+                            ) { onTab("remote") }
+                            SecondaryButton(
+                                "Thêm mới",
+                                Modifier.weight(1f),
+                                Icons.Filled.Add,
+                            ) { navigate("add") }
+                        }
                     }
-                    HeaderIconButton(Icons.Filled.Add, "Thêm") { navigate("add") }
                 }
             }
 
             if (!diagnostics.hasIrEmitter) {
                 InfoBanner(
-                    "Điện thoại chưa sẵn sàng phát IR. Bạn vẫn có thể quản lý remote nhưng chưa thể điều khiển máy lạnh.",
+                    "Bộ phát IR chưa sẵn sàng. Bạn vẫn có thể sắp xếp và quản lý thiết bị.",
                     Icons.Filled.ErrorOutline,
                     AppColors.danger,
                     AppColors.paleDanger,
                 )
             }
 
-            SectionTitle("Máy lạnh của bạn")
             when {
                 state.loading -> SurfaceCard(Modifier.fillMaxWidth()) {
                     Row(
@@ -141,82 +163,328 @@ fun ProductionHomeScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         CircularProgressIndicator(Modifier.size(22.dp))
-                        Text("Đang tải remote đã lưu…", color = AppColors.navySoft)
+                        Text("Đang tải thiết bị…", color = AppColors.navySoft)
                     }
                 }
+
                 state.remotes.isEmpty() -> EmptyState(
-                    "Chưa có remote",
-                    "Thêm máy lạnh để bắt đầu điều khiển.",
+                    "Chưa có máy lạnh",
+                    "Sau khi thêm thiết bị, các phòng, mục yêu thích và thiết bị gần đây sẽ xuất hiện ở đây.",
                     Icons.Outlined.AcUnit,
                 )
-                else -> state.remotes.forEach { remote ->
-                    val profile = store.profileFor(remote.catalogProfileId)
-                    val imported = remote.importedCommandsJson.isNotBlank()
-                    val transmittable = imported ||
-                        (profile != null && CatalogTransmitter.supports(profile))
-                    val verification = remote.verificationState(profile)
-                    SurfaceCard(
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable { navigate("remote/${remote.id}") }
-                    ) {
-                        Row(
-                            Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(14.dp),
-                        ) {
-                            AcWallUnitArt(remote.brand, Modifier.width(110.dp).height(72.dp))
-                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(
-                                    remote.displayName,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = AppColors.navy,
-                                )
-                                Text(
-                                    listOfNotNull(remote.brand, remote.acModel, remote.remoteModel)
-                                        .filter(String::isNotBlank)
-                                        .joinToString(" • "),
-                                    color = AppColors.navySoft,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                StatusChip(
-                                    when {
-                                        imported -> "File IR"
-                                        verification == SavedVerificationState.FULL -> "Đã xác minh"
-                                        verification == SavedVerificationState.PARTIAL -> "Đã kiểm tra một phần"
-                                        transmittable -> "Sẵn sàng thử"
-                                        else -> "Cần kiểm tra lại"
-                                    },
-                                    when {
-                                        imported || verification == SavedVerificationState.FULL -> Icons.Filled.CheckCircle
-                                        verification == SavedVerificationState.PARTIAL -> Icons.Filled.Info
-                                        transmittable -> Icons.Filled.SignalCellularAlt
-                                        else -> Icons.Filled.Info
-                                    },
-                                    when {
-                                        imported -> AppColors.blue
-                                        verification == SavedVerificationState.FULL -> AppColors.mint
-                                        verification == SavedVerificationState.PARTIAL -> AppColors.warning
-                                        transmittable -> AppColors.blue
-                                        else -> AppColors.warning
-                                    },
-                                    when {
-                                        imported -> AppColors.paleBlue
-                                        verification == SavedVerificationState.FULL -> AppColors.paleMint
-                                        verification == SavedVerificationState.PARTIAL -> AppColors.paleWarning
-                                        transmittable -> AppColors.paleBlue
-                                        else -> AppColors.paleWarning
-                                    },
+
+                else -> {
+                    if (favorites.isNotEmpty()) {
+                        SectionTitle("Yêu thích")
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            items(favorites, key = SavedRemote::id) { remote ->
+                                HomeQuickRemoteCard(
+                                    remote = remote,
+                                    icon = Icons.Filled.Star,
+                                    onClick = { navigate("remote/" + remote.id) },
                                 )
                             }
-                            Icon(Icons.Filled.ArrowForward, null, tint = AppColors.navySoft)
                         }
+                    }
+
+                    if (recent.isNotEmpty()) {
+                        SectionTitle("Gần đây")
+                        recent.forEach { remote ->
+                            HomeRemoteRow(
+                                remote = remote,
+                                store = store,
+                                onClick = { navigate("remote/" + remote.id) },
+                            )
+                        }
+                    }
+
+                    SectionTitle("Phòng")
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        items(rooms, key = RoomSummary::name) { room ->
+                            Surface(
+                                modifier = Modifier
+                                    .width(158.dp)
+                                    .clickable { onTab("remote") },
+                                shape = RoundedCornerShape(22.dp),
+                                color = Color.White,
+                                border = BorderStroke(1.dp, AppColors.line),
+                            ) {
+                                Column(
+                                    Modifier.padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    IconBubble(Icons.Filled.Home, size = 44)
+                                    Text(
+                                        room.name,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = AppColors.navy,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    Text(
+                                        room.count.toString() + " thiết bị",
+                                        color = AppColors.navySoft,
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    SecondaryButton(
+                        "Xem tất cả thiết bị",
+                        Modifier.fillMaxWidth(),
+                        Icons.Filled.ArrowForward,
+                    ) { onTab("remote") }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ProductionDevicesScreen(
+    state: HomeUiState,
+    store: SavedRemotesViewModel,
+    onTab: (String) -> Unit,
+    navigate: (String) -> Unit,
+) {
+    var selectedRoom by remember { mutableStateOf<String?>(null) }
+    val rooms = remember(state.remotes) { roomSummaries(state.remotes) }
+    val visibleRemotes = remember(state.remotes, selectedRoom) {
+        selectedRoom?.let { room -> state.remotes.filter { it.roomLabel() == room } } ?: state.remotes
+    }
+
+    AppScaffold("remote", onTab) { padding ->
+        PageColumn(padding) {
+            AppTopBar(
+                title = "Thiết bị",
+                subtitle = if (state.loading) "Đang tải…" else state.remotes.size.toString() + " máy lạnh đã lưu",
+                actions = {
+                    HeaderIconButton(Icons.Filled.Add, "Thêm máy lạnh") { navigate("add") }
+                },
+            )
+
+            if (rooms.isNotEmpty()) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item {
+                        DeviceRoomFilter(
+                            label = "Tất cả",
+                            count = state.remotes.size,
+                            selected = selectedRoom == null,
+                        ) { selectedRoom = null }
+                    }
+                    items(rooms, key = RoomSummary::name) { room ->
+                        DeviceRoomFilter(
+                            label = room.name,
+                            count = room.count,
+                            selected = selectedRoom == room.name,
+                        ) { selectedRoom = room.name }
                     }
                 }
             }
+
+            when {
+                state.loading -> SurfaceCard(Modifier.fillMaxWidth()) {
+                    Row(
+                        Modifier.padding(20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        CircularProgressIndicator(Modifier.size(22.dp))
+                        Text("Đang tải thiết bị…", color = AppColors.navySoft)
+                    }
+                }
+
+                state.remotes.isEmpty() -> {
+                    EmptyState(
+                        "Chưa có thiết bị",
+                        "Thêm máy lạnh để bắt đầu tạo các phòng và mục yêu thích.",
+                        Icons.Outlined.AcUnit,
+                    )
+                    PrimaryButton(
+                        "Thêm máy lạnh",
+                        Modifier.fillMaxWidth(),
+                        Icons.Filled.Add,
+                    ) { navigate("add") }
+                }
+
+                visibleRemotes.isEmpty() -> EmptyState(
+                    "Phòng này chưa có thiết bị",
+                    "Bạn có thể đổi phòng từ màn Chi tiết thiết bị.",
+                    Icons.Filled.Home,
+                )
+
+                else -> visibleRemotes
+                    .sortedWith(
+                        compareByDescending<SavedRemote> { it.favorite }
+                            .thenByDescending { it.lastUsedAtEpochMs }
+                            .thenBy { it.displayName.lowercase() },
+                    )
+                    .forEach { remote ->
+                        HomeRemoteRow(
+                            remote = remote,
+                            store = store,
+                            showRoom = true,
+                            onClick = { navigate("remote/" + remote.id) },
+                        )
+                    }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DeviceRoomFilter(
+    label: String,
+    count: Int,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(18.dp),
+        color = if (selected) AppColors.blue else Color.White,
+        border = BorderStroke(1.dp, if (selected) AppColors.blue else AppColors.line),
+    ) {
+        Text(
+            label + " · " + count,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            color = if (selected) Color.White else AppColors.navy,
+            fontWeight = FontWeight.Bold,
+        )
+    }
+}
+
+@Composable
+private fun HomeQuickRemoteCard(
+    remote: SavedRemote,
+    icon: ImageVector,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier
+            .width(190.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(24.dp),
+        color = Color.White,
+        border = BorderStroke(1.dp, AppColors.line),
+    ) {
+        Column(
+            Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(9.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                IconBubble(icon, tint = AppColors.warning, background = AppColors.paleWarning, size = 42)
+                Text(
+                    remote.roomLabel(),
+                    color = AppColors.navySoft,
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Text(
+                remote.displayName,
+                fontWeight = FontWeight.ExtraBold,
+                color = AppColors.navy,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                remote.brand,
+                color = AppColors.navySoft,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@Composable
+private fun HomeRemoteRow(
+    remote: SavedRemote,
+    store: SavedRemotesViewModel,
+    showRoom: Boolean = true,
+    onClick: () -> Unit,
+) {
+    val profile = store.profileFor(remote.catalogProfileId)
+    val imported = remote.importedCommandsJson.isNotBlank()
+    val verification = remote.verificationState(profile)
+
+    SurfaceCard(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+    ) {
+        Row(
+            Modifier.padding(15.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(13.dp),
+        ) {
+            AcWallUnitArt(remote.brand, Modifier.width(98.dp).height(66.dp))
+            Column(
+                Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        remote.displayName,
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = AppColors.navy,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (remote.favorite) {
+                        Icon(
+                            Icons.Filled.Star,
+                            contentDescription = "Yêu thích",
+                            tint = AppColors.warning,
+                            modifier = Modifier.size(19.dp),
+                        )
+                    }
+                }
+                Text(
+                    buildList {
+                        if (showRoom) add(remote.roomLabel())
+                        add(remote.brand)
+                        remote.acModel?.takeIf(String::isNotBlank)?.let(::add)
+                    }.joinToString(" • "),
+                    color = AppColors.navySoft,
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                StatusChip(
+                    when {
+                        imported -> "File IR"
+                        verification == SavedVerificationState.FULL -> "Đã xác minh"
+                        verification == SavedVerificationState.PARTIAL -> "Xác minh một phần"
+                        else -> "Chưa xác minh"
+                    },
+                    when {
+                        imported || verification == SavedVerificationState.FULL -> Icons.Filled.CheckCircle
+                        else -> Icons.Filled.Info
+                    },
+                    when {
+                        imported -> AppColors.blue
+                        verification == SavedVerificationState.FULL -> AppColors.mint
+                        else -> AppColors.warning
+                    },
+                    when {
+                        imported -> AppColors.paleBlue
+                        verification == SavedVerificationState.FULL -> AppColors.paleMint
+                        else -> AppColors.paleWarning
+                    },
+                )
+            }
+            Icon(Icons.Filled.ArrowForward, contentDescription = null, tint = AppColors.navySoft)
         }
     }
 }
