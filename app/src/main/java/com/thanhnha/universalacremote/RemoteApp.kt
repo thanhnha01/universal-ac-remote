@@ -162,7 +162,7 @@ fun RemoteApp(diagnostics: IrHardwareDiagnostics, store: SavedRemotesViewModel =
                     ProductionDetailsScreen(remote, store.profileFor(remote.catalogProfileId), store, { nav.navigate("remote/${remote.id}") }, { store.beginScan(RemoteQuery(brand = remote.brand)); nav.navigate("scan") }, { nav.popBackStack() })
                 }
             }
-            composable("settings") { ProductionSettingsScreen(diagnostics, catalog, ::navigateTab, { nav.navigate("diagnostics") }, { nav.navigate("import") }) }
+            composable("settings") { ProductionSettingsScreen(diagnostics, catalog, store, ::navigateTab, { nav.navigate("diagnostics") }, { nav.navigate("import") }) }
             composable("diagnostics") { DiagnosticScreen(diagnostics, onBack = { nav.popBackStack() }) }
         }
     }
