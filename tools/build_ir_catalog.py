@@ -216,16 +216,55 @@ def _clean_irremote_device_label(device_text: str, definition: dict, send_ids: s
     return label
 
 
+def _irremote_reference_profile(
+    *,
+    sha: str,
+    family: str,
+    brand: str,
+    device_text: str,
+    label: str,
+    is_remote: bool,
+    protocol_ids: list[str],
+    reason: str,
+) -> dict:
+    identity = "|".join([
+        family, brand, label, ",".join(protocol_ids), "remote" if is_remote else "ac", "reference"
+    ])
+    source_id = "catalog-ref-" + hashlib.sha256(identity.encode("utf-8")).hexdigest()[:16]
+    profile = base_profile(
+        source="irremoteesp8266", sha=sha,
+        path="data/upstreams/snapshots/irremoteesp8266/SupportedProtocols.md",
+        source_id=source_id, brand=brand,
+        ac_model=None if is_remote else label,
+        remote_model=label if is_remote else None,
+        protocol_id=protocol_ids[0] if len(protocol_ids) == 1 else None,
+        variant=None, encoding="IRREMOTE_REFERENCE", capabilities=[],
+        temp=None, fans=[], modes=[],
+        v_swing={"type": "NONE", "positions": []},
+        h_swing={"type": "NONE", "positions": []},
+        special=[], verification="needsSupport")
+    profile["sourceMetadata"] = {
+        "catalogOrigin": "SupportedProtocols.md",
+        "upstreamFamily": family,
+        "upstreamDeviceText": device_text,
+        "upstreamProtocolIds": protocol_ids,
+        "supportReason": reason,
+    }
+    return profile
+
+
 def parse_irremote_supported_protocols(
     supported_text: str,
     registry_text: str,
     sha: str = PINNED_IRREMOTE_SHA,
     state_text: str | None = None,
 ) -> list[dict]:
-    """Turn upstream Detailed A/C model rows into real, transmittable app candidates.
+    """Import the complete upstream Detailed A/C inventory.
 
-    Only protocols already present in ProtocolRegistry are admitted. An upstream row
-    that explicitly names a different/unsupported protocol variant is skipped.
+    Rows backed by an already-reviewed ProtocolRegistry definition become
+    transmittable PROTOCOL profiles. Every other A/C model/remote is still
+    preserved as an IRREMOTE_REFERENCE profile so the app can search and show
+    the library inventory without claiming that the APK can transmit it.
     """
     definitions = parse_protocol_registry(registry_text, state_text)
     by_upstream = {definition["upstreamProtocol"]: definition for definition in definitions}
@@ -255,41 +294,66 @@ def parse_irremote_supported_protocols(
 
             explicit_ids = _annotation_protocol_ids(device_text, send_ids)
             active_explicit = next((protocol_id for protocol_id in explicit_ids if protocol_id in by_upstream), None)
-            if explicit_ids and active_explicit is None:
-                continue
-            definition = by_upstream.get(active_explicit) if active_explicit else fallback
-            if definition is None or _has_unknown_explicit_variant(device_text, definition):
+            definition = by_upstream.get(active_explicit) if active_explicit else (fallback if not explicit_ids else None)
+            is_remote = re.search(r"\bremote\b", device_text, re.I) is not None
+
+            if definition is not None and not _has_unknown_explicit_variant(device_text, definition):
+                variant = _model_variant(device_text, definition)
+                label = _clean_irremote_device_label(device_text, definition, send_ids)
+                if not label:
+                    continue
+                identity = "|".join([
+                    family, brand, label, definition["upstreamProtocol"], variant or "", "remote" if is_remote else "ac"
+                ])
+                source_id = "catalog-" + hashlib.sha256(identity.encode("utf-8")).hexdigest()[:16]
+                profile = base_profile(
+                    source="irremoteesp8266", sha=sha,
+                    path="data/upstreams/snapshots/irremoteesp8266/SupportedProtocols.md",
+                    source_id=source_id, brand=brand,
+                    ac_model=None if is_remote else label,
+                    remote_model=label if is_remote else None,
+                    protocol_id=definition["upstreamProtocol"], variant=variant,
+                    encoding="PROTOCOL", capabilities=_definition_capabilities(definition),
+                    temp={"minC": definition["minC"], "maxC": definition["maxC"]},
+                    fans=definition["fans"], modes=definition["modes"],
+                    v_swing={"type": "ON_OFF" if definition["verticalSwing"] else "NONE", "positions": []},
+                    h_swing={"type": "ON_OFF" if definition["horizontalSwing"] else "NONE", "positions": []},
+                    special=[], verification="candidate")
+                profile["sourceMetadata"] = {
+                    "catalogOrigin": "SupportedProtocols.md",
+                    "upstreamFamily": family,
+                    "upstreamDeviceText": device_text,
+                    "upstreamProtocolIds": explicit_ids,
+                    "appProtocolId": definition["appId"],
+                    "transmissionSupport": "enabled",
+                }
+                records.append(profile)
                 continue
 
-            variant = _model_variant(device_text, definition)
-            label = _clean_irremote_device_label(device_text, definition, send_ids)
+            # Preserve unsupported/unknown variants as searchable library data.
+            # Use a generic label cleaner so protocol annotations do not become
+            # part of the user-visible model/remote name.
+            label = device_text
+            for annotation in re.findall(r"\(([^)]*)\)", device_text):
+                tokens = set(re.findall(r"\b[A-Z][A-Z0-9_]+\b", annotation))
+                if tokens & send_ids:
+                    label = label.replace(f"({annotation})", "")
+            label = re.sub(r"\bremote\b", "", label, flags=re.I)
+            label = re.sub(r"\bA/C\b", "", label, flags=re.I)
+            label = re.sub(r"\s{2,}", " ", label).strip(" -;/")
             if not label:
                 continue
-            is_remote = re.search(r"\bremote\b", device_text, re.I) is not None
-            identity = "|".join([
-                family, brand, label, definition["upstreamProtocol"], variant or "", "remote" if is_remote else "ac"
-            ])
-            source_id = "catalog-" + hashlib.sha256(identity.encode("utf-8")).hexdigest()[:16]
-            profile = base_profile(
-                source="irremoteesp8266", sha=sha,
-                path="data/upstreams/snapshots/irremoteesp8266/SupportedProtocols.md",
-                source_id=source_id, brand=brand,
-                ac_model=None if is_remote else label,
-                remote_model=label if is_remote else None,
-                protocol_id=definition["upstreamProtocol"], variant=variant,
-                encoding="PROTOCOL", capabilities=_definition_capabilities(definition),
-                temp={"minC": definition["minC"], "maxC": definition["maxC"]},
-                fans=definition["fans"], modes=definition["modes"],
-                v_swing={"type": "ON_OFF" if definition["verticalSwing"] else "NONE", "positions": []},
-                h_swing={"type": "ON_OFF" if definition["horizontalSwing"] else "NONE", "positions": []},
-                special=[], verification="candidate")
-            profile["sourceMetadata"] = {
-                "catalogOrigin": "SupportedProtocols.md",
-                "upstreamFamily": family,
-                "upstreamDeviceText": device_text,
-                "appProtocolId": definition["appId"],
-            }
-            records.append(profile)
+
+            if explicit_ids:
+                reason = "Protocol/variant exists upstream but is not enabled in this APK."
+            elif fallback is None:
+                reason = "Detailed A/C family exists upstream but has no reviewed app protocol mapping yet."
+            else:
+                reason = "Upstream model variant is not in the reviewed app model allowlist."
+            records.append(_irremote_reference_profile(
+                sha=sha, family=family, brand=brand, device_text=device_text,
+                label=label, is_remote=is_remote, protocol_ids=explicit_ids, reason=reason,
+            ))
 
     unique = {}
     for record in records:
@@ -468,6 +532,13 @@ def build() -> tuple[list[dict], dict]:
         ),
         "irremoteesp8266CatalogProfiles": sum(
             p["source"] == "irremoteesp8266" and p["sourcePath"].endswith("SupportedProtocols.md") for p in profiles
+        ),
+        "irremoteesp8266UsableCatalogProfiles": sum(
+            p["source"] == "irremoteesp8266" and p["sourcePath"].endswith("SupportedProtocols.md")
+            and p["encodingType"] == "PROTOCOL" for p in profiles
+        ),
+        "irremoteesp8266ReferenceProfiles": sum(
+            p["source"] == "irremoteesp8266" and p["encodingType"] == "IRREMOTE_REFERENCE" for p in profiles
         ),
         "smartirTotal": sum(p["source"] == "smartir" for p in profiles),
         "smartirTransmittable": sum(p["source"] == "smartir" and is_transmittable(p) for p in profiles),
