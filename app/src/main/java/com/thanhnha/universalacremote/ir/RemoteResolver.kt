@@ -34,6 +34,16 @@ class RemoteResolver(private val candidates: List<RemoteCandidate>) {
         .sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key })
         .take(limit).map { it.key }
 
+    fun allBrands(): List<String> = candidates.asSequence()
+        .map { it.brand.trim() }
+        .filter(String::isNotBlank)
+        .distinctBy(::normalizeSearchText)
+        .sortedWith(String.CASE_INSENSITIVE_ORDER)
+        .toList()
+
+    fun brandCandidates(brand: String): List<RemoteCandidate> =
+        resolve(RemoteQuery(brand = brand))
+
     fun scannerBrands(canTransmit: (RemoteCandidate) -> Boolean): List<String> =
         candidates.asSequence()
             .filter(canTransmit)
