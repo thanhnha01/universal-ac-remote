@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import shutil
 import subprocess
 import tempfile
 from datetime import datetime, timezone
@@ -88,14 +87,14 @@ def materialize(candidate: str) -> None:
         repo = temp / "upstream"
         run("git", "clone", "--filter=blob:none", "--no-checkout", source["repositoryUrl"], str(repo), capture=False)
         run("git", "fetch", "--filter=blob:none", "origin", candidate, cwd=repo, capture=False)
-        run("git", "checkout", "--detach", candidate, cwd=repo, capture=False)
 
         current_files = sorted(path.relative_to(UPSTREAM_DIR) for path in UPSTREAM_DIR.rglob("*") if path.is_file())
         for rel in current_files:
-            src = repo / "src" / rel
-            if not src.is_file():
-                raise ValueError(f"upstream removed required vendored file: src/{rel.as_posix()}")
-            text = src.read_text(encoding="utf-8")
+            upstream_path = f"src/{rel.as_posix()}"
+            try:
+                text = run("git", "show", f"{candidate}:{upstream_path}", cwd=repo)
+            except subprocess.CalledProcessError as exc:
+                raise ValueError(f"upstream removed required vendored file: {upstream_path}") from exc
             if rel.as_posix() == "IRac.cpp":
                 text = patch_irac(text)
             elif rel.as_posix() == "IRsend.cpp":
@@ -103,13 +102,16 @@ def materialize(candidate: str) -> None:
             dest = UPSTREAM_DIR / rel
             dest.write_text(text, encoding="utf-8")
 
-        license_path = repo / "LICENSE.txt"
-        protocols_path = repo / "SupportedProtocols.md"
-        if not license_path.is_file() or not protocols_path.is_file():
-            raise ValueError("required upstream provenance files are missing")
-        shutil.copyfile(license_path, ROOT / "app/src/main/cpp/IRremoteESP8266-LICENSE.txt")
+        try:
+            license_text = run("git", "show", f"{candidate}:LICENSE.txt", cwd=repo)
+            protocols_text = run("git", "show", f"{candidate}:SupportedProtocols.md", cwd=repo)
+        except subprocess.CalledProcessError as exc:
+            raise ValueError("required upstream provenance files are missing") from exc
+        if "GNU LESSER GENERAL PUBLIC LICENSE" not in license_text.upper():
+            raise ValueError("IRremoteESP8266 license text no longer matches the reviewed LGPL provenance")
+        (ROOT / "app/src/main/cpp/IRremoteESP8266-LICENSE.txt").write_text(license_text + "\n", encoding="utf-8")
         SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(protocols_path, SNAPSHOT_DIR / "SupportedProtocols.md")
+        (SNAPSHOT_DIR / "SupportedProtocols.md").write_text(protocols_text + "\n", encoding="utf-8")
 
     today = datetime.now(timezone.utc).date().isoformat()
     lock = json.loads(LOCK.read_text(encoding="utf-8"))
