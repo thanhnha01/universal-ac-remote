@@ -63,6 +63,7 @@ fun RemoteControlScreen(
     remote: SavedRemote,
     candidate: RemoteCandidate,
     diagnostics: IrHardwareDiagnostics,
+    store: SavedRemotesViewModel,
     onTab: (String) -> Unit,
     onDetails: () -> Unit,
     onBack: () -> Unit,
@@ -86,31 +87,42 @@ fun RemoteControlScreen(
     val temperatureRange = controls.temperatureRange
         ?: protocol?.let { it.minTemperatureCelsius..it.maxTemperatureCelsius }
 
+    val persistedState = remember(remote.id, remote.lastSentStateJson) { decodeLastSentState(remote.lastSentStateJson) }
     val safeState = remember(candidate.id) { CatalogTransmitter.safeProbe(candidate)?.state }
-    val initialMode = safeState?.mode?.let { safeMode ->
+    val initialMode = persistedState?.mode?.let { lastMode ->
+        modes.firstOrNull { CatalogTransmitter.mode(it) == lastMode }
+    } ?: safeState?.mode?.let { safeMode ->
         modes.firstOrNull { CatalogTransmitter.mode(it) == safeMode }
     } ?: modes.firstOrNull()
         ?: protocol?.modes?.firstOrNull()?.name?.lowercase()
         ?: "cool"
-    val initialFan = safeState?.fan?.let { safeFan ->
+    val initialFan = persistedState?.fan?.let { lastFan ->
+        fans.firstOrNull { CatalogTransmitter.fan(it) == lastFan }
+    } ?: safeState?.fan?.let { safeFan ->
         fans.firstOrNull { CatalogTransmitter.fan(it) == safeFan }
     } ?: fans.firstOrNull()
         ?: protocol?.fanSpeeds?.firstOrNull()?.let(::fanKey)
         ?: "auto"
-    val initialTemperature = safeState?.temperatureCelsius
+    val initialTemperature = persistedState?.temperatureCelsius
+        ?.takeIf { temperatureRange == null || it in temperatureRange }
+        ?: safeState?.temperatureCelsius
         ?.takeIf { temperatureRange == null || it in temperatureRange }
         ?: temperatureRange?.let { 24.coerceIn(it.first, it.last) }
         ?: 24
 
-    var power by remember(candidate.id) { mutableStateOf<Boolean?>(null) }
+    var power by remember(candidate.id, remote.lastSentStateJson) { mutableStateOf<Boolean?>(persistedState?.power) }
     var temperature by remember(candidate.id) { mutableIntStateOf(initialTemperature) }
     var mode by remember(candidate.id) { mutableStateOf(initialMode) }
     var fan by remember(candidate.id) { mutableStateOf(initialFan) }
-    var swingVertical by remember(candidate.id) { mutableStateOf(safeState?.swingVertical ?: false) }
-    var swingHorizontal by remember(candidate.id) { mutableStateOf(safeState?.swingHorizontal ?: false) }
+    var swingVertical by remember(candidate.id, remote.lastSentStateJson) {
+        mutableStateOf(persistedState?.swingVertical ?: safeState?.swingVertical ?: false)
+    }
+    var swingHorizontal by remember(candidate.id, remote.lastSentStateJson) {
+        mutableStateOf(persistedState?.swingHorizontal ?: safeState?.swingHorizontal ?: false)
+    }
     var feedback by remember { mutableStateOf("") }
     var feedbackError by remember { mutableStateOf(false) }
-    var hasSentState by remember(candidate.id) { mutableStateOf(false) }
+    var hasSentState by remember(candidate.id, remote.lastSentStateJson) { mutableStateOf(persistedState != null) }
 
     val ready = hardwareReady && transmittable
     val verification = remote.verificationState(candidate)
@@ -222,7 +234,7 @@ fun RemoteControlScreen(
                     onSuccess = {
                         power = true
                         hasSentState = true
-                        feedback = "Đã phát lệnh bật."
+                        feedback = "Đã gửi lệnh bật."
                         feedbackError = false
                         true
                     },
@@ -264,7 +276,8 @@ fun RemoteControlScreen(
                 swingVertical = resolved.swingVertical
                 swingHorizontal = resolved.swingHorizontal
                 hasSentState = true
-                feedback = "Đã phát lệnh."
+                store.updateLastSentState(remote.id, resolved)
+                feedback = "Đã gửi lệnh."
                 feedbackError = false
                 true
             },
@@ -373,9 +386,7 @@ fun RemoteControlScreen(
                 )
             }
 
-            // Special features are intentionally not rendered until the encoder
-            // can represent them. Showing a dead Turbo/Eco/Quiet switch would
-            // make the screen look complete while producing no valid IR state.
+            AdaptiveCapabilitySummary(controls)
 
             if (feedback.isNotBlank()) {
                 InfoBanner(
@@ -387,9 +398,62 @@ fun RemoteControlScreen(
             }
 
             Text(
-                "Chạm vào nút là app phát lệnh ngay tới máy lạnh.",
+                "IR là điều khiển một chiều. App chỉ hiển thị trạng thái lần cuối đã gửi, không xác nhận trạng thái thực tế của máy.",
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
+                color = AppColors.navySoft,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+    }
+}
+
+@Composable
+private fun AdaptiveCapabilitySummary(controls: RemoteControls) {
+    val capabilities = buildList {
+        if (controls.power) add("Nguồn")
+        if (controls.temperatureRange != null) add("Nhiệt độ")
+        if (controls.modes.isNotEmpty()) add("Chế độ")
+        if (controls.fanModes.isNotEmpty()) add("Quạt")
+        if (controls.verticalSwing.visible) add("Swing dọc")
+        if (controls.horizontalSwing.visible) add("Swing ngang")
+    }
+    if (capabilities.isEmpty()) return
+
+    RemoteSectionCard(
+        title = "Remote thích ứng",
+        subtitle = "Chỉ hiện các điều khiển mà profile hiện tại có thể phát",
+        icon = Icons.Filled.Tune,
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            capabilities.take(3).forEach { label ->
+                Surface(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(16.dp),
+                    color = AppColors.paleBlue,
+                ) {
+                    Text(
+                        label,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 12.dp),
+                        textAlign = TextAlign.Center,
+                        color = AppColors.blue,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+        }
+        if (capabilities.size > 3) {
+            Text(
+                "+" + (capabilities.size - 3) + " điều khiển phù hợp khác",
+                color = AppColors.navySoft,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        if (controls.specialCapabilities.isNotEmpty()) {
+            Text(
+                controls.specialCapabilities.joinToString(", ") { com.thanhnha.universalacremote.ir.specialCapabilityLabel(it) } +
+                    " có trong catalog nhưng chưa được hiện vì encoder hiện tại chưa phát an toàn các tính năng này.",
                 color = AppColors.navySoft,
                 style = MaterialTheme.typography.bodySmall,
             )
@@ -528,9 +592,9 @@ private fun RemoteHeroCard(
                     )
                     Text(
                         when (power) {
-                            true -> "Đang bật"
-                            false -> "Đang tắt"
-                            null -> "Chưa gửi trạng thái"
+                            true -> "Lần cuối đã gửi: Bật"
+                            false -> "Lần cuối đã gửi: Tắt"
+                            null -> "Chưa có trạng thái đã gửi"
                         },
                         color = when (power) {
                             true -> AppColors.mint

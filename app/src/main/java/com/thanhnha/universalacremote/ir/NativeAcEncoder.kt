@@ -5,6 +5,9 @@ object NativeAcEncoder {
     init { System.loadLibrary("irremote_ac_protocols") }
 
     fun encodeAc(protocolId: String, modelId: String? = null, acState: AcState): IrTransmission {
+        require(!acState.requiresExtendedEncoder()) {
+            "This protocol encoder cannot emit extended A/C features yet."
+        }
         val definition = ProtocolRegistry.requireSupported(protocolId, acState)
         val selectedModelId = ProtocolRegistry.modelId(definition, modelId)
         val native = nativeEncodeAc(definition.upstreamProtocol, selectedModelId,
