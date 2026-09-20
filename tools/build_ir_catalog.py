@@ -2,11 +2,13 @@
 """Build a small, provenance preserving AC catalog from pinned local snapshots."""
 from __future__ import annotations
 
+import base64
+import hashlib
+import html
 import json
 import math
 import re
 import sys
-import base64
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -15,6 +17,7 @@ OUT = ROOT / "data/generated"
 MOBILE_INDEX = ROOT / "app/src/main/assets/catalog-index.json"
 REGISTRY = ROOT / "app/src/main/java/com/thanhnha/universalacremote/ir/ProtocolRegistry.kt"
 STATE = ROOT / "app/src/main/java/com/thanhnha/universalacremote/ir/AcState.kt"
+IRREMOTE_SUPPORTED = ROOT / "data/upstreams/snapshots/irremoteesp8266/SupportedProtocols.md"
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 
 def locked_source_sha(name: str) -> str:
@@ -71,35 +74,227 @@ def base_profile(*, source: str, sha: str, path: str, source_id: str,
     }
 
 
-def parse_irremote_registry(text: str, sha: str = PINNED_IRREMOTE_SHA, state_text: str | None = None) -> list[dict]:
-    # Read only reviewed entries in the app registry; do not infer from protocol names.
+def parse_protocol_registry(text: str, state_text: str | None = None) -> list[dict]:
+    """Read the reviewed app allowlist used by both native encoding and catalog import."""
     state_text = state_text if state_text is not None else STATE.read_text(encoding="utf-8")
-    mode_match = re.search(r"enum class AcMode[^\{]*\{([^}]+)\}", state_text)
-    fan_match = re.search(r"enum class AcFan[^\{]*\{([^}]+)\}", state_text)
-    if not mode_match or not fan_match: raise ValueError("Could not read AcMode/AcFan registry enums")
-    modes = [v.lower() for v in re.findall(r"\b([A-Z][A-Z0-9_]*)\s*\(", mode_match.group(1))]
-    fans = ["low" if v == "min" else v.lower() for v in re.findall(r"\b([A-Z][A-Z0-9_]*)\s*\(", fan_match.group(1))]
-    result = []
-    pattern = re.compile(r'ProtocolDefinition\("([^"]+)",\s*"([^"]+)",\s*"[^"]+",\s*"([^"]+)",\s*(null|"[^"]+")?,\s*(setOf\([^)]*\)|emptySet\(\)),\s*(\d+),\s*(\d+),\s*commonModes,\s*commonFans,\s*(true|false),\s*(true|false)\)')
+    mode_match = re.search(r"enum class AcMode[^\\{]*\\{([^}]+)\\}", state_text)
+    fan_match = re.search(r"enum class AcFan[^\\{]*\\{([^}]+)\\}", state_text)
+    if not mode_match or not fan_match:
+        raise ValueError("Could not read AcMode/AcFan registry enums")
+    modes = [v.lower() for v in re.findall(r"\\b([A-Z][A-Z0-9_]*)\\s*\\(", mode_match.group(1))]
+    fans = ["low" if v == "min" else v.lower() for v in re.findall(r"\\b([A-Z][A-Z0-9_]*)\\s*\\(", fan_match.group(1))]
+    pattern = re.compile(
+        r'ProtocolDefinition\\("([^"]+)",\\s*"([^"]+)",\\s*"([^"]+)",\\s*"([^"]+)",\\s*'
+        r'(null|"[^"]+")?,\\s*(setOf\\([^)]*\\)|emptySet\\(\\)),\\s*(\\d+),\\s*(\\d+),\\s*'
+        r'commonModes,\\s*commonFans,\\s*(true|false),\\s*(true|false)\\)'
+    )
+    definitions = []
     for match in pattern.finditer(text):
-        pid, upstream, brand, remote, modelset, lo, hi, vs, hs = match.groups()
-        models = re.findall(r'"([^"]+)"', modelset)
-        if remote and remote != "null":
-            models = [remote[1:-1]]
-        result.append(base_profile(
-            source="irremoteesp8266", sha=sha,
-            path="app/src/main/java/com/thanhnha/universalacremote/ir/ProtocolRegistry.kt",
-            source_id=pid, brand=brand, ac_model=None,
-            remote_model=remote.strip('"') if remote and remote != "null" else None,
-            protocol_id=upstream, variant=",".join(models) or None,
-            encoding="PROTOCOL", capabilities=["power", *[f"mode:{x}" for x in modes], *[f"fan:{x}" for x in fans]],
-            temp={"minC": int(lo), "maxC": int(hi)}, fans=fans,
-            modes=modes,
-            v_swing={"type": "ON_OFF" if vs == "true" else "NONE", "positions": []},
-            h_swing={"type": "ON_OFF" if hs == "true" else "NONE", "positions": []},
-            special=[], verification="candidate"))
-    return result
+        app_id, upstream, protocol_name, brand, default_raw, modelset, lo, hi, vs, hs = match.groups()
+        default_model = None if not default_raw or default_raw == "null" else default_raw.strip('"')
+        model_ids = re.findall(r'"([^"]+)"', modelset)
+        if default_model and default_model not in model_ids:
+            model_ids.insert(0, default_model)
+        definitions.append({
+            "appId": app_id,
+            "upstreamProtocol": upstream,
+            "protocolName": protocol_name,
+            "manufacturer": brand,
+            "defaultModel": default_model,
+            "modelIds": model_ids,
+            "minC": int(lo),
+            "maxC": int(hi),
+            "modes": modes,
+            "fans": fans,
+            "verticalSwing": vs == "true",
+            "horizontalSwing": hs == "true",
+        })
+    if not definitions:
+        raise ValueError("No ProtocolDefinition entries found")
+    return definitions
 
+
+def _definition_capabilities(definition: dict) -> list[str]:
+    return [
+        "power",
+        *[f"mode:{value}" for value in definition["modes"]],
+        *[f"fan:{value}" for value in definition["fans"]],
+        *(["swing:vertical"] if definition["verticalSwing"] else []),
+        *(["swing:horizontal"] if definition["horizontalSwing"] else []),
+    ]
+
+
+def _profile_from_protocol_definition(definition: dict, sha: str) -> dict:
+    profile = base_profile(
+        source="irremoteesp8266", sha=sha,
+        path="app/src/main/java/com/thanhnha/universalacremote/ir/ProtocolRegistry.kt",
+        source_id=definition["appId"], brand=definition["manufacturer"], ac_model=None,
+        remote_model=definition["defaultModel"], protocol_id=definition["upstreamProtocol"],
+        variant=definition["defaultModel"], encoding="PROTOCOL",
+        capabilities=_definition_capabilities(definition),
+        temp={"minC": definition["minC"], "maxC": definition["maxC"]},
+        fans=definition["fans"], modes=definition["modes"],
+        v_swing={"type": "ON_OFF" if definition["verticalSwing"] else "NONE", "positions": []},
+        h_swing={"type": "ON_OFF" if definition["horizontalSwing"] else "NONE", "positions": []},
+        special=[], verification="candidate")
+    profile["sourceMetadata"] = {
+        "catalogOrigin": "ProtocolRegistry.kt",
+        "appProtocolId": definition["appId"],
+    }
+    return profile
+
+
+def parse_irremote_registry(text: str, sha: str = PINNED_IRREMOTE_SHA, state_text: str | None = None) -> list[dict]:
+    return [_profile_from_protocol_definition(definition, sha)
+            for definition in parse_protocol_registry(text, state_text)]
+
+
+def _irremote_text(value: str) -> str:
+    value = re.sub(r"\\[([^]]+)\\]\\([^)]*\\)", r"\\1", value)
+    value = re.sub(r"\\*\\*", "", value)
+    return html.unescape(value).strip()
+
+
+def _irremote_family_key(upstream_protocol: str) -> str:
+    return normalize_brand(re.sub(r"_AC$", "", upstream_protocol, flags=re.I))
+
+
+def _supported_send_ids(text: str) -> set[str]:
+    section = re.search(r"## Send & decodable protocols:\\s*\\n(.*?)(?=\\n## |\\Z)", text, re.S)
+    if not section:
+        raise ValueError("Could not locate IRremoteESP8266 send protocol inventory")
+    return set(re.findall(r"^- ([A-Z0-9_]+)$", section.group(1), re.M))
+
+
+def _annotation_protocol_ids(device_text: str, send_ids: set[str]) -> list[str]:
+    annotations = " ".join(re.findall(r"\\(([^)]*)\\)", device_text))
+    tokens = re.findall(r"\\b[A-Z][A-Z0-9_]+\\b", annotations)
+    return [token for token in tokens if token in send_ids]
+
+
+def _model_variant(device_text: str, definition: dict) -> str | None:
+    annotations = " ".join(re.findall(r"\\(([^)]*)\\)", device_text))
+    for model in sorted(definition["modelIds"], key=len, reverse=True):
+        if re.search(rf"(?<![A-Za-z0-9]){re.escape(model)}(?![A-Za-z0-9])", annotations, re.I):
+            return model
+    return definition["defaultModel"]
+
+
+def _has_unknown_explicit_variant(device_text: str, definition: dict) -> bool:
+    """Fail closed when an explicit protocol annotation names a model we have not reviewed."""
+    if not definition["modelIds"]:
+        return False
+    upstream = definition["upstreamProtocol"]
+    for annotation in re.findall(r"\\(([^)]*)\\)", device_text):
+        if not re.search(rf"(?<![A-Z0-9_]){re.escape(upstream)}(?![A-Z0-9_])", annotation):
+            continue
+        if any(re.search(rf"(?<![A-Za-z0-9]){re.escape(model)}(?![A-Za-z0-9])", annotation, re.I)
+               for model in definition["modelIds"]):
+            return False
+        remainder = re.sub(rf"(?<![A-Z0-9_]){re.escape(upstream)}(?![A-Z0-9_])", "", annotation)
+        remainder = re.sub(r"^[\\s\\-:/]+|[\\s\\-:/]+$", "", remainder)
+        if re.search(r"[A-Za-z]", remainder):
+            return True
+    return False
+
+
+def _clean_irremote_device_label(device_text: str, definition: dict, send_ids: set[str]) -> str:
+    model_ids = set(definition["modelIds"])
+    def keep_or_drop(match: re.Match[str]) -> str:
+        inner = match.group(1)
+        tokens = set(re.findall(r"\\b[A-Z][A-Z0-9_]+\\b", inner))
+        if tokens & send_ids:
+            return ""
+        if any(re.search(rf"(?<![A-Za-z0-9]){re.escape(model)}(?![A-Za-z0-9])", inner, re.I)
+               for model in model_ids):
+            return ""
+        return match.group(0)
+    label = re.sub(r"\\(([^)]*)\\)", keep_or_drop, device_text)
+    label = re.sub(r"\\bremote\\b", "", label, flags=re.I)
+    label = re.sub(r"\\bA/C\\b", "", label, flags=re.I)
+    label = re.sub(r"\\s{2,}", " ", label).strip(" -;/")
+    return label
+
+
+def parse_irremote_supported_protocols(
+    supported_text: str,
+    registry_text: str,
+    sha: str = PINNED_IRREMOTE_SHA,
+    state_text: str | None = None,
+) -> list[dict]:
+    """Turn upstream Detailed A/C model rows into real, transmittable app candidates.
+
+    Only protocols already present in ProtocolRegistry are admitted. An upstream row
+    that explicitly names a different/unsupported protocol variant is skipped.
+    """
+    definitions = parse_protocol_registry(registry_text, state_text)
+    by_upstream = {definition["upstreamProtocol"]: definition for definition in definitions}
+    family_map = {_irremote_family_key(definition["upstreamProtocol"]): definition
+                  for definition in definitions}
+    send_ids = _supported_send_ids(supported_text)
+    records = []
+
+    for line in supported_text.splitlines():
+        if not line.startswith("|"):
+            continue
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if len(cells) != 5 or cells[4].strip() != "Yes":
+            continue
+        family_raw, brand_raw, models_raw, _ac_models_raw, _ = cells
+        family = _irremote_text(family_raw)
+        brand = _irremote_text(brand_raw)
+        fallback = family_map.get(normalize_brand(family))
+
+        for raw_item in re.split(r"<BR\\s*/?>", models_raw, flags=re.I):
+            device_text = _irremote_text(raw_item)
+            if not device_text:
+                continue
+            if re.search(r"\\b(projector|\\bTV\\b|stand fan|soundbar|blu-?ray|transmitter IC|cooker hood|toilet)\\b",
+                         device_text, re.I):
+                continue
+
+            explicit_ids = _annotation_protocol_ids(device_text, send_ids)
+            active_explicit = next((protocol_id for protocol_id in explicit_ids if protocol_id in by_upstream), None)
+            if explicit_ids and active_explicit is None:
+                continue
+            definition = by_upstream.get(active_explicit) if active_explicit else fallback
+            if definition is None or _has_unknown_explicit_variant(device_text, definition):
+                continue
+
+            variant = _model_variant(device_text, definition)
+            label = _clean_irremote_device_label(device_text, definition, send_ids)
+            if not label:
+                continue
+            is_remote = re.search(r"\\bremote\\b", device_text, re.I) is not None
+            identity = "|".join([
+                family, brand, label, definition["upstreamProtocol"], variant or "", "remote" if is_remote else "ac"
+            ])
+            source_id = "catalog-" + hashlib.sha256(identity.encode("utf-8")).hexdigest()[:16]
+            profile = base_profile(
+                source="irremoteesp8266", sha=sha,
+                path="data/upstreams/snapshots/irremoteesp8266/SupportedProtocols.md",
+                source_id=source_id, brand=brand,
+                ac_model=None if is_remote else label,
+                remote_model=label if is_remote else None,
+                protocol_id=definition["upstreamProtocol"], variant=variant,
+                encoding="PROTOCOL", capabilities=_definition_capabilities(definition),
+                temp={"minC": definition["minC"], "maxC": definition["maxC"]},
+                fans=definition["fans"], modes=definition["modes"],
+                v_swing={"type": "ON_OFF" if definition["verticalSwing"] else "NONE", "positions": []},
+                h_swing={"type": "ON_OFF" if definition["horizontalSwing"] else "NONE", "positions": []},
+                special=[], verification="candidate")
+            profile["sourceMetadata"] = {
+                "catalogOrigin": "SupportedProtocols.md",
+                "upstreamFamily": family,
+                "upstreamDeviceText": device_text,
+                "appProtocolId": definition["appId"],
+            }
+            records.append(profile)
+
+    unique = {}
+    for record in records:
+        unique.setdefault(record["id"], record)
+    return list(unique.values())
 
 def parse_smartir(path: Path, sha: str) -> list[dict]:
     obj = json.loads(path.read_text(encoding="utf-8"))
@@ -222,7 +417,16 @@ def build() -> tuple[list[dict], dict]:
     lock = json.loads((ROOT / "upstream-lock.json").read_text(encoding="utf-8"))
     locked = {s["name"]: s for s in lock["sources"]}
     sha_irremote = locked["irremoteesp8266"]["commitSha"]
-    profiles = parse_irremote_registry(REGISTRY.read_text(encoding="utf-8"), sha_irremote)
+    registry_text = REGISTRY.read_text(encoding="utf-8")
+    profiles = parse_irremote_registry(registry_text, sha_irremote)
+    try:
+        profiles.extend(parse_irremote_supported_protocols(
+            IRREMOTE_SUPPORTED.read_text(encoding="utf-8"),
+            registry_text,
+            sha_irremote,
+        ))
+    except Exception as exc:
+        raise ValueError(f"irremoteesp8266 SupportedProtocols import failed: {exc}") from exc
     malformed: list[dict] = []
     exclusion_doc = json.loads((ROOT / "data/upstreams/flipper-exclusions.json").read_text(encoding="utf-8"))
     excluded = exclusion_doc["excludedFiles"]
@@ -259,6 +463,12 @@ def build() -> tuple[list[dict], dict]:
         "totalProfiles": len(profiles),
         "protocolProfiles": sum(p["encodingType"] == "PROTOCOL" for p in profiles),
         "rawProfiles": sum(p["encodingType"] != "PROTOCOL" for p in profiles),
+        "irremoteesp8266GenericProfiles": sum(
+            p["source"] == "irremoteesp8266" and p["sourcePath"].endswith("ProtocolRegistry.kt") for p in profiles
+        ),
+        "irremoteesp8266CatalogProfiles": sum(
+            p["source"] == "irremoteesp8266" and p["sourcePath"].endswith("SupportedProtocols.md") for p in profiles
+        ),
         "smartirTotal": sum(p["source"] == "smartir" for p in profiles),
         "smartirTransmittable": sum(p["source"] == "smartir" and is_transmittable(p) for p in profiles),
         "smartirUnsupported": sum(p["source"] == "smartir" and not is_transmittable(p) for p in profiles),
