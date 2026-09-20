@@ -99,7 +99,9 @@ class RemoteResolver(private val candidates: List<RemoteCandidate>) {
         }
         candidate.copy(evidence = reasons.distinct(), priority = priority)
         }.sortedWith(compareBy<RemoteCandidate> { if (it.isTransmittableByCatalogStatus()) 0 else 1 }
-            .thenBy { it.priority }.thenBy { it.id })
+            .thenBy { it.priority }
+            .thenBy { if (it.source.equals("irremoteesp8266", true)) 0 else 1 }
+            .thenBy { it.id })
 
     companion object {
         fun fromCatalog(json: String): RemoteResolver = fromCatalogDocument(json)
@@ -167,7 +169,9 @@ fun RemoteCandidate.isTransmittableByCatalogStatus(): Boolean =
 
 fun RemoteCandidate.displayModelLabel(): String = when {
     !acModel.isNullOrBlank() && !acModel.equals("Unknown", true) -> acModel
+    !remoteModel.isNullOrBlank() -> "Remote $remoteModel"
     source.equals("smartir", true) -> "Model chưa xác định · SmartIR #${sourceProfileId ?: id.substringAfterLast(':')}"
+    source.equals("irremoteesp8266", true) -> protocolId?.let { "Protocol $it" }.orEmpty()
     else -> acModel.orEmpty()
 }
 
