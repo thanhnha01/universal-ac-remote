@@ -153,7 +153,7 @@ fun RemoteApp(diagnostics: IrHardwareDiagnostics, store: SavedRemotesViewModel =
                     when {
                         catalog.loading -> LoadingScreen { nav.popBackStack() }
                         profile == null -> MissingProfileScreen(remote) { store.beginScan(); nav.navigate("scan") }
-                        else -> RemoteControlScreen(remote, profile, diagnostics, ::navigateTab, { nav.navigate("details/${remote.id}") }) { nav.popBackStack() }
+                        else -> RemoteControlScreen(remote, profile, diagnostics, store, ::navigateTab, { nav.navigate("details/${remote.id}") }) { nav.popBackStack() }
                     }
                 }
             }
