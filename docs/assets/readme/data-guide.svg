@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="340" viewBox="0 0 1400 340" role="img" aria-labelledby="title desc">
+<title id="title">Nhập file IR và sao lưu dữ liệu</title><desc id="desc">Luồng nhập file .ir và backup restore.</desc>
+<defs><linearGradient id="bg" x1="0" x2="1"><stop offset="0" stop-color="#F9FCFF"/><stop offset="1" stop-color="#E7F5FF"/></linearGradient></defs>
+<rect width="1400" height="340" rx="30" fill="url(#bg)"/>
+<text x="70" y="58" font-family="Arial" font-size="28" font-weight="800" fill="#0B1F44">Nhập file .ir và bảo vệ dữ liệu của bạn</text>
+<text x="70" y="88" font-family="Arial" font-size="17" fill="#60778D">Dùng file IR có sẵn hoặc xuất backup JSON để mang toàn bộ cấu hình sang thiết bị khác.</text>
+<g transform="translate(90 136)" font-family="Arial">
+  <g><rect width="280" height="128" rx="22" fill="#fff"/><circle cx="52" cy="52" r="28" fill="#EAF6FF"/><text x="52" y="61" text-anchor="middle" font-size="22" font-weight="800" fill="#087CF0">.ir</text><text x="94" y="43" font-size="19" font-weight="800" fill="#0B1F44">1. Chọn file .ir</text><text x="94" y="70" font-size="14" fill="#5E738A">Đọc và kiểm tra dữ liệu IR</text></g>
+  <text x="300" y="68" font-size="34" fill="#087CF0">→</text>
+  <g transform="translate(340 0)"><rect width="280" height="128" rx="22" fill="#fff"/><circle cx="52" cy="52" r="28" fill="#EAFBF4"/><text x="52" y="61" text-anchor="middle" font-size="22" fill="#13A66B">✓</text><text x="94" y="43" font-size="19" font-weight="800" fill="#0B1F44">2. Thử và lưu</text><text x="94" y="70" font-size="14" fill="#5E738A">Giữ nguyên waveform gốc</text><circle cx="244" cy="28" r="7" fill="#13A66B"><animate attributeName="opacity" values=".2;1;.2" dur="1.5s" repeatCount="indefinite"/></circle></g>
+  <g transform="translate(690 0)"><rect width="280" height="128" rx="22" fill="#fff"/><circle cx="52" cy="52" r="28" fill="#F1EDFF"/><text x="52" y="61" text-anchor="middle" font-size="22" fill="#6F54D8">⇧</text><text x="94" y="43" font-size="19" font-weight="800" fill="#0B1F44">3. Xuất backup</text><text x="94" y="70" font-size="14" fill="#5E738A">Remote · phòng · yêu thích</text><path d="M230 88 L230 110" stroke="#6F54D8" stroke-width="4"><animate attributeName="y1" values="88;72;88" dur="1.6s" repeatCount="indefinite"/><animate attributeName="y2" values="110;94;110" dur="1.6s" repeatCount="indefinite"/></path></g>
+  <text x="990" y="68" font-size="34" fill="#087CF0">→</text>
+  <g transform="translate(1030 0)"><rect width="280" height="128" rx="22" fill="#087CF0"/><circle cx="52" cy="52" r="28" fill="#fff" opacity=".16"/><text x="52" y="61" text-anchor="middle" font-size="22" fill="#fff">⇩</text><text x="94" y="43" font-size="19" font-weight="800" fill="#fff">4. Khôi phục</text><text x="94" y="70" font-size="14" fill="#DCEEFF">Nhập lại từ file JSON</text><rect x="94" y="88" width="140" height="8" rx="4" fill="#DCEEFF" opacity=".35"/><rect x="94" y="88" width="0" height="8" rx="4" fill="#fff"><animate attributeName="width" values="0;140;0" dur="2.5s" repeatCount="indefinite"/></rect></g>
+</g>
+</svg>
