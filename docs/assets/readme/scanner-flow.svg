@@ -1,53 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1400" height="320" viewBox="0 0 1400 320" role="img" aria-labelledby="title desc">
-  <title id="title">Smart Scanner workflow</title>
-  <desc id="desc">Animated workflow from brand selection through safe probe, user verification, and saving a remote.</desc>
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#F8FCFF"/>
-      <stop offset="1" stop-color="#EAF6FF"/>
-    </linearGradient>
-    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#19B9F5"/>
-      <stop offset="1" stop-color="#087CF0"/>
-    </linearGradient>
-  </defs>
-  <rect width="1400" height="320" rx="30" fill="url(#bg)"/>
-  <text x="70" y="64" font-family="Arial" font-size="28" font-weight="800" fill="#0B1F44">Smart Scanner V2 — safe, resumable, user-confirmed</text>
-  <text x="70" y="96" font-family="Arial" font-size="17" fill="#60778D">The app sends one candidate at a time. You confirm whether the A/C reacted before it moves on.</text>
-
-  <line x1="210" y1="184" x2="1190" y2="184" stroke="#C8E8FB" stroke-width="10" stroke-linecap="round"/>
-  <line x1="210" y1="184" x2="1190" y2="184" stroke="url(#line)" stroke-width="4" stroke-linecap="round"/>
-
-  <g font-family="Arial">
-    <g transform="translate(210 184)">
-      <circle r="44" fill="#fff" stroke="#087CF0" stroke-width="4"/>
-      <text y="-4" text-anchor="middle" font-size="20" font-weight="800" fill="#087CF0">1</text>
-      <text y="20" text-anchor="middle" font-size="12" font-weight="700" fill="#0B1F44">BRAND</text>
-      <text y="82" text-anchor="middle" font-size="15" font-weight="700" fill="#0B1F44">Choose brand</text>
-    </g>
-    <g transform="translate(535 184)">
-      <circle r="44" fill="#fff" stroke="#087CF0" stroke-width="4"/>
-      <text y="-4" text-anchor="middle" font-size="20" font-weight="800" fill="#087CF0">2</text>
-      <text y="20" text-anchor="middle" font-size="12" font-weight="700" fill="#0B1F44">PROBE</text>
-      <text y="82" text-anchor="middle" font-size="15" font-weight="700" fill="#0B1F44">Send one safe signal</text>
-    </g>
-    <g transform="translate(860 184)">
-      <circle r="44" fill="#fff" stroke="#13A66B" stroke-width="4"/>
-      <text y="-4" text-anchor="middle" font-size="20" font-weight="800" fill="#13A66B">3</text>
-      <text y="20" text-anchor="middle" font-size="12" font-weight="700" fill="#0B1F44">CONFIRM</text>
-      <text y="82" text-anchor="middle" font-size="15" font-weight="700" fill="#0B1F44">You verify the reaction</text>
-    </g>
-    <g transform="translate(1190 184)">
-      <circle r="44" fill="#087CF0"/>
-      <text y="-4" text-anchor="middle" font-size="20" font-weight="800" fill="#fff">4</text>
-      <text y="20" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">SAVE</text>
-      <text y="82" text-anchor="middle" font-size="15" font-weight="700" fill="#0B1F44">Keep the verified remote</text>
-    </g>
-  </g>
-
-  <circle r="9" fill="#19B9F5">
-    <animateMotion dur="4s" repeatCount="indefinite" path="M210 184 L1190 184"/>
-    <animate attributeName="r" values="7;12;7" dur="1s" repeatCount="indefinite"/>
-  </circle>
+<title id="title">Cách dùng Smart Scanner V2</title><desc id="desc">Luồng chọn hãng, phát mã thử, xác nhận phản hồi và lưu remote.</desc>
+<defs><linearGradient id="bg" x1="0" x2="1"><stop offset="0" stop-color="#F8FCFF"/><stop offset="1" stop-color="#EAF6FF"/></linearGradient><linearGradient id="line" x1="0" x2="1"><stop offset="0" stop-color="#19B9F5"/><stop offset="1" stop-color="#087CF0"/></linearGradient></defs>
+<rect width="1400" height="320" rx="30" fill="url(#bg)"/>
+<text x="70" y="58" font-family="Arial" font-size="28" font-weight="800" fill="#0B1F44">Smart Scanner V2 — dò an toàn, có thể tiếp tục sau</text>
+<text x="70" y="88" font-family="Arial" font-size="17" fill="#60778D">App chỉ phát từng mã một và luôn chờ bạn xác nhận trước khi chuyển sang mã tiếp theo.</text>
+<line x1="210" y1="184" x2="1190" y2="184" stroke="#C8E8FB" stroke-width="10" stroke-linecap="round"/><line x1="210" y1="184" x2="1190" y2="184" stroke="url(#line)" stroke-width="4" stroke-linecap="round"/>
+<g font-family="Arial">
+<g transform="translate(210 184)"><circle r="44" fill="#fff" stroke="#087CF0" stroke-width="4"/><text y="-4" text-anchor="middle" font-size="20" font-weight="800" fill="#087CF0">1</text><text y="20" text-anchor="middle" font-size="12" font-weight="700" fill="#0B1F44">CHỌN HÃNG</text><text y="82" text-anchor="middle" font-size="15" font-weight="700" fill="#0B1F44">Chọn thương hiệu</text></g>
+<g transform="translate(535 184)"><circle r="44" fill="#fff" stroke="#087CF0" stroke-width="4"/><text y="-4" text-anchor="middle" font-size="20" font-weight="800" fill="#087CF0">2</text><text y="20" text-anchor="middle" font-size="12" font-weight="700" fill="#0B1F44">PHÁT THỬ</text><text y="82" text-anchor="middle" font-size="15" font-weight="700" fill="#0B1F44">Gửi một mã an toàn</text></g>
+<g transform="translate(860 184)"><circle r="44" fill="#fff" stroke="#13A66B" stroke-width="4"/><text y="-4" text-anchor="middle" font-size="20" font-weight="800" fill="#13A66B">3</text><text y="20" text-anchor="middle" font-size="12" font-weight="700" fill="#0B1F44">XÁC NHẬN</text><text y="82" text-anchor="middle" font-size="15" font-weight="700" fill="#0B1F44">Bạn kiểm tra phản hồi</text></g>
+<g transform="translate(1190 184)"><circle r="44" fill="#087CF0"/><text y="-4" text-anchor="middle" font-size="20" font-weight="800" fill="#fff">4</text><text y="20" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">LƯU</text><text y="82" text-anchor="middle" font-size="15" font-weight="700" fill="#0B1F44">Lưu remote đã xác minh</text></g>
+</g>
+<circle r="9" fill="#19B9F5"><animateMotion dur="4s" repeatCount="indefinite" path="M210 184 L1190 184"/><animate attributeName="r" values="7;12;7" dur="1s" repeatCount="indefinite"/></circle>
 </svg>
