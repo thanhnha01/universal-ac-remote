@@ -1,180 +1,286 @@
 # Universal A/C Remote
 
 <p align="center">
-  <img src="docs/assets/readme/hero.svg" alt="Universal A/C Remote product overview" width="100%" />
+  <img src="docs/assets/readme/hero.svg" alt="Universal A/C Remote - ứng dụng điều khiển điều hòa bằng IR trên Android" width="100%" />
 </p>
 
 <p align="center">
-  <strong>A modern Android infrared remote for discovering, verifying, organizing, and controlling air conditioners — directly from the IR blaster built into your phone.</strong>
+  <strong>Biến điện thoại Android có IR blaster thành remote điều hòa đa năng, hiện đại và dễ dùng.</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/thanhnha01/universal-ac-remote/releases/latest"><strong>Download the latest APK</strong></a>
-  · <a href="#how-it-works">How it works</a>
-  · <a href="#features">Features</a>
-  · <a href="#device-requirements">Device requirements</a>
+  <a href="https://github.com/thanhnha01/universal-ac-remote/releases/latest"><strong>📥 Tải APK mới nhất</strong></a>
+  · <a href="#-cách-sử-dụng">Cách sử dụng</a>
+  · <a href="#-tính-năng-nổi-bật">Tính năng</a>
+  · <a href="#-yêu-cầu-thiết-bị">Yêu cầu thiết bị</a>
+  · <a href="#-kiến-trúc">Kiến trúc</a>
 </p>
 
 <p align="center">
-  <img alt="Latest release" src="https://img.shields.io/github/v/release/thanhnha01/universal-ac-remote?display_name=tag&style=flat-square" />
+  <img alt="Phiên bản mới nhất" src="https://img.shields.io/github/v/release/thanhnha01/universal-ac-remote?display_name=tag&style=flat-square" />
   <img alt="Android" src="https://img.shields.io/badge/Android-6.0%2B-3DDC84?style=flat-square&logo=android&logoColor=white" />
   <img alt="Kotlin" src="https://img.shields.io/badge/Kotlin-Jetpack%20Compose-7F52FF?style=flat-square&logo=kotlin&logoColor=white" />
-  <img alt="IR" src="https://img.shields.io/badge/IR-ConsumerIrManager-087CF0?style=flat-square" />
+  <img alt="Consumer IR" src="https://img.shields.io/badge/IR-ConsumerIrManager-087CF0?style=flat-square" />
   <img alt="ABI" src="https://img.shields.io/badge/ABI-arm64--v8a-0B1F44?style=flat-square" />
 </p>
 
 ---
 
-## Why this app exists
+## ❄️ Universal A/C Remote là gì?
 
-Universal A/C Remote solves one practical problem: your Android phone already has a built-in IR blaster, but the original A/C remote is missing, broken, inconvenient, or impossible to identify.
+Universal A/C Remote là ứng dụng Android điều khiển máy lạnh bằng **bộ phát hồng ngoại tích hợp trên điện thoại**.
 
-Instead of behaving like a generic remote-code database, the app is designed around how people actually find a working A/C remote:
+Ứng dụng được xây dựng cho những tình huống rất thực tế: remote gốc bị mất, hỏng, khó tìm đúng model hoặc bạn muốn gom nhiều máy lạnh vào một giao diện thống nhất.
 
-- browse brands with an **A–Z catalog**,
-- narrow by **series, A/C model, or remote model**,
-- use a **safe Smart Scanner** when the exact model is unknown,
-- save devices by **room, favorites, and recent use**,
-- control them with an **adaptive remote** that only exposes functions the active profile can really transmit.
+Điểm khác biệt của dự án:
 
-**No ESP32. No Wi-Fi bridge. No external IR hardware.** The phone itself is the remote.
+- **Không cần ESP32**
+- **Không cần hub Wi‑Fi**
+- **Không cần thiết bị IR rời**
+- Phát tín hiệu trực tiếp qua Android `ConsumerIrManager`
+- Hỗ trợ tìm theo **hãng / model máy / model remote**
+- Có **Smart Scanner V2** khi không biết model
+- Remote hiển thị theo **khả năng thực tế của profile**
+- Có nhập file `.ir`, backup/restore và cập nhật app
 
----
-
-## Download
-
-The latest stable APK is published through GitHub Releases:
-
-**[Download Universal A/C Remote](https://github.com/thanhnha01/universal-ac-remote/releases/latest)**
-
-Recent release artifacts include the APK, update manifest, SHA-256 sums, catalog metadata, and source-lock information.
-
-> Android may ask you to allow installation from the selected source. The app never uses silent installation.
+> Mục tiêu của app là biến chính chiếc điện thoại Android có IR blaster của bạn thành một remote điều hòa mạnh, gọn và đáng tin cậy.
 
 ---
 
-## Features
+## 📥 Tải ứng dụng
 
-### Fast device discovery
+Bản APK ổn định mới nhất được phát hành tại GitHub Releases:
 
-Search by brand, A/C model, or remote model. Or browse the full catalog using the A–Z brand index and drill into available series/model groups.
+### 👉 [Tải Universal A/C Remote mới nhất](https://github.com/thanhnha01/universal-ac-remote/releases/latest)
 
-### Smart Scanner V2
+Release có thể bao gồm:
 
-When you do not know the exact model, Smart Scanner tests compatible profiles one at a time and waits for your confirmation before continuing.
+- APK cài đặt
+- `update.json`
+- `SHA256SUMS.txt`
+- metadata catalog
+- thông tin nguồn dữ liệu IR được pin
+
+> Android có thể yêu cầu cho phép cài ứng dụng từ nguồn hiện tại. Ứng dụng không sử dụng cơ chế cài đặt im lặng.
+
+---
+
+## ✨ Tính năng nổi bật
+
+### 🔎 Tìm remote theo hãng và model
+
+Bạn có thể tìm nhanh bằng:
+
+- tên hãng
+- model máy lạnh
+- model remote
+- danh sách hãng **A–Z**
+- nhóm **Series / Model** khi catalog có đủ dữ liệu
+
+Các hãng phổ biến được đưa lên trước để thao tác nhanh hơn.
+
+### 🧠 Smart Scanner V2
+
+Không biết chính xác model? Chọn hãng và để Smart Scanner hỗ trợ.
 
 <p align="center">
-  <img src="docs/assets/readme/scanner-flow.svg" alt="Smart Scanner V2 workflow" width="100%" />
+  <img src="docs/assets/readme/scanner-flow.svg" alt="Hướng dẫn dùng Smart Scanner V2" width="100%" />
 </p>
 
-Scanner behavior is intentionally conservative:
+Scanner được thiết kế theo hướng an toàn:
 
-- one candidate at a time,
-- no automatic IR blast loop,
-- explicit user confirmation after each probe,
-- **Power verification last**,
-- resumable scan progress,
-- previously successful profiles ranked ahead on the same device.
+- chỉ phát **một mã mỗi lần**
+- luôn chờ người dùng xác nhận
+- không chạy brute-force tự động
+- bước kiểm tra nguồn được giữ về cuối
+- có thể thoát và **tiếp tục phiên dò** sau
+- profile từng xác minh thành công trên máy sẽ được ưu tiên
 
-### Adaptive Remote
+### 🎛️ Adaptive Remote — remote thích ứng
 
-The remote UI is generated from real profile capabilities. Depending on the selected profile, it can expose:
+Remote không cố hiển thị mọi nút có thể tưởng tượng ra. Nó chỉ hiển thị các điều khiển mà profile hiện tại thực sự hỗ trợ và encoder có thể phát.
 
-- Power
-- Temperature
-- Mode
-- Fan speed
-- Vertical swing
-- Horizontal swing
+<p align="center">
+  <img src="docs/assets/readme/remote-guide.svg" alt="Hướng dẫn sử dụng remote điều hòa" width="100%" />
+</p>
 
-Controls are hidden when the active profile cannot safely encode them.
+Tùy profile, bạn có thể có:
 
-> Consumer IR is one-way. **Last sent state** means what the app most recently transmitted — not the live state of the A/C.
+- Bật / Tắt
+- Nhiệt độ
+- Chế độ
+- Tốc độ quạt
+- Swing dọc
+- Swing ngang
 
-### Rooms, favorites, and recents
+> **Lưu ý quan trọng:** IR là giao tiếp một chiều. Ứng dụng hiển thị **“lần cuối đã gửi”**, không giả vờ biết trạng thái thực tế hiện tại của máy lạnh.
 
-Organize saved A/Cs by room and reach the devices you use most through Favorites, Recent devices, room filters, and device details.
+### 🏠 Phòng, yêu thích và thiết bị gần đây
 
-### Smart `.ir` import
+Bạn có thể tổ chức remote theo:
 
-Import Flipper-style raw IR files directly from Android storage.
+- Phòng
+- Yêu thích
+- Thiết bị dùng gần đây
+- Tên tùy chỉnh
 
-The importer validates the file, preserves the original waveform, classifies common command names, and normalizes labels such as Power, Temp ±, Fan, Swing, Timer, and Light.
+Nhờ vậy các remote thường dùng luôn ở ngay trang đầu.
 
-It never invents timings or synthesizes commands that were not present in the file.
+### 📄 Nhập file `.ir`
 
-### Backup and restore
+Ứng dụng hỗ trợ nhập file raw IR kiểu Flipper từ bộ nhớ Android.
 
-Export your local setup to a versioned JSON backup containing saved remotes, imported commands, rooms, favorites, verification data, recent usage, and last-sent state.
+Smart Import sẽ:
 
-Restore is validated before replacing the local database.
+- kiểm tra file trước khi dùng
+- giữ nguyên waveform IR gốc
+- nhận diện nhóm lệnh phổ biến
+- chuẩn hóa nhãn như Power, Temp ±, Fan, Swing, Timer, Light
+- cho phép phát thử trước khi lưu
 
-### Hardware diagnostics
+Ứng dụng **không tự bịa thêm lệnh** và không chỉnh timing IR trong file gốc.
 
-Diagnostics distinguish between **Ready**, **Limited**, and **Unavailable** IR states. When Android reports carrier-frequency ranges, the app shows them in kHz.
+### ☁️ Backup / Restore
 
-### App update flow
+<p align="center">
+  <img src="docs/assets/readme/data-guide.svg" alt="Hướng dẫn nhập file IR và backup restore" width="100%" />
+</p>
 
-Stable APK updates are checked through GitHub Releases and validated with allowed HTTPS sources, manifest checks, and APK SHA-256 verification.
+Backup JSON có thể lưu:
 
-A database-update foundation also exists with compatibility checks, SHA-256 validation, signature-verifier hooks, atomic activation, and rollback support.
+- remote đã lưu
+- lệnh IR import
+- phòng
+- yêu thích
+- kết quả xác minh
+- lịch sử dùng gần đây
+- trạng thái lần cuối đã gửi
+
+Restore được kiểm tra schema trước khi thay thế dữ liệu local.
+
+### 🩺 Chẩn đoán phần cứng IR
+
+Màn hình Diagnostics phân biệt rõ:
+
+- **Ready** — Android xác nhận có IR emitter hoạt động
+- **Limited** — có dấu hiệu hỗ trợ IR nhưng chưa xác nhận emitter
+- **Unavailable** — Android không cung cấp Consumer IR service
+
+Nếu thiết bị trả về dải carrier frequency, app sẽ hiển thị trực tiếp theo kHz.
+
+### 🔄 Cập nhật ứng dụng
+
+Ứng dụng có thể kiểm tra bản stable từ GitHub Releases và xác minh:
+
+- URL HTTPS hợp lệ
+- manifest update
+- SHA-256 của APK
+- khả năng mở package installer trên Android
+
+Nền database updater cũng đã có:
+
+- compatibility gate
+- SHA-256
+- hook xác minh chữ ký
+- cài atomic
+- rollback
 
 ---
 
-## How it works
+## 📱 Cách sử dụng
+
+### Cách 1 — Bạn biết hãng hoặc model
+
+1. Mở **Thêm máy lạnh**
+2. Tìm hãng hoặc model
+3. Chọn hãng trong danh sách A–Z
+4. Chọn Series / Model phù hợp
+5. Thử profile và xác minh
+6. Lưu remote
+
+### Cách 2 — Bạn không biết model
+
+1. Chọn hãng
+2. Mở **Smart Scanner V2**
+3. Nhấn phát thử
+4. Quan sát máy lạnh
+5. Chọn **Có phản hồi** hoặc **Không phản hồi**
+6. Khi tìm được mã đúng, lưu remote
+
+### Cách 3 — Bạn đã có file `.ir`
+
+1. Vào **Nhập file .ir**
+2. Chọn file trên điện thoại
+3. Kiểm tra danh sách lệnh
+4. Phát thử
+5. Đặt tên remote
+6. Lưu
+
+---
+
+## ⚙️ Cách ứng dụng hoạt động
 
 ```text
-Compose UI
-   ↓
-Saved device / scanner / remote state
-   ↓
+Jetpack Compose UI
+        ↓
+Thiết bị đã lưu / Scanner / Remote state
+        ↓
 AcState
-   ↓
-Protocol encoder or validated profile/raw command
-   ↓
+        ↓
+Protocol encoder hoặc profile/raw IR đã validate
+        ↓
 IrTransmission
-   ↓
+        ↓
 Android ConsumerIrManager
-   ↓
-Built-in phone IR blaster
+        ↓
+IR blaster tích hợp trên điện thoại
 ```
 
-Protocol-based remotes use a native bridge around selected IRremoteESP8266 A/C capabilities. Profile-based sources are validated and resolved before transmission.
+Với remote protocol-based, app dùng native bridge cho phần A/C phù hợp từ IRremoteESP8266.
+
+Với profile/raw IR, dữ liệu được resolve và validate trước khi phát.
 
 ---
 
-## IR data sources
+## 🗃️ Nguồn dữ liệu IR
 
-The unified catalog is assembled from multiple upstream projects:
+Unified catalog hiện tổng hợp dữ liệu từ:
 
 - **IRremoteESP8266**
 - **SmartIR**
-- **Flipper IRDB** — A/C entries only
+- **Flipper IRDB** — chỉ dữ liệu A/C
 - **irplus**
 
-Upstream inputs are pinned and tracked rather than pulling unreviewed latest content directly into every build.
+Nguồn upstream được pin và theo dõi để build có thể tái tạo, thay vì kéo “latest” không kiểm soát vào mỗi lần build.
 
-See [Upstream sources](docs/UPSTREAM_SOURCES.md), [Protocol catalog](docs/PROTOCOL_CATALOG.md), and [IR protocol model](docs/IR_PROTOCOL.md).
+Xem thêm:
 
----
-
-## Device requirements
-
-### Required
-
-- Android **6.0 / API 23** or newer
-- **arm64-v8a**
-- built-in consumer IR emitter exposed through Android `ConsumerIrManager`
-
-### Primary target
-
-The initial hardware target is **OnePlus 15**.
-
-The app can also work on other Android phones that expose a compatible built-in IR emitter through the Consumer IR API.
+- [Nguồn upstream](docs/UPSTREAM_SOURCES.md)
+- [Protocol catalog](docs/PROTOCOL_CATALOG.md)
+- [Mô hình IR protocol](docs/IR_PROTOCOL.md)
 
 ---
 
-## Build from source
+## 📲 Yêu cầu thiết bị
+
+### Bắt buộc
+
+- Android **6.0 / API 23** trở lên
+- kiến trúc **arm64-v8a**
+- điện thoại có **IR blaster tích hợp**
+- Android phải expose phần cứng qua `ConsumerIrManager`
+
+### Thiết bị mục tiêu chính
+
+Thiết bị mục tiêu ban đầu của dự án là **OnePlus 15**.
+
+Ứng dụng cũng có thể chạy trên các máy Android khác nếu hệ thống expose bộ phát IR tương thích qua Consumer IR API.
+
+> Việc điện thoại trông như có “mắt IR” chưa đủ. Android phải cung cấp emitter qua API mà ứng dụng sử dụng.
+
+---
+
+## 🛠️ Build từ source
 
 ### Toolchain
 
@@ -186,35 +292,35 @@ The app can also work on other Android phones that expose a compatible built-in 
 - Room
 - Native C++ IR bridge
 
-### Debug build
+### Build debug
 
 ```bash
 ./gradlew :app:assembleDebug
 ```
 
-### Unit tests
+### Chạy unit test
 
 ```bash
 ./gradlew :app:testDebugUnitTest
 ```
 
-### Lint
+### Chạy lint
 
 ```bash
 ./gradlew :app:lintDebug
 ```
 
-### Full local verification
+### Kiểm tra đầy đủ
 
 ```bash
 ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
 ```
 
-Release signing is configured through environment variables in CI and is not committed to the repository.
+Release signing được cấu hình bằng biến môi trường trong CI và không được commit vào repository.
 
 ---
 
-## Architecture
+## 🧱 Kiến trúc
 
 ```text
 app/src/main/java/com/thanhnha/universalacremote/
@@ -240,87 +346,102 @@ app/src/main/java/com/thanhnha/universalacremote/
     └── UpdateScreen.kt
 ```
 
-More detail:
+Tài liệu chi tiết:
 
-- [System architecture](docs/ARCHITECTURE.md)
-- [Product goals](docs/PRODUCT.md)
-- [Testing strategy](docs/TESTING.md)
+- [Kiến trúc hệ thống](docs/ARCHITECTURE.md)
+- [Mục tiêu sản phẩm](docs/PRODUCT.md)
+- [Chiến lược kiểm thử](docs/TESTING.md)
 - [CI/CD](docs/CI_CD.md)
-- [Update system](docs/UPDATE_SYSTEM.md)
+- [Hệ thống cập nhật](docs/UPDATE_SYSTEM.md)
 - [UI / UX](docs/UI_UX.md)
 - [Roadmap](docs/ROADMAP.md)
 
 ---
 
-## Product principles
+## 🧭 Nguyên tắc sản phẩm
 
-### Do not fake device state
+### Không giả trạng thái máy lạnh
 
-Consumer IR is one-way, so the app uses **Last sent state** instead of pretending to know the live state of the A/C.
+IR là một chiều. App chỉ lưu trạng thái **lần cuối đã gửi**.
 
-### Do not show dead controls
+### Không hiển thị nút chết
 
-A feature being present in catalog metadata is not enough. A control should only be interactive when the active encoder/profile can produce a valid IR transmission for it.
+Chỉ hiển thị control khi encoder/profile thực sự có thể phát lệnh hợp lệ.
 
-### Do not brute-force IR
+### Không brute-force IR
 
-The scanner sends a candidate, waits for confirmation, and only then continues.
+Scanner luôn chờ người dùng xác nhận giữa các mã.
 
-### Prefer reproducible data
+### Dữ liệu phải tái tạo được
 
-IR sources, build inputs, and release artifacts are pinned and auditable.
+Nguồn IR, build input và release artifact đều được pin và có thể audit.
 
 ---
 
-## Project status
+## 🚧 Trạng thái dự án
 
-The V3 rebuild is merged into `main` and includes:
+Bản V3 đã được merge vào `main` với:
 
-- V3 design system and navigation
-- Home / Rooms / Favorites / Recents
-- A–Z brand browser
-- Brand → Series / Model discovery
-- Smart Scanner V2 with resume
-- Adaptive Remote + AcState V2 foundation
-- Smart `.ir` import
+- Design system + navigation V3
+- Home / Rooms / Favorites / Recent
+- Brand Browser A–Z
+- Brand → Series / Model
+- Smart Scanner V2 có resume
+- Adaptive Remote
+- AcState V2 foundation
+- Smart Import `.ir`
 - Backup / Restore
 - App updater
 - Database updater security foundation
 - IR diagnostics
-- regression fixes across the core flows
+- regression audit các luồng chính
 
-The next validation focus is physical-device testing across real A/C units and the primary OnePlus 15 target.
-
----
-
-## Contributing
-
-Before changing the repository, read [AGENTS.md](AGENTS.md).
-
-Good pull requests should solve one clear problem, include tests for behavior changes, preserve scanner safety, avoid unsupported IR claims, and keep upstream attribution traceable.
+Ưu tiên tiếp theo là kiểm thử thực tế trên nhiều máy lạnh và đặc biệt là **OnePlus 15**.
 
 ---
 
-## Security and trust
+## 🤝 Đóng góp
 
-APK updates are verified by checksum and restricted to approved GitHub HTTPS sources.
+Trước khi thay đổi repository, hãy đọc [AGENTS.md](AGENTS.md).
 
-The database updater foundation supports signed-payload verification, compatibility gating, atomic install, and rollback.
+Một pull request tốt nên:
 
-Do not submit secrets, signing keys, private remote dumps, or IR datasets without clear provenance.
+- giải quyết một vấn đề rõ ràng
+- tránh refactor ngoài phạm vi
+- có test cho thay đổi hành vi
+- giữ nguyên nguyên tắc scanner an toàn
+- không thêm claim IR chưa được kiểm chứng
+- giữ attribution nguồn dữ liệu rõ ràng
 
 ---
 
-## Acknowledgements
+## 🔐 Bảo mật và độ tin cậy
 
-Universal A/C Remote builds on work from the open-source IR community, especially IRremoteESP8266, SmartIR, Flipper IRDB, and irplus.
+Luồng update và dữ liệu IR được xem là phần nhạy cảm.
+
+APK update bị giới hạn vào nguồn GitHub HTTPS được cho phép và phải qua kiểm tra checksum.
+
+Database updater foundation hỗ trợ xác minh chữ ký, compatibility gate, atomic install và rollback.
+
+Không commit secret, signing key hoặc dữ liệu IR không rõ nguồn gốc.
+
+---
+
+## ❤️ Cảm ơn
+
+Dự án được hưởng lợi rất nhiều từ cộng đồng mã nguồn mở IR, đặc biệt:
+
+- IRremoteESP8266
+- SmartIR
+- Flipper IRDB
+- irplus
 
 ---
 
 <p align="center">
-  <strong>Turn the Android phone already in your hand into the A/C remote you actually want to use.</strong>
+  <strong>Một điện thoại · Nhiều máy lạnh · Một trải nghiệm điều khiển thống nhất.</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/thanhnha01/universal-ac-remote/releases/latest"><strong>Download the latest APK →</strong></a>
+  <a href="https://github.com/thanhnha01/universal-ac-remote/releases/latest"><strong>📥 Tải APK mới nhất →</strong></a>
 </p>
