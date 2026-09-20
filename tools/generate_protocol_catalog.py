@@ -2,7 +2,7 @@
 """Generate the pinned upstream Detailed A/C catalog and generic-readiness report.
 
 Usage: python tools/generate_protocol_catalog.py [SupportedProtocols.md] [output.md]
-The default input is the reviewed snapshot in docs/SupportedProtocols.upstream.md.
+The default input is the reviewed snapshot in data/upstreams/snapshots/irremoteesp8266/SupportedProtocols.md.
 This tool intentionally reports candidates; it never enables an unreviewed sender.
 """
 from __future__ import annotations
