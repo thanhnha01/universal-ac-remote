@@ -59,7 +59,21 @@ class CatalogTests(unittest.TestCase):
         self.assertTrue(any(record["brand"] == "Comfee" and record["protocolId"] == "MIDEA" for record in records))
         self.assertTrue(any(record["brand"] == "Gree" and record["protocolId"] == "GREE" for record in records))
         self.assertTrue(any(record["brand"] == "Fujitsu" and record["protocolId"] == "FUJITSU_AC" for record in records))
-        self.assertFalse(any(record["protocolId"] == "LG2" for record in records))
+        lg2 = [record for record in records if record["protocolId"] == "LG2"]
+        self.assertTrue(lg2)
+        self.assertTrue(all(record["encodingType"] == "IRREMOTE_REFERENCE" for record in lg2))
+        self.assertTrue(all(record["verificationStatus"] == "needsSupport" for record in lg2))
+
+    def test_full_irremote_inventory_keeps_not_yet_enabled_families_searchable(self):
+        records = catalog.parse_irremote_supported_protocols(
+            catalog.IRREMOTE_SUPPORTED.read_text(encoding="utf-8"),
+            catalog.REGISTRY.read_text(encoding="utf-8"),
+        )
+        haier = [record for record in records if record["brand"] == "Haier"]
+        self.assertTrue(haier)
+        self.assertTrue(any(record["protocolId"] in {"HAIER_AC", "HAIER_AC160", "HAIER_AC176", "HAIER_AC_YRW02"} for record in haier))
+        self.assertTrue(all(record["encodingType"] == "IRREMOTE_REFERENCE" for record in haier))
+        self.assertTrue(all(record["verificationStatus"] == "needsSupport" for record in haier))
 
     def test_swing_support_is_explicit_and_never_inferred_as_positions(self):
         records = catalog.parse_irremote_registry(catalog.REGISTRY.read_text(encoding="utf-8"))
@@ -177,7 +191,9 @@ class CatalogTests(unittest.TestCase):
         self.assertGreater(len(smart), 0)
         self.assertTrue(all(p["sourcePath"].startswith("codes/climate/") for p in smart))
         self.assertEqual(report["validationStatus"], "PASS")
-        self.assertGreater(report["irremoteesp8266CatalogProfiles"], 20)
+        self.assertGreater(report["irremoteesp8266CatalogProfiles"], 100)
+        self.assertGreater(report["irremoteesp8266UsableCatalogProfiles"], 20)
+        self.assertGreater(report["irremoteesp8266ReferenceProfiles"], 20)
         self.assertEqual(report["irremoteesp8266GenericProfiles"], 8)
         self.assertEqual(report["smartirTotal"], report["smartirTransmittable"] + report["smartirUnsupported"])
         self.assertGreater(report["transmittableBrands"], 0)
