@@ -1,0 +1,190 @@
+name: Update IRremoteESP8266
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "13 6 * * 1"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-irremoteesp8266
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Check and prepare reviewed IRremoteESP8266 update
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12.8"
+
+      - name: Check for an existing IRremoteESP8266 update PR
+        id: existing-pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          count=$(gh pr list \
+            --base main \
+            --state open \
+            --search 'in:title [irremote-auto-update]' \
+            --json number \
+            --jq 'length')
+          echo "exists=$([ "$count" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve latest IRremoteESP8266 SHA
+        id: candidate
+        if: steps.existing-pr.outputs.exists != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          locked=$(python3 - <<'PY'
+          import json
+          doc = json.load(open("upstream-lock.json", encoding="utf-8"))
+          print(next(source["commitSha"] for source in doc["sources"] if source["name"] == "irremoteesp8266"))
+          PY
+          )
+          candidate=$(python3 tools/update_irremoteesp8266.py --resolve)
+          test "${#candidate}" -eq 40
+          echo "locked=$locked" >> "$GITHUB_OUTPUT"
+          echo "sha=$candidate" >> "$GITHUB_OUTPUT"
+          echo "short=${candidate:0:12}" >> "$GITHUB_OUTPUT"
+          if [ "$candidate" = "$locked" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "IRremoteESP8266 is already current at $locked."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "IRremoteESP8266 update detected: $locked -> $candidate"
+          fi
+
+      - name: Stop when no update is available
+        if: steps.existing-pr.outputs.exists != 'true' && steps.candidate.outputs.changed != 'true'
+        run: echo "No IRremoteESP8266 update detected; no branch or pull request will be created."
+
+      - name: Set up JDK 17
+        if: steps.existing-pr.outputs.exists != 'true' && steps.candidate.outputs.changed == 'true'
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "17.0.20+8"
+
+      - name: Validate Gradle Wrapper
+        if: steps.existing-pr.outputs.exists != 'true' && steps.candidate.outputs.changed == 'true'
+        uses: gradle/actions/wrapper-validation@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+
+      - name: Set up Gradle cache
+        if: steps.existing-pr.outputs.exists != 'true' && steps.candidate.outputs.changed == 'true'
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        with:
+          cache-provider: basic
+          validate-wrappers: false
+
+      - name: Install pinned Android SDK components
+        if: steps.existing-pr.outputs.exists != 'true' && steps.candidate.outputs.changed == 'true'
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0" \
+            "ndk;27.2.12479018" \
+            "cmake;3.22.1"
+
+      - name: Materialize candidate and preserve local SWIGLIB hooks
+        if: steps.existing-pr.outputs.exists != 'true' && steps.candidate.outputs.changed == 'true'
+        run: |
+          python3 tools/update_irremoteesp8266.py --candidate "${{ steps.candidate.outputs.sha }}"
+          python3 tools/generate_protocol_catalog.py
+          python3 tools/build_ir_catalog.py
+          python3 tools/test_build_ir_catalog.py
+          git diff --check
+
+      - name: Verify provenance and local native hooks
+        if: steps.existing-pr.outputs.exists != 'true' && steps.candidate.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          candidate="${{ steps.candidate.outputs.sha }}"
+          python3 - "$candidate" <<'PY'
+          import json, pathlib, re, sys
+          expected = sys.argv[1]
+          lock = json.loads(pathlib.Path("upstream-lock.json").read_text(encoding="utf-8"))
+          actual = next(source["commitSha"] for source in lock["sources"] if source["name"] == "irremoteesp8266")
+          assert actual == expected
+          source = json.loads(pathlib.Path("data/upstreams/snapshots/irremoteesp8266/source.json").read_text(encoding="utf-8"))
+          assert source["commitSha"] == expected
+          manifest = pathlib.Path("app/src/main/cpp/UPSTREAM_MANIFEST.txt").read_text(encoding="utf-8")
+          assert f"Commit: {expected}" in manifest
+          irac = pathlib.Path("app/src/main/cpp/upstream/IRac.cpp").read_text(encoding="utf-8")
+          irsend = pathlib.Path("app/src/main/cpp/upstream/IRsend.cpp").read_text(encoding="utf-8")
+          assert "carrierFrequencyList.clear();" in irac
+          assert "carrierFrequencyList.push_back(freq);" in irsend
+          PY
+
+      - name: Run Android native and app verification
+        if: steps.existing-pr.outputs.exists != 'true' && steps.candidate.outputs.changed == 'true'
+        run: |
+          chmod +x gradlew
+          ./gradlew \
+            :app:testDebugUnitTest \
+            :app:lintDebug \
+            :app:assembleDebug \
+            :app:assembleDebugAndroidTest \
+            :app:assembleRelease \
+            --stacktrace
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" \
+            -v -c -P 16 4 \
+            app/build/outputs/apk/release/app-release-unsigned.apk
+
+      - name: Create reviewed update pull request
+        if: steps.existing-pr.outputs.exists != 'true' && steps.candidate.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          candidate="${{ steps.candidate.outputs.sha }}"
+          short="${{ steps.candidate.outputs.short }}"
+          branch="automation/update-irremoteesp8266-${short}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add \
+            upstream-lock.json \
+            data/upstreams/licenses.json \
+            data/upstreams/snapshots/irremoteesp8266 \
+            data/generated/ir_catalog.json \
+            data/generated/catalog_report.json \
+            app/src/main/assets/catalog-index.json \
+            app/src/main/cpp/upstream \
+            app/src/main/cpp/IRremoteESP8266-LICENSE.txt \
+            app/src/main/cpp/UPSTREAM_MANIFEST.txt \
+            docs/PROTOCOL_CATALOG.md \
+            docs/UPSTREAM_SOURCES.md
+
+          git diff --cached --quiet && {
+            echo "::error::Candidate SHA changed but produced no reviewed repository changes."
+            exit 1
+          }
+
+          git commit -m "chore(ir): update IRremoteESP8266 to ${short} [irremote-auto-update]"
+          git push --set-upstream origin "$branch"
+
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "chore(ir): update IRremoteESP8266 to ${short} [irremote-auto-update]" \
+            --body "Automated **review-only** IRremoteESP8266 update.\n\nPinned SHA: \`${{ steps.candidate.outputs.locked }}\` → \`$candidate\`\n\nBefore this PR was created, the workflow re-applied the local SWIGLIB carrier-frequency hooks, regenerated the protocol/catalog outputs, ran catalog tests, Android unit tests, lint, debug/instrumentation/release builds, and verified 16 KB APK alignment.\n\n**This PR is never auto-merged. Review the native/source diff and merge manually when satisfied.**"
