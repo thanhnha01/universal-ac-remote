@@ -93,11 +93,13 @@ fun IrImportScreen(
             } ?: error("Không thể đọc file đã chọn.")
             FlipperRawImporter.parse(bytes)
         }
-        result.onSuccess {
+        result.onSuccess { parsed ->
             fileName = displayName(context, uri)
-            commands = it
-            selectedIndex = it.indices.firstOrNull() ?: -1
-            feedback = "Đã đọc ${it.size} lệnh IR hợp lệ."
+            commands = smartImportedCommands(parsed).map { presentation ->
+                presentation.command.copy(name = presentation.label)
+            }
+            selectedIndex = commands.indices.firstOrNull() ?: -1
+            feedback = "Đã đọc và sắp xếp ${parsed.size} lệnh IR hợp lệ."
         }.onFailure {
             fileName = null
             commands = emptyList()
