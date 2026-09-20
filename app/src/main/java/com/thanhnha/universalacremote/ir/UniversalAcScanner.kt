@@ -5,6 +5,12 @@ enum class ScanResult { FULL_MATCH, PARTIAL_MATCH, NO_MATCH }
 enum class ScanState { READY, TRANSMITTING, AWAITING_FEEDBACK, VERIFYING, MATCHED, STOPPED, ERROR, COMPLETE }
 enum class VerificationStatus { VERIFIED, FAILED, SKIPPED, UNSUPPORTED }
 
+data class ScannerSnapshot(
+    val cursor: Int,
+    val selectedCandidateId: String? = null,
+    val verificationStatuses: Map<VerificationCheck, VerificationStatus> = emptyMap(),
+)
+
 /** Safe, UI-driven scanner: a candidate is transmitted once, then waits for explicit user action. */
 class UniversalAcScanner(
     val candidates: List<RemoteCandidate>,
@@ -103,6 +109,41 @@ class UniversalAcScanner(
         state = if (cursor < candidates.size) ScanState.READY else ScanState.COMPLETE
         if (state == ScanState.COMPLETE) result = ScanResult.NO_MATCH
         return state == ScanState.READY
+    }
+
+    fun snapshot(): ScannerSnapshot = ScannerSnapshot(
+        cursor = cursor,
+        selectedCandidateId = selected?.id,
+        verificationStatuses = verificationStatuses,
+    )
+
+    /**
+     * Resume only user-visible progress. An in-flight transmission is never
+     * restored as AWAITING_FEEDBACK, so reopening the app cannot transmit or
+     * advance the scan without an explicit user action.
+     */
+    fun restore(snapshot: ScannerSnapshot) {
+        if (candidates.isEmpty()) return
+        cursor = snapshot.cursor.coerceIn(0, candidates.lastIndex)
+        val selectedIndex = snapshot.selectedCandidateId
+            ?.let { id -> candidates.indexOfFirst { it.id == id } }
+            ?.takeIf { it >= 0 }
+        if (selectedIndex != null) {
+            cursor = selectedIndex
+            selected = candidates[selectedIndex]
+            verificationStatuses = snapshot.verificationStatuses
+            verifiedCapabilities = verificationStatuses
+                .filterValues { it == VerificationStatus.VERIFIED }
+                .keys
+            state = ScanState.VERIFYING
+        } else {
+            selected = null
+            verificationStatuses = emptyMap()
+            verifiedCapabilities = emptySet()
+            state = ScanState.READY
+        }
+        result = null
+        lastSentAt = null
     }
 
     fun stop() {
