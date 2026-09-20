@@ -1,160 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="720" viewBox="0 0 1400 720" role="img" aria-labelledby="title desc">
-  <title id="title">Universal A/C Remote product overview</title>
-  <desc id="desc">Three Android phone mockups showing Home, brand discovery, and adaptive remote controls.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="620" viewBox="0 0 1400 620" role="img" aria-labelledby="title desc">
+  <title id="title">Universal A/C Remote</title>
+  <desc id="desc">Tổng quan ứng dụng điều khiển điều hòa bằng IR trên Android.</desc>
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#F6FBFF"/>
-      <stop offset="0.55" stop-color="#EAF6FF"/>
-      <stop offset="1" stop-color="#D9EEFF"/>
-    </linearGradient>
-    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#19B9F5"/>
-      <stop offset="1" stop-color="#087CF0"/>
-    </linearGradient>
-    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
-      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#0B1F44" flood-opacity="0.15"/>
-    </filter>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F7FCFF"/><stop offset="1" stop-color="#DFF2FF"/></linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#19B9F5"/><stop offset="1" stop-color="#087CF0"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#0B1F44" flood-opacity=".16"/></filter>
   </defs>
-  <rect width="1400" height="720" rx="36" fill="url(#bg)"/>
-  <circle cx="1240" cy="120" r="240" fill="#FFFFFF" opacity="0.42"/>
-  <circle cx="180" cy="670" r="260" fill="#BFE8FF" opacity="0.34"/>
-
-  <g transform="translate(70 76)">
-    <rect width="94" height="94" rx="26" fill="url(#blue)"/>
-    <g stroke="#fff" stroke-width="8" stroke-linecap="round">
-      <line x1="47" y1="18" x2="47" y2="76"/>
-      <line x1="22" y1="32" x2="72" y2="62"/>
-      <line x1="72" y1="32" x2="22" y2="62"/>
-    </g>
-    <text x="122" y="50" font-family="Arial, Helvetica, sans-serif" font-size="50" font-weight="800" fill="#0B1F44">Universal A/C Remote</text>
-    <text x="122" y="88" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="#45627F">Discover. Verify. Control. No external hardware.</text>
+  <rect width="1400" height="620" rx="34" fill="url(#bg)"/>
+  <circle cx="1240" cy="90" r="220" fill="#fff" opacity=".45"/>
+  <g transform="translate(70 70)">
+    <rect width="92" height="92" rx="26" fill="url(#blue)"/>
+    <g stroke="#fff" stroke-width="8" stroke-linecap="round"><line x1="46" y1="18" x2="46" y2="74"/><line x1="21" y1="31" x2="71" y2="61"/><line x1="71" y1="31" x2="21" y2="61"/></g>
+    <text x="122" y="48" font-family="Arial" font-size="48" font-weight="800" fill="#0B1F44">Universal A/C Remote</text>
+    <text x="122" y="84" font-family="Arial" font-size="21" fill="#45627F">Biến điện thoại Android có IR blaster thành remote điều hòa thông minh</text>
   </g>
-
-  <g transform="translate(92 212)">
-    <text x="0" y="0" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" fill="#087CF0">ANDROID IR REMOTE, BUILT LIKE A TOOL</text>
-    <text x="0" y="52" font-family="Arial, Helvetica, sans-serif" font-size="44" font-weight="800" fill="#0B1F44">One app for the A/Cs</text>
-    <text x="0" y="101" font-family="Arial, Helvetica, sans-serif" font-size="44" font-weight="800" fill="#0B1F44">you actually own.</text>
-
-    <g transform="translate(0 146)" font-family="Arial, Helvetica, sans-serif">
-      <g>
-        <rect x="0" y="0" width="330" height="72" rx="22" fill="#fff" opacity="0.9"/>
-        <circle cx="38" cy="36" r="20" fill="#E7F4FF"/>
-        <text x="38" y="43" text-anchor="middle" font-size="20" font-weight="800" fill="#087CF0">A–Z</text>
-        <text x="72" y="30" font-size="18" font-weight="700" fill="#0B1F44">Brand + model discovery</text>
-        <text x="72" y="53" font-size="15" fill="#5E738A">Search brand, A/C model or remote</text>
-      </g>
-      <g transform="translate(0 88)">
-        <rect x="0" y="0" width="330" height="72" rx="22" fill="#fff" opacity="0.9"/>
-        <circle cx="38" cy="36" r="20" fill="#EAFBF4"/>
-        <text x="38" y="43" text-anchor="middle" font-size="22" font-weight="800" fill="#13A66B">✓</text>
-        <text x="72" y="30" font-size="18" font-weight="700" fill="#0B1F44">Smart Scanner V2</text>
-        <text x="72" y="53" font-size="15" fill="#5E738A">One safe probe, then your confirmation</text>
-      </g>
-      <g transform="translate(0 176)">
-        <rect x="0" y="0" width="330" height="72" rx="22" fill="#fff" opacity="0.9"/>
-        <circle cx="38" cy="36" r="20" fill="#F1EDFF"/>
-        <text x="38" y="43" text-anchor="middle" font-size="22" font-weight="800" fill="#6F54D8">IR</text>
-        <text x="72" y="30" font-size="18" font-weight="700" fill="#0B1F44">Adaptive Remote</text>
-        <text x="72" y="53" font-size="15" fill="#5E738A">Only controls the profile can really send</text>
-      </g>
+  <g transform="translate(80 210)" font-family="Arial">
+    <text x="0" y="0" font-size="22" font-weight="700" fill="#087CF0">TÌM NHANH · DÒ AN TOÀN · ĐIỀU KHIỂN ĐÚNG</text>
+    <text x="0" y="54" font-size="42" font-weight="800" fill="#0B1F44">Một ứng dụng cho nhiều hãng điều hòa</text>
+    <text x="0" y="96" font-size="20" fill="#5E738A">Không cần ESP32, không cần bộ phát IR rời.</text>
+    <g transform="translate(0 132)">
+      <rect width="350" height="72" rx="20" fill="#fff"/><circle cx="38" cy="36" r="20" fill="#E7F4FF"/><text x="38" y="43" text-anchor="middle" font-size="17" font-weight="800" fill="#087CF0">A–Z</text>
+      <text x="72" y="30" font-size="18" font-weight="700" fill="#0B1F44">Tìm theo hãng / model</text><text x="72" y="53" font-size="14" fill="#5E738A">Daikin, Panasonic, LG, Samsung…</text>
+    </g>
+    <g transform="translate(0 218)">
+      <rect width="350" height="72" rx="20" fill="#fff"/><circle cx="38" cy="36" r="20" fill="#EAFBF4"/><text x="38" y="43" text-anchor="middle" font-size="20" font-weight="800" fill="#13A66B">✓</text>
+      <text x="72" y="30" font-size="18" font-weight="700" fill="#0B1F44">Smart Scanner V2</text><text x="72" y="53" font-size="14" fill="#5E738A">Phát từng mã và chờ bạn xác nhận</text>
+    </g>
+    <g transform="translate(0 304)">
+      <rect width="350" height="72" rx="20" fill="#fff"/><circle cx="38" cy="36" r="20" fill="#F1EDFF"/><text x="38" y="43" text-anchor="middle" font-size="19" font-weight="800" fill="#6F54D8">IR</text>
+      <text x="72" y="30" font-size="18" font-weight="700" fill="#0B1F44">Remote thích ứng</text><text x="72" y="53" font-size="14" fill="#5E738A">Chỉ hiện chức năng profile có thể phát</text>
     </g>
   </g>
-
-  <!-- phone 1 -->
-  <g transform="translate(485 155)" filter="url(#shadow)">
-    <rect width="245" height="500" rx="38" fill="#07152A"/>
-    <rect x="9" y="9" width="227" height="482" rx="31" fill="#FBFDFF"/>
-    <circle cx="123" cy="25" r="6" fill="#07152A"/>
-    <text x="25" y="58" font-family="Arial" font-size="16" font-weight="700" fill="#0B1F44">Home</text>
-    <rect x="22" y="78" width="201" height="74" rx="20" fill="#EAF6FF"/>
-    <text x="38" y="105" font-family="Arial" font-size="13" font-weight="700" fill="#087CF0">MY HOME</text>
-    <text x="38" y="131" font-family="Arial" font-size="19" font-weight="800" fill="#0B1F44">4 rooms · 8 devices</text>
-    <text x="22" y="185" font-family="Arial" font-size="15" font-weight="800" fill="#0B1F44">Favorites</text>
-    <g transform="translate(22 202)">
-      <rect width="58" height="82" rx="16" fill="#087CF0"/>
-      <text x="29" y="31" text-anchor="middle" font-family="Arial" font-size="21" fill="#fff">❄</text>
-      <text x="29" y="53" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="#fff">Daikin</text>
-      <text x="29" y="68" text-anchor="middle" font-family="Arial" font-size="9" fill="#DDF1FF">Living</text>
-      <rect x="68" width="58" height="82" rx="16" fill="#F2F6FA"/>
-      <text x="97" y="31" text-anchor="middle" font-family="Arial" font-size="20" fill="#6F54D8">☾</text>
-      <text x="97" y="53" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="#0B1F44">Panasonic</text>
-      <text x="97" y="68" text-anchor="middle" font-family="Arial" font-size="9" fill="#5E738A">Bedroom</text>
-      <rect x="136" width="58" height="82" rx="16" fill="#F2F6FA"/>
-      <text x="165" y="31" text-anchor="middle" font-family="Arial" font-size="19" fill="#EF5D75">♥</text>
-      <text x="165" y="53" text-anchor="middle" font-family="Arial" font-size="10" font-weight="700" fill="#0B1F44">LG</text>
-      <text x="165" y="68" text-anchor="middle" font-family="Arial" font-size="9" fill="#5E738A">Office</text>
-    </g>
-    <text x="22" y="320" font-family="Arial" font-size="15" font-weight="800" fill="#0B1F44">Recent devices</text>
-    <g font-family="Arial">
-      <rect x="22" y="338" width="201" height="54" rx="14" fill="#F4F8FC"/>
-      <text x="38" y="360" font-size="12" font-weight="700" fill="#0B1F44">Daikin · Living room</text>
-      <text x="38" y="378" font-size="11" fill="#5E738A">Last sent 26°C · Cool</text>
-      <rect x="22" y="402" width="201" height="54" rx="14" fill="#F4F8FC"/>
-      <text x="38" y="424" font-size="12" font-weight="700" fill="#0B1F44">Panasonic · Bedroom</text>
-      <text x="38" y="442" font-size="11" fill="#5E738A">Last sent 24°C · Auto</text>
-    </g>
+  <g transform="translate(610 160)" filter="url(#shadow)" font-family="Arial">
+    <rect width="230" height="390" rx="36" fill="#07152A"/><rect x="9" y="9" width="212" height="372" rx="29" fill="#FBFDFF"/><circle cx="115" cy="25" r="6" fill="#07152A"/>
+    <text x="24" y="58" font-size="16" font-weight="700" fill="#0B1F44">Thiết bị của tôi</text>
+    <rect x="22" y="78" width="186" height="65" rx="18" fill="#EAF6FF"/><text x="36" y="104" font-size="11" font-weight="700" fill="#087CF0">PHÒNG KHÁCH</text><text x="36" y="128" font-size="17" font-weight="800" fill="#0B1F44">Daikin · 26°C</text>
+    <text x="22" y="176" font-size="14" font-weight="800" fill="#0B1F44">Yêu thích</text>
+    <rect x="22" y="192" width="54" height="72" rx="15" fill="#087CF0"/><text x="49" y="222" text-anchor="middle" font-size="20" fill="#fff">❄</text><text x="49" y="245" text-anchor="middle" font-size="9" fill="#fff">Daikin</text>
+    <rect x="84" y="192" width="54" height="72" rx="15" fill="#F2F6FA"/><text x="111" y="222" text-anchor="middle" font-size="19" fill="#6F54D8">☾</text><text x="111" y="245" text-anchor="middle" font-size="9" fill="#0B1F44">Pana.</text>
+    <rect x="146" y="192" width="54" height="72" rx="15" fill="#F2F6FA"/><text x="173" y="222" text-anchor="middle" font-size="19" fill="#EF5D75">♥</text><text x="173" y="245" text-anchor="middle" font-size="9" fill="#0B1F44">LG</text>
+    <text x="22" y="298" font-size="14" font-weight="800" fill="#0B1F44">Gần đây</text><rect x="22" y="314" width="186" height="45" rx="13" fill="#F4F8FC"/><text x="36" y="334" font-size="11" font-weight="700" fill="#0B1F44">Daikin · Phòng khách</text><text x="36" y="350" font-size="10" fill="#5E738A">Lần cuối đã gửi 26°C</text>
   </g>
-
-  <!-- phone 2 -->
-  <g transform="translate(755 118)" filter="url(#shadow)">
-    <rect width="245" height="537" rx="38" fill="#07152A"/>
-    <rect x="9" y="9" width="227" height="519" rx="31" fill="#FBFDFF"/>
-    <circle cx="123" cy="25" r="6" fill="#07152A"/>
-    <text x="24" y="58" font-family="Arial" font-size="16" font-weight="700" fill="#0B1F44">Find a remote</text>
-    <rect x="22" y="76" width="201" height="42" rx="16" fill="#F1F6FA"/>
-    <text x="38" y="102" font-family="Arial" font-size="11" fill="#7890A7">Search brand, model, remote…</text>
-    <g font-family="Arial" font-size="11" font-weight="700">
-      <rect x="22" y="132" width="52" height="32" rx="12" fill="#087CF0"/>
-      <text x="48" y="153" text-anchor="middle" fill="#fff">Popular</text>
-      <rect x="82" y="132" width="44" height="32" rx="12" fill="#EAF6FF"/>
-      <text x="104" y="153" text-anchor="middle" fill="#087CF0">A–Z</text>
-    </g>
-    <g font-family="Arial">
-      <text x="22" y="194" font-size="14" font-weight="800" fill="#0B1F44">D</text>
-      <rect x="22" y="208" width="201" height="48" rx="14" fill="#F7FAFD"/>
-      <text x="38" y="238" font-size="13" font-weight="700" fill="#0B1F44">Daikin</text>
-      <text x="206" y="238" text-anchor="end" font-size="16" fill="#087CF0">›</text>
-      <text x="22" y="286" font-size="14" font-weight="800" fill="#0B1F44">G</text>
-      <rect x="22" y="300" width="201" height="48" rx="14" fill="#F7FAFD"/>
-      <text x="38" y="330" font-size="13" font-weight="700" fill="#0B1F44">Gree</text>
-      <text x="206" y="330" text-anchor="end" font-size="16" fill="#087CF0">›</text>
-      <rect x="22" y="362" width="201" height="48" rx="14" fill="#F7FAFD"/>
-      <text x="38" y="392" font-size="13" font-weight="700" fill="#0B1F44">General</text>
-      <text x="206" y="392" text-anchor="end" font-size="16" fill="#087CF0">›</text>
-      <rect x="22" y="438" width="201" height="55" rx="18" fill="#EAFBF4"/>
-      <text x="38" y="462" font-size="12" font-weight="800" fill="#138B60">Don’t know the model?</text>
-      <text x="38" y="481" font-size="11" fill="#4D7568">Use Smart Scanner</text>
-    </g>
+  <g transform="translate(870 120)" filter="url(#shadow)" font-family="Arial">
+    <rect width="230" height="430" rx="36" fill="#07152A"/><rect x="9" y="9" width="212" height="412" rx="29" fill="#FBFDFF"/><circle cx="115" cy="25" r="6" fill="#07152A"/>
+    <text x="24" y="58" font-size="16" font-weight="700" fill="#0B1F44">Tìm remote</text><rect x="22" y="76" width="186" height="40" rx="15" fill="#F1F6FA"/><text x="36" y="101" font-size="10" fill="#7890A7">Tìm hãng, model, remote…</text>
+    <rect x="22" y="132" width="186" height="45" rx="13" fill="#EAF6FF"/><text x="38" y="160" font-size="13" font-weight="700" fill="#0B1F44">Daikin</text><text x="193" y="160" text-anchor="end" font-size="18" fill="#087CF0">›</text>
+    <rect x="22" y="187" width="186" height="45" rx="13" fill="#F7FAFD"/><text x="38" y="215" font-size="13" font-weight="700" fill="#0B1F44">Panasonic</text><text x="193" y="215" text-anchor="end" font-size="18" fill="#087CF0">›</text>
+    <rect x="22" y="242" width="186" height="45" rx="13" fill="#F7FAFD"/><text x="38" y="270" font-size="13" font-weight="700" fill="#0B1F44">LG</text><text x="193" y="270" text-anchor="end" font-size="18" fill="#087CF0">›</text>
+    <rect x="22" y="320" width="186" height="62" rx="17" fill="#EAFBF4"/><text x="38" y="345" font-size="12" font-weight="800" fill="#138B60">Không biết model?</text><text x="38" y="366" font-size="11" fill="#4D7568">Dùng Smart Scanner V2</text>
   </g>
-
-  <!-- phone 3 -->
-  <g transform="translate(1025 155)" filter="url(#shadow)">
-    <rect width="245" height="500" rx="38" fill="#07152A"/>
-    <rect x="9" y="9" width="227" height="482" rx="31" fill="#FBFDFF"/>
-    <circle cx="123" cy="25" r="6" fill="#07152A"/>
-    <text x="123" y="58" text-anchor="middle" font-family="Arial" font-size="15" font-weight="700" fill="#0B1F44">Daikin · Living room</text>
-    <text x="123" y="89" text-anchor="middle" font-family="Arial" font-size="11" fill="#5E738A">LAST SENT STATE</text>
-    <text x="123" y="145" text-anchor="middle" font-family="Arial" font-size="50" font-weight="800" fill="#0B1F44">26°C</text>
-    <text x="123" y="173" text-anchor="middle" font-family="Arial" font-size="13" font-weight="700" fill="#087CF0">Cool · Auto fan</text>
-    <g font-family="Arial">
-      <circle cx="57" cy="223" r="28" fill="#F1F6FA"/>
-      <text x="57" y="232" text-anchor="middle" font-size="31" fill="#087CF0">−</text>
-      <circle cx="188" cy="223" r="28" fill="#F1F6FA"/>
-      <text x="188" y="232" text-anchor="middle" font-size="31" fill="#087CF0">+</text>
-      <rect x="22" y="278" width="62" height="62" rx="16" fill="#087CF0"/>
-      <text x="53" y="304" text-anchor="middle" font-size="17" fill="#fff">❄</text>
-      <text x="53" y="326" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">Cool</text>
-      <rect x="91" y="278" width="62" height="62" rx="16" fill="#F2F6FA"/>
-      <text x="122" y="304" text-anchor="middle" font-size="17" fill="#087CF0">≋</text>
-      <text x="122" y="326" text-anchor="middle" font-size="10" font-weight="700" fill="#0B1F44">Fan</text>
-      <rect x="160" y="278" width="62" height="62" rx="16" fill="#F2F6FA"/>
-      <text x="191" y="304" text-anchor="middle" font-size="17" fill="#087CF0">↕</text>
-      <text x="191" y="326" text-anchor="middle" font-size="10" font-weight="700" fill="#0B1F44">Swing</text>
-      <circle cx="123" cy="404" r="48" fill="url(#blue)"/>
-      <text x="123" y="418" text-anchor="middle" font-size="42" fill="#fff">⏻</text>
-    </g>
+  <g transform="translate(1130 160)" filter="url(#shadow)" font-family="Arial">
+    <rect width="230" height="390" rx="36" fill="#07152A"/><rect x="9" y="9" width="212" height="372" rx="29" fill="#FBFDFF"/><circle cx="115" cy="25" r="6" fill="#07152A"/>
+    <text x="115" y="58" text-anchor="middle" font-size="15" font-weight="700" fill="#0B1F44">Daikin · Phòng khách</text><text x="115" y="87" text-anchor="middle" font-size="10" fill="#5E738A">LẦN CUỐI ĐÃ GỬI</text><text x="115" y="143" text-anchor="middle" font-size="48" font-weight="800" fill="#0B1F44">26°C</text><text x="115" y="171" text-anchor="middle" font-size="12" font-weight="700" fill="#087CF0">Làm mát · Quạt Auto</text>
+    <circle cx="56" cy="220" r="27" fill="#F1F6FA"/><text x="56" y="229" text-anchor="middle" font-size="30" fill="#087CF0">−</text><circle cx="174" cy="220" r="27" fill="#F1F6FA"/><text x="174" y="229" text-anchor="middle" font-size="30" fill="#087CF0">+</text>
+    <circle cx="115" cy="310" r="43" fill="url(#blue)"/><text x="115" y="323" text-anchor="middle" font-size="38" fill="#fff">⏻</text>
   </g>
-
-  <text x="92" y="684" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#60778D">Visual overview — the app uses one-way IR and never pretends to know the live A/C state.</text>
 </svg>
