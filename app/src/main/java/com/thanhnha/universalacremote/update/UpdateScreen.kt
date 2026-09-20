@@ -12,15 +12,18 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import com.thanhnha.universalacremote.AppColors
 import com.thanhnha.universalacremote.BuildConfig
 import com.thanhnha.universalacremote.InfoBanner
 import com.thanhnha.universalacremote.PrimaryButton
+import com.thanhnha.universalacremote.SurfaceCard
 import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -32,7 +35,7 @@ fun UpdatePanel() {
     var update by remember { mutableStateOf<AppUpdate?>(null) }
     var message by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
-    var busy by remember { mutableStateOf(false) }
+    var busyState by remember { mutableStateOf<UpdateBusyState?>(null) }
     val executor = remember { Executors.newSingleThreadExecutor() }
     val preferences = remember { context.getSharedPreferences("app_updates", 0) }
 
@@ -41,11 +44,11 @@ fun UpdatePanel() {
     }
 
     val checkForUpdate: () -> Unit = {
-        busy = true
+        busyState = UpdateBusyState.CHECKING
         executor.execute {
             val result = runCatching { client.latestStableUpdate() }
             android.os.Handler(context.mainLooper).post {
-                busy = false
+                busyState = null
                 result.onSuccess { found ->
                     update = found?.takeIf { hasNewVersion(it.versionCode, BuildConfig.VERSION_CODE) }
                     message = when {
@@ -70,10 +73,10 @@ fun UpdatePanel() {
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         PrimaryButton(
-            text = if (busy) "Đang kiểm tra…" else "Kiểm tra cập nhật",
+            text = if (busyState == UpdateBusyState.CHECKING) "Đang kiểm tra…" else "Kiểm tra cập nhật",
             modifier = Modifier.fillMaxWidth(),
             icon = Icons.Filled.Refresh,
-            enabled = !busy,
+            enabled = busyState == null,
             onClick = checkForUpdate,
         )
 
@@ -87,18 +90,32 @@ fun UpdatePanel() {
         }
 
         update?.let { available ->
+            available.releaseNotes?.takeIf(String::isNotBlank)?.let { notes ->
+                SurfaceCard(Modifier.fillMaxWidth()) {
+                    Column(
+                        Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text("Có gì mới", fontWeight = FontWeight.Bold, color = AppColors.navy)
+                        Text(
+                            notes.take(600),
+                            color = AppColors.navySoft,
+                        )
+                    }
+                }
+            }
             PrimaryButton(
-                text = if (busy) "Đang tải…" else "Cập nhật lên ${available.versionName}",
+                text = if (busyState == UpdateBusyState.DOWNLOADING) "Đang tải APK…" else "Cập nhật lên ${available.versionName}",
                 modifier = Modifier.fillMaxWidth(),
                 icon = Icons.Filled.Download,
-                enabled = !busy,
+                enabled = busyState == null,
             ) {
-                busy = true
+                busyState = UpdateBusyState.DOWNLOADING
                 executor.execute {
                     val apk = File(context.cacheDir, "updates/update-${available.versionCode}.apk")
                     val result = runCatching { client.downloadApk(available, apk) }
                     android.os.Handler(context.mainLooper).post {
-                        busy = false
+                        busyState = null
                         result.onSuccess {
                             runCatching {
                                 if (Build.VERSION.SDK_INT >= 26 && !context.packageManager.canRequestPackageInstalls()) {
@@ -139,3 +156,6 @@ fun UpdatePanel() {
         }
     }
 }
+
+
+private enum class UpdateBusyState { CHECKING, DOWNLOADING }

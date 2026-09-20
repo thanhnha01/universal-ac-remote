@@ -16,7 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.thanhnha.universalacremote.ir.IrDiagnosticSeverity
 import com.thanhnha.universalacremote.ir.IrHardwareDiagnostics
+import com.thanhnha.universalacremote.ir.summary
 
 @Composable
 fun DiagnosticScreen(
@@ -24,6 +26,7 @@ fun DiagnosticScreen(
     onBack: () -> Unit,
     debugContent: (@Composable () -> Unit)? = null,
 ) {
+    val summary = diagnostics.summary()
     AppBackground {
         Column(Modifier.fillMaxSize()) {
             AppTopBar("Kiểm tra phần cứng IR", "Trạng thái bộ phát hồng ngoại", onBack)
@@ -31,18 +34,16 @@ fun DiagnosticScreen(
                 GradientHero {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            if (diagnostics.hasIrEmitter) "IR sẵn sàng" else "IR chưa sẵn sàng",
+                            summary.title,
                             style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.ExtraBold,
-                            color = if (diagnostics.hasIrEmitter) AppColors.mint else AppColors.danger,
+                            color = when (summary.severity) {
+                                IrDiagnosticSeverity.READY -> AppColors.mint
+                                IrDiagnosticSeverity.LIMITED -> AppColors.warning
+                                IrDiagnosticSeverity.UNAVAILABLE -> AppColors.danger
+                            },
                         )
-                        Text(
-                            if (diagnostics.hasIrEmitter)
-                                "Android nhận diện được bộ phát IR và có thể gửi tín hiệu."
-                            else
-                                "Android chưa xác nhận được bộ phát IR trên thiết bị này.",
-                            color = AppColors.navySoft,
-                        )
+                        Text(summary.detail, color = AppColors.navySoft)
                     }
                 }
 
@@ -69,7 +70,9 @@ fun DiagnosticScreen(
                             if (diagnostics.carrierFrequencyRanges.isEmpty())
                                 "Thiết bị không cung cấp chi tiết"
                             else
-                                "${diagnostics.carrierFrequencyRanges.size} dải được nhận diện",
+                                diagnostics.carrierFrequencyRanges.joinToString(" • ") { range ->
+                                    (range.minFrequencyHz / 1000).toString() + "–" + (range.maxFrequencyHz / 1000) + " kHz"
+                                },
                             Icons.Filled.Tune,
                             AppColors.navySoft,
                         )
