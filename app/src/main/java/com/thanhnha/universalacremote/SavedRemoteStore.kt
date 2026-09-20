@@ -133,6 +133,7 @@ private data class LoadedCatalog(
     val popularBrands: List<String>,
     val scannerBrands: List<String>,
     val scannerCapableIds: Set<String>,
+    val allBrands: List<String>,
 )
 
 class SavedRemotesViewModel(application: Application) : AndroidViewModel(application) {
@@ -143,6 +144,10 @@ class SavedRemotesViewModel(application: Application) : AndroidViewModel(applica
     val catalog: StateFlow<CatalogUiState> = mutableCatalog.asStateFlow()
     private val mutablePopularBrands = MutableStateFlow<List<String>>(emptyList())
     val popularBrands: StateFlow<List<String>> = mutablePopularBrands.asStateFlow()
+    private val mutableAllBrands = MutableStateFlow<List<String>>(emptyList())
+    val allBrands: StateFlow<List<String>> = mutableAllBrands.asStateFlow()
+    private val mutableBrandProfiles = MutableStateFlow<List<RemoteCandidate>>(emptyList())
+    val brandProfiles: StateFlow<List<RemoteCandidate>> = mutableBrandProfiles.asStateFlow()
     private val mutableScannerBrands = MutableStateFlow<List<String>>(emptyList())
     val scannerBrands: StateFlow<List<String>> = mutableScannerBrands.asStateFlow()
     private val mutableSearch = MutableStateFlow(CatalogSearchState())
@@ -172,6 +177,7 @@ class SavedRemotesViewModel(application: Application) : AndroidViewModel(applica
                         popularBrands = loaded.popularBrands(),
                         scannerBrands = loaded.scannerBrands { it.id in capableIds },
                         scannerCapableIds = capableIds,
+                        allBrands = loaded.allBrands(),
                     )
                 }
             }.onSuccess { loaded ->
@@ -179,6 +185,7 @@ class SavedRemotesViewModel(application: Application) : AndroidViewModel(applica
                 scannerCapableIds = loaded.scannerCapableIds
                 mutableCatalog.value = CatalogUiState(loading = false, profileCount = loaded.resolver.profileCount)
                 mutablePopularBrands.value = loaded.popularBrands
+                mutableAllBrands.value = loaded.allBrands
                 mutableScannerBrands.value = loaded.scannerBrands
             }.onFailure { error ->
                 mutableCatalog.value = CatalogUiState(loading = false, error = error.message ?: "Không thể tải danh mục máy lạnh.")
@@ -227,6 +234,16 @@ class SavedRemotesViewModel(application: Application) : AndroidViewModel(applica
     }
 
     fun canTransmit(candidate: RemoteCandidate): Boolean = candidate.id in scannerCapableIds
+
+    fun browseBrand(brand: String) {
+        mutableBrandProfiles.value = resolver?.brandCandidates(brand)
+            .orEmpty()
+            .filter(::canTransmit)
+    }
+
+    fun clearBrandBrowse() {
+        mutableBrandProfiles.value = emptyList()
+    }
 
     fun beginScan(query: RemoteQuery = RemoteQuery(), selected: RemoteCandidate? = null) {
         val canTransmit: (RemoteCandidate) -> Boolean = ::canTransmit

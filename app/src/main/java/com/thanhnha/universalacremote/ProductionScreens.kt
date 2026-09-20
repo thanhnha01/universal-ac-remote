@@ -496,41 +496,51 @@ fun ProductionAddScreen(
     navigate: (String) -> Unit,
 ) {
     val popular by store.popularBrands.collectAsState()
+    val allBrands by store.allBrands.collectAsState()
+    val brandProfiles by store.brandProfiles.collectAsState()
     val search by store.search.collectAsState()
     var query by remember { mutableStateOf("") }
-    var scanBrand by remember { mutableStateOf<String?>(null) }
+    var selectedBrand by remember { mutableStateOf<String?>(null) }
+    var selectedLetter by remember(allBrands) {
+        mutableStateOf(allBrands.firstOrNull()?.firstOrNull()?.uppercaseChar() ?: 'A')
+    }
 
     fun searchNow(value: String) {
         query = value
+        selectedBrand = null
+        store.clearBrandBrowse()
         store.updateSearchText(value)
     }
 
+    fun chooseBrand(brand: String) {
+        query = ""
+        selectedBrand = brand
+        store.browseBrand(brand)
+    }
+
     val usableResults = search.results.filter(store::canTransmit)
+    val sections = remember(allBrands) { brandSections(allBrands) }
+    val visibleBrands = remember(sections, selectedLetter) {
+        sections.firstOrNull { it.letter == selectedLetter }?.brands.orEmpty()
+    }
+    val seriesGroups = remember(brandProfiles) { modelSeriesGroups(brandProfiles) }
 
     AppScaffold("home", onTab) { padding ->
         PageColumn(padding) {
             AppTopBar(
                 "Thêm máy lạnh",
-                "Chọn cách thiết lập phù hợp",
-                onBack = { onTab("home") },
+                selectedBrand ?: "Tìm hãng, model hoặc remote",
+                onBack = {
+                    if (selectedBrand != null) {
+                        selectedBrand = null
+                        store.clearBrandBrowse()
+                    } else {
+                        onTab("home")
+                    }
+                },
             )
 
-            SurfaceCard(Modifier.fillMaxWidth(), SoftHeroGradient) {
-                Column(
-                    Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    SetupFlowHeader(
-                        number = "1",
-                        title = "Tôi biết model",
-                        subtitle = "Tìm theo hãng, model máy hoặc model remote.",
-                        icon = Icons.Filled.Search,
-                        tint = AppColors.blue,
-                        background = AppColors.paleBlue,
-                    )
-                    SearchField(query, ::searchNow, "Ví dụ: Daikin, FTXM35, ARC…")
-                }
-            }
+            SearchField(query, ::searchNow, "Tìm hãng, model máy hoặc model remote")
 
             if (catalog.loading) {
                 InfoBanner("Đang tải thư viện điều khiển…", Icons.Filled.Refresh, AppColors.blue, AppColors.paleBlue)
@@ -539,124 +549,211 @@ fun ProductionAddScreen(
                 InfoBanner("Không thể tải thư viện điều khiển.", Icons.Filled.ErrorOutline, AppColors.danger, AppColors.paleDanger)
             }
 
-            if (query.isBlank()) {
-                SectionTitle("Hãng phổ biến")
-                if (popular.isEmpty() && !catalog.loading) {
-                    EmptyState("Chưa có dữ liệu hãng", "Thư viện điều khiển chưa sẵn sàng.")
-                } else {
-                    popular.take(8).chunked(4).forEach { rowBrands ->
+            when {
+                query.isNotBlank() -> {
+                    if (search.loading) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                            CircularProgressIndicator(Modifier.size(24.dp))
+                        }
+                    } else {
+                        SectionTitle("Kết quả phù hợp")
+                        if (usableResults.isEmpty()) {
+                            EmptyState(
+                                "Không tìm thấy mã phù hợp",
+                                "Thử tên hãng, model máy hoặc model remote khác.",
+                                Icons.Filled.Search,
+                            )
+                        } else {
+                            usableResults.take(20).forEach { candidate ->
+                                UserProfileCard(candidate) {
+                                    store.beginScan(selected = candidate)
+                                    navigate("scan")
+                                }
+                            }
+                        }
+                    }
+                }
+
+                selectedBrand != null -> {
+                    SurfaceCard(Modifier.fillMaxWidth(), SoftHeroGradient) {
                         Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            Modifier.padding(18.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp),
                         ) {
-                            rowBrands.forEach { brand ->
-                                BrandTile(
-                                    brand = brand,
-                                    selected = query.equals(brand, true),
-                                    modifier = Modifier.weight(1f),
-                                ) {
-                                    query = brand
-                                    store.updateSearchText(brand)
-                                }
-                            }
-                            repeat(4 - rowBrands.size) { Box(Modifier.weight(1f)) }
-                        }
-                    }
-                }
-            }
-
-            if (search.loading) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                    CircularProgressIndicator(Modifier.size(24.dp))
-                }
-            }
-
-            if (query.isNotBlank() && !search.loading) {
-                SectionTitle("Kết quả phù hợp")
-                if (usableResults.isEmpty()) {
-                    EmptyState(
-                        "Chưa có remote phù hợp",
-                        "Bạn có thể dò theo hãng hoặc nhập file .ir.",
-                        Icons.Filled.Search,
-                    )
-                } else {
-                    usableResults.take(16).forEach { candidate ->
-                        UserProfileCard(candidate) {
-                            store.beginScan(selected = candidate)
-                            navigate("scan")
-                        }
-                    }
-                }
-            }
-
-            SurfaceCard(Modifier.fillMaxWidth()) {
-                Column(
-                    Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    SetupFlowHeader(
-                        number = "2",
-                        title = "Tôi không biết model",
-                        subtitle = "Chọn hãng để app dò remote 1000-in-1.",
-                        icon = Icons.Outlined.Radio,
-                        tint = AppColors.mint,
-                        background = AppColors.paleMint,
-                    )
-                    if (popular.isNotEmpty()) {
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(popular.take(12)) { brand ->
-                                BrandChoiceChip(brand, scanBrand.equals(brand, true)) {
-                                    scanBrand = brand
-                                }
+                            AcWallUnitArt(selectedBrand.orEmpty(), Modifier.width(112.dp).height(74.dp))
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    selectedBrand.orEmpty(),
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = AppColors.navy,
+                                )
+                                Text(
+                                    brandProfiles.size.toString() + " profile có thể phát",
+                                    color = AppColors.navySoft,
+                                )
                             }
                         }
                     }
-                    scanBrand?.let { brand ->
-                        PrimaryButton(
-                            "Bắt đầu dò $brand",
-                            Modifier.fillMaxWidth(),
-                            Icons.Filled.PlayArrow,
-                        ) {
-                            store.beginScan(RemoteQuery(brand = brand))
-                            navigate("scan")
-                        }
-                    } ?: InfoBanner(
-                        "Chọn hãng máy lạnh trước khi bắt đầu dò.",
-                        Icons.Filled.Info,
-                        AppColors.blue,
-                        AppColors.paleBlue,
-                    )
-                }
-            }
 
-            SurfaceCard(
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { navigate("import") }
-            ) {
-                Column(
-                    Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    SetupFlowHeader(
-                        number = "3",
-                        title = "Nhập file .ir",
-                        subtitle = "Dùng file IR bạn đã có sẵn trên điện thoại.",
-                        icon = Icons.Filled.FileDownload,
-                        tint = AppColors.purple,
-                        background = Color(0xFFF4F0FF),
-                    )
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            "Mở trình chọn file",
-                            modifier = Modifier.weight(1f),
-                            color = AppColors.navy,
-                            fontWeight = FontWeight.Bold,
+                    SectionTitle("Series / Model")
+                    if (seriesGroups.isEmpty()) {
+                        EmptyState(
+                            "Chưa có profile có thể phát",
+                            "Bạn vẫn có thể thử dò remote theo hãng này.",
+                            Icons.Filled.Info,
                         )
-                        Icon(Icons.Filled.ArrowForward, null, tint = AppColors.navySoft)
+                    } else {
+                        seriesGroups.forEach { group ->
+                            SurfaceCard(Modifier.fillMaxWidth()) {
+                                Column(
+                                    Modifier.padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                                ) {
+                                    Text(
+                                        group.name,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = AppColors.navy,
+                                    )
+                                    group.profiles.take(8).forEach { candidate ->
+                                        Row(
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(18.dp))
+                                                .clickable {
+                                                    store.beginScan(selected = candidate)
+                                                    navigate("scan")
+                                                }
+                                                .padding(horizontal = 12.dp, vertical = 11.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        ) {
+                                            IconBubble(Icons.Filled.AcUnit, size = 42)
+                                            Column(Modifier.weight(1f)) {
+                                                Text(
+                                                    candidate.compactDisplayModelLabel().ifBlank { "Model chưa xác định" },
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = AppColors.navy,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                )
+                                                Text(
+                                                    candidate.remoteModel?.let { "Remote " + it } ?: "Profile điều khiển",
+                                                    color = AppColors.navySoft,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                )
+                                            }
+                                            Icon(Icons.Filled.ArrowForward, null, tint = AppColors.navySoft)
+                                        }
+                                    }
+                                    if (group.profiles.size > 8) {
+                                        Text(
+                                            "+" + (group.profiles.size - 8) + " profile khác",
+                                            color = AppColors.navySoft,
+                                            style = MaterialTheme.typography.bodySmall,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    PrimaryButton(
+                        "Dò tất cả mã " + selectedBrand,
+                        Modifier.fillMaxWidth(),
+                        Icons.Filled.PlayArrow,
+                    ) {
+                        store.beginScan(RemoteQuery(brand = selectedBrand))
+                        navigate("scan")
+                    }
+                }
+
+                else -> {
+                    SectionTitle("Hãng phổ biến")
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(popular.take(12)) { brand ->
+                            BrandChoiceChip(brand, false) { chooseBrand(brand) }
+                        }
+                    }
+
+                    SectionTitle("Tất cả hãng A–Z")
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        items(sections, key = BrandSection::letter) { section ->
+                            Surface(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clickable { selectedLetter = section.letter },
+                                shape = RoundedCornerShape(14.dp),
+                                color = if (selectedLetter == section.letter) AppColors.blue else Color.White,
+                                border = BorderStroke(1.dp, if (selectedLetter == section.letter) AppColors.blue else AppColors.line),
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        section.letter.toString(),
+                                        color = if (selectedLetter == section.letter) Color.White else AppColors.navy,
+                                        fontWeight = FontWeight.ExtraBold,
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    SurfaceCard(Modifier.fillMaxWidth()) {
+                        Column(
+                            Modifier.padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                        ) {
+                            Text(
+                                selectedLetter.toString(),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = AppColors.blue,
+                            )
+                            visibleBrands.forEach { brand ->
+                                Row(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(18.dp))
+                                        .clickable { chooseBrand(brand) }
+                                        .padding(horizontal = 12.dp, vertical = 13.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    IconBubble(Icons.Filled.AcUnit, size = 42)
+                                    Text(
+                                        brand,
+                                        modifier = Modifier.weight(1f),
+                                        fontWeight = FontWeight.Bold,
+                                        color = AppColors.navy,
+                                    )
+                                    Icon(Icons.Filled.ArrowForward, null, tint = AppColors.navySoft)
+                                }
+                            }
+                        }
+                    }
+
+                    SurfaceCard(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { navigate("import") }
+                    ) {
+                        Row(
+                            Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            IconBubble(Icons.Filled.FileDownload, tint = AppColors.purple, background = AppColors.palePurple)
+                            Column(Modifier.weight(1f)) {
+                                Text("Nhập file .ir", fontWeight = FontWeight.ExtraBold, color = AppColors.navy)
+                                Text("Dùng file IR có sẵn trên điện thoại", color = AppColors.navySoft, style = MaterialTheme.typography.bodySmall)
+                            }
+                            Icon(Icons.Filled.ArrowForward, null, tint = AppColors.navySoft)
+                        }
                     }
                 }
             }
