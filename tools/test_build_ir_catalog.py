@@ -53,7 +53,10 @@ class CatalogTests(unittest.TestCase):
             catalog.REGISTRY.read_text(encoding="utf-8"),
         )
         self.assertGreater(len(records), 20)
-        self.assertTrue(any(record["brand"] == "Midea" and record["protocolId"] == "MIDEA" for record in records))
+        # Upstream's detailed MIDEA A/C rows are mostly OEM/rebrand devices
+        # (Comfee, Danby, Kaysun, Keystone, etc.). The only direct Midea row at
+        # this pin is a MIDEA24 stand fan, which the A/C importer intentionally excludes.
+        self.assertTrue(any(record["brand"] == "Comfee" and record["protocolId"] == "MIDEA" for record in records))
         self.assertTrue(any(record["brand"] == "Gree" and record["protocolId"] == "GREE" for record in records))
         self.assertTrue(any(record["brand"] == "Fujitsu" and record["protocolId"] == "FUJITSU_AC" for record in records))
         self.assertFalse(any(record["protocolId"] == "LG2" for record in records))
