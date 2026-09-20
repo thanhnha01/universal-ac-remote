@@ -105,7 +105,13 @@ jobs:
       - name: Materialize candidate and preserve local SWIGLIB hooks
         if: steps.existing-pr.outputs.exists != 'true' && steps.candidate.outputs.changed == 'true'
         run: |
+          cp data/upstreams/snapshots/irremoteesp8266/SupportedProtocols.md "$RUNNER_TEMP/SupportedProtocols.before.md"
           python3 tools/update_irremoteesp8266.py --candidate "${{ steps.candidate.outputs.sha }}"
+          python3 tools/summarize_irremote_update.py \
+            "$RUNNER_TEMP/SupportedProtocols.before.md" \
+            data/upstreams/snapshots/irremoteesp8266/SupportedProtocols.md \
+            > "$RUNNER_TEMP/irremote-update-summary.md"
+          cat "$RUNNER_TEMP/irremote-update-summary.md" >> "$GITHUB_STEP_SUMMARY"
           python3 tools/generate_protocol_catalog.py
           python3 tools/build_ir_catalog.py
           python3 tools/test_build_ir_catalog.py
@@ -183,8 +189,20 @@ jobs:
           git commit -m "chore(ir): update IRremoteESP8266 to ${short} [irremote-auto-update]"
           git push --set-upstream origin "$branch"
 
+          {
+            echo "Automated **review-only** IRremoteESP8266 update."
+            echo
+            echo "Pinned SHA: \`${{ steps.candidate.outputs.locked }}\` → \`$candidate\`"
+            echo
+            cat "$RUNNER_TEMP/irremote-update-summary.md"
+            echo
+            echo "Before this PR was created, the workflow re-applied the local SWIGLIB carrier-frequency hooks, regenerated the protocol/catalog outputs, ran catalog tests, Android unit tests, lint, debug/instrumentation/release builds, and verified 16 KB APK alignment."
+            echo
+            echo "**This PR is never auto-merged. Review the native/source diff and merge manually when satisfied.**"
+          } > "$RUNNER_TEMP/irremote-pr-body.md"
+
           gh pr create \
             --base main \
             --head "$branch" \
             --title "chore(ir): update IRremoteESP8266 to ${short} [irremote-auto-update]" \
-            --body "Automated **review-only** IRremoteESP8266 update.\n\nPinned SHA: \`${{ steps.candidate.outputs.locked }}\` → \`$candidate\`\n\nBefore this PR was created, the workflow re-applied the local SWIGLIB carrier-frequency hooks, regenerated the protocol/catalog outputs, ran catalog tests, Android unit tests, lint, debug/instrumentation/release builds, and verified 16 KB APK alignment.\n\n**This PR is never auto-merged. Review the native/source diff and merge manually when satisfied.**"
+            --body-file "$RUNNER_TEMP/irremote-pr-body.md"
