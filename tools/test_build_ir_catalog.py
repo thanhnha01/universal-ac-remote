@@ -7,7 +7,7 @@ import build_ir_catalog as catalog
 import sync_upstreams as sync
 
 
-SHA = "1e2f0f3ef0a93cbf2a8ddb2e95130f8f4c584b3f"
+SHA = catalog.PINNED_IRREMOTE_SHA
 
 
 class CatalogTests(unittest.TestCase):

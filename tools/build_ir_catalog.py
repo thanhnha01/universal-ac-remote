@@ -15,8 +15,16 @@ OUT = ROOT / "data/generated"
 MOBILE_INDEX = ROOT / "app/src/main/assets/catalog-index.json"
 REGISTRY = ROOT / "app/src/main/java/com/thanhnha/universalacremote/ir/ProtocolRegistry.kt"
 STATE = ROOT / "app/src/main/java/com/thanhnha/universalacremote/ir/AcState.kt"
-PINNED_IRREMOTE_SHA = "1e2f0f3ef0a93cbf2a8ddb2e95130f8f4c584b3f"
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+
+def locked_source_sha(name: str) -> str:
+    lock = json.loads((ROOT / "upstream-lock.json").read_text(encoding="utf-8"))
+    source = next((item for item in lock["sources"] if item["name"] == name), None)
+    if not source or not SHA_RE.fullmatch(source.get("commitSha", "")):
+        raise ValueError(f"{name}: upstream lock needs a full commit SHA")
+    return source["commitSha"]
+
+PINNED_IRREMOTE_SHA = locked_source_sha("irremoteesp8266")
 FLIPPER_LICENSE_CUTOFF = "2319685"
 
 
