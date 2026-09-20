@@ -113,7 +113,7 @@ fun RemoteApp(diagnostics: IrHardwareDiagnostics, store: SavedRemotesViewModel =
 
     fun navigateTab(route: String) {
         val resolvedRoute = when (route) {
-            "remote" -> home.remotes.firstOrNull()?.let { "remote/${it.id}" } ?: "add"
+            "remote" -> "devices"
             "scan" -> {
                 store.clearScan()
                 "scan"
@@ -129,7 +129,18 @@ fun RemoteApp(diagnostics: IrHardwareDiagnostics, store: SavedRemotesViewModel =
 
     UniversalAcTheme {
         NavHost(navController = nav, startDestination = "home") {
-            composable("home") { ProductionHomeScreen(home, diagnostics, store, ::navigateTab) { route -> nav.navigate(route) } }
+            composable("home") {
+                ProductionHomeScreen(home, diagnostics, store, ::navigateTab) { route ->
+                    if (route.startsWith("remote/")) store.markUsed(route.removePrefix("remote/"))
+                    nav.navigate(route)
+                }
+            }
+            composable("devices") {
+                ProductionDevicesScreen(home, store, ::navigateTab) { route ->
+                    if (route.startsWith("remote/")) store.markUsed(route.removePrefix("remote/"))
+                    nav.navigate(route)
+                }
+            }
             composable("add") { ProductionAddScreen(store, catalog, ::navigateTab) { route -> nav.navigate(route) } }
             composable("import") { IrImportScreen(store, ::navigateTab, onBack = { nav.popBackStack() }, onSaved = { nav.popBackStack("home", false) }) }
             composable("scan") { ProductionScannerScreen(store, ::navigateTab, onDone = { nav.popBackStack("home", false) }, onChangeBrand = { store.clearScan() }, onImport = { nav.navigate("import") }) }

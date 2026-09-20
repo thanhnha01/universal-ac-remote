@@ -12,6 +12,8 @@ import androidx.compose.material.icons.filled.Air
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Refresh
@@ -44,7 +46,9 @@ fun ProductionDetailsScreen(
 ) {
     var renameOpen by remember { mutableStateOf(false) }
     var deleteOpen by remember { mutableStateOf(false) }
+    var roomOpen by remember { mutableStateOf(false) }
     var newName by remember(remote.id, remote.displayName) { mutableStateOf(remote.displayName) }
+    var newRoom by remember(remote.id, remote.roomName) { mutableStateOf(remote.roomName) }
     val imported = remote.importedCommandsJson.isNotBlank()
     val verification = remote.verificationState(candidate)
 
@@ -137,6 +141,7 @@ fun ProductionDetailsScreen(
             SurfaceCard(Modifier.fillMaxWidth()) {
                 Column {
                     SourceInfoRow("Hãng", remote.brand.ifBlank { "Không rõ" }, Icons.Filled.AcUnit)
+                    SourceInfoRow("Phòng", remote.roomLabel(), Icons.Filled.Home)
                     SourceInfoRow(
                         "Model",
                         candidate?.displayModelLabel()?.takeIf(String::isNotBlank)
@@ -161,6 +166,21 @@ fun ProductionDetailsScreen(
             }
 
             SectionTitle("Quản lý")
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                SecondaryButton(
+                    if (remote.favorite) "Bỏ yêu thích" else "Yêu thích",
+                    Modifier.weight(1f),
+                    Icons.Filled.Star,
+                ) { store.setFavorite(remote.id, !remote.favorite) }
+                SecondaryButton(
+                    "Đổi phòng",
+                    Modifier.weight(1f),
+                    Icons.Filled.Home,
+                ) {
+                    newRoom = remote.roomName
+                    roomOpen = true
+                }
+            }
             PrimaryButton("Mở remote", Modifier.fillMaxWidth(), Icons.Filled.PlayArrow, onClick = onOpen)
             if (imported) {
                 SecondaryButton("Đổi tên", Modifier.fillMaxWidth(), Icons.Filled.Edit) {
@@ -198,6 +218,27 @@ fun ProductionDetailsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { renameOpen = false }) { Text("Hủy") }
+            },
+        )
+    }
+
+    if (roomOpen) {
+        AlertDialog(
+            onDismissRequest = { roomOpen = false },
+            title = { Text("Chọn phòng") },
+            text = {
+                OutlinedField("Tên phòng", newRoom) { newRoom = it }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        store.updateRoom(remote.id, newRoom)
+                        roomOpen = false
+                    },
+                ) { Text("Lưu") }
+            },
+            dismissButton = {
+                TextButton(onClick = { roomOpen = false }) { Text("Hủy") }
             },
         )
     }

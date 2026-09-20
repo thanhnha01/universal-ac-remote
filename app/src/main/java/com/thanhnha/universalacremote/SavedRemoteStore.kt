@@ -43,6 +43,9 @@ data class SavedRemote(
     val protocolModel: String?,
     val verifiedCapabilities: List<String>,
     @ColumnInfo(defaultValue = "''") val importedCommandsJson: String = "",
+    @ColumnInfo(defaultValue = "''") val roomName: String = "",
+    @ColumnInfo(defaultValue = "0") val favorite: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val lastUsedAtEpochMs: Long = 0L,
 )
 
 class SavedRemoteConverters {
@@ -80,11 +83,20 @@ interface SavedRemoteDao {
     @Query("UPDATE saved_remotes SET displayName = :name WHERE id = :id")
     suspend fun rename(id: String, name: String)
 
+    @Query("UPDATE saved_remotes SET roomName = :roomName WHERE id = :id")
+    suspend fun updateRoom(id: String, roomName: String)
+
+    @Query("UPDATE saved_remotes SET favorite = :favorite WHERE id = :id")
+    suspend fun updateFavorite(id: String, favorite: Boolean)
+
+    @Query("UPDATE saved_remotes SET lastUsedAtEpochMs = :lastUsedAtEpochMs WHERE id = :id")
+    suspend fun markUsed(id: String, lastUsedAtEpochMs: Long)
+
     @Query("DELETE FROM saved_remotes WHERE id = :id")
     suspend fun delete(id: String)
 }
 
-@Database(entities = [SavedRemote::class], version = 2, exportSchema = false)
+@Database(entities = [SavedRemote::class], version = 3, exportSchema = false)
 @TypeConverters(SavedRemoteConverters::class)
 abstract class SavedRemoteDatabase : RoomDatabase() {
     abstract fun savedRemoteDao(): SavedRemoteDao
@@ -93,11 +105,20 @@ abstract class SavedRemoteDatabase : RoomDatabase() {
         @Volatile private var instance: SavedRemoteDatabase? = null
         fun get(application: Application): SavedRemoteDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(application, SavedRemoteDatabase::class.java, "saved-remotes.db")
-                .addMigrations(object : androidx.room.migration.Migration(1, 2) {
-                    override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
-                        db.execSQL("ALTER TABLE saved_remotes ADD COLUMN importedCommandsJson TEXT NOT NULL DEFAULT ''")
-                    }
-                })
+                .addMigrations(
+                    object : androidx.room.migration.Migration(1, 2) {
+                        override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                            db.execSQL("ALTER TABLE saved_remotes ADD COLUMN importedCommandsJson TEXT NOT NULL DEFAULT ''")
+                        }
+                    },
+                    object : androidx.room.migration.Migration(2, 3) {
+                        override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                            db.execSQL("ALTER TABLE saved_remotes ADD COLUMN roomName TEXT NOT NULL DEFAULT ''")
+                            db.execSQL("ALTER TABLE saved_remotes ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0")
+                            db.execSQL("ALTER TABLE saved_remotes ADD COLUMN lastUsedAtEpochMs INTEGER NOT NULL DEFAULT 0")
+                        }
+                    },
+                )
                 .build().also { instance = it }
         }
     }
@@ -221,5 +242,14 @@ class SavedRemotesViewModel(application: Application) : AndroidViewModel(applica
 
     fun save(remote: SavedRemote) = viewModelScope.launch { dao.save(remote) }
     fun rename(id: String, name: String) = viewModelScope.launch { dao.rename(id, name.trim()) }
+    fun updateRoom(id: String, roomName: String) = viewModelScope.launch {
+        dao.updateRoom(id, roomName.trim())
+    }
+    fun setFavorite(id: String, favorite: Boolean) = viewModelScope.launch {
+        dao.updateFavorite(id, favorite)
+    }
+    fun markUsed(id: String, atEpochMs: Long = System.currentTimeMillis()) = viewModelScope.launch {
+        dao.markUsed(id, atEpochMs)
+    }
     fun delete(id: String) = viewModelScope.launch { dao.delete(id) }
 }
