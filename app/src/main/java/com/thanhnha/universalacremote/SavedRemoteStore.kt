@@ -247,8 +247,23 @@ class SavedRemotesViewModel(application: Application) : AndroidViewModel(applica
 
     fun beginScan(query: RemoteQuery = RemoteQuery(), selected: RemoteCandidate? = null) {
         val canTransmit: (RemoteCandidate) -> Boolean = ::canTransmit
-        mutableScanCandidates.value = if (selected != null) listOf(selected).filter(canTransmit)
-        else resolver?.scannerCandidates(query, canTransmit).orEmpty()
+        val previouslySuccessful = mutableState.value.remotes
+            .asSequence()
+            .filter { it.verifiedCapabilities.isNotEmpty() }
+            .map { it.catalogProfileId }
+            .toSet()
+        mutableScanCandidates.value = if (selected != null) {
+            listOf(selected).filter(canTransmit)
+        } else {
+            resolver?.scannerCandidates(query, canTransmit)
+                .orEmpty()
+                .sortedWith(
+                    compareBy<RemoteCandidate> { if (it.id in previouslySuccessful) 0 else 1 }
+                        .thenBy(RemoteCandidate::priority)
+                        .thenByDescending { it.verifiedScannerCapabilityCount() }
+                        .thenBy { it.id },
+                )
+        }
     }
 
     fun clearScan() {
@@ -270,3 +285,7 @@ class SavedRemotesViewModel(application: Application) : AndroidViewModel(applica
     }
     fun delete(id: String) = viewModelScope.launch { dao.delete(id) }
 }
+
+private fun RemoteCandidate.verifiedScannerCapabilityCount(): Int =
+    runCatching { com.thanhnha.universalacremote.ir.RemoteControls.from(this).verificationRequirements().size }
+        .getOrDefault(0)
