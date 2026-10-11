@@ -75,7 +75,7 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/zipalign"             -v -c -P 16 4             app/build/outputs/apk/release/app-release-unsigned.apk
 
       - name: Upload debug APK
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: universal-ac-remote-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
@@ -84,7 +84,7 @@ jobs:
 
       - name: Upload verification reports
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: android-verification-reports
           path: app/build/reports/
