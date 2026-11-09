@@ -1,14 +1,15 @@
 {
-  "totalBrands": 121,
-  "totalProfiles": 351,
+  "totalBrands": 138,
+  "transmittableBrands": 121,
+  "totalProfiles": 414,
   "protocolProfiles": 8,
-  "rawProfiles": 343,
-  "smartirTotal": 343,
-  "smartirTransmittable": 241,
-  "smartirUnsupported": 102,
+  "rawProfiles": 406,
+  "smartirTotal": 406,
+  "smartirTransmittable": 290,
+  "smartirUnsupported": 116,
   "profilesBySource": {
     "irremoteesp8266": 8,
-    "smartir": 343,
+    "smartir": 406,
     "flipper-irdb": 0,
     "irplus": 0
   },
@@ -55,6 +56,21 @@
     },
     {
       "source": "smartir",
+      "path": "data/upstreams/snapshots/smartir/codes/climate/1397.json",
+      "reason": "temperature range outside validated Celsius bounds"
+    },
+    {
+      "source": "smartir",
+      "path": "data/upstreams/snapshots/smartir/codes/climate/1524.json",
+      "reason": "temperature range outside validated Celsius bounds"
+    },
+    {
+      "source": "smartir",
+      "path": "data/upstreams/snapshots/smartir/codes/climate/1541.json",
+      "reason": "Expecting property name enclosed in double quotes: line 161 column 7 (char 20167)"
+    },
+    {
+      "source": "smartir",
       "path": "data/upstreams/snapshots/smartir/codes/climate/2040.json",
       "reason": "temperature range outside validated Celsius bounds"
     },
@@ -75,12 +91,17 @@
     },
     {
       "source": "smartir",
-      "path": "data/upstreams/snapshots/smartir/codes/climate/2680.json",
-      "reason": "Expecting property name enclosed in double quotes: line 154 column 5 (char 36067)"
+      "path": "data/upstreams/snapshots/smartir/codes/climate/2861.json",
+      "reason": "temperature range outside validated Celsius bounds"
     },
     {
       "source": "smartir",
       "path": "data/upstreams/snapshots/smartir/codes/climate/3200.json",
+      "reason": "temperature range outside validated Celsius bounds"
+    },
+    {
+      "source": "smartir",
+      "path": "data/upstreams/snapshots/smartir/codes/climate/3460.json",
       "reason": "temperature range outside validated Celsius bounds"
     },
     {
@@ -802,6 +823,21 @@
       },
       {
         "source": "smartir",
+        "path": "data/upstreams/snapshots/smartir/codes/climate/1397.json",
+        "reason": "temperature range outside validated Celsius bounds"
+      },
+      {
+        "source": "smartir",
+        "path": "data/upstreams/snapshots/smartir/codes/climate/1524.json",
+        "reason": "temperature range outside validated Celsius bounds"
+      },
+      {
+        "source": "smartir",
+        "path": "data/upstreams/snapshots/smartir/codes/climate/1541.json",
+        "reason": "Expecting property name enclosed in double quotes: line 161 column 7 (char 20167)"
+      },
+      {
+        "source": "smartir",
         "path": "data/upstreams/snapshots/smartir/codes/climate/2040.json",
         "reason": "temperature range outside validated Celsius bounds"
       },
@@ -822,12 +858,17 @@
       },
       {
         "source": "smartir",
-        "path": "data/upstreams/snapshots/smartir/codes/climate/2680.json",
-        "reason": "Expecting property name enclosed in double quotes: line 154 column 5 (char 36067)"
+        "path": "data/upstreams/snapshots/smartir/codes/climate/2861.json",
+        "reason": "temperature range outside validated Celsius bounds"
       },
       {
         "source": "smartir",
         "path": "data/upstreams/snapshots/smartir/codes/climate/3200.json",
+        "reason": "temperature range outside validated Celsius bounds"
+      },
+      {
+        "source": "smartir",
+        "path": "data/upstreams/snapshots/smartir/codes/climate/3460.json",
         "reason": "temperature range outside validated Celsius bounds"
       },
       {
@@ -1000,7 +1041,7 @@
   },
   "pinnedShas": {
     "irremoteesp8266": "1e2f0f3ef0a93cbf2a8ddb2e95130f8f4c584b3f",
-    "smartir": "e4df2957ad915536f41ffb39daa96886d7cfe040",
+    "smartir": "3dca407e3c475b57c02c08b97ae521a4ef0bbf43",
     "flipper-irdb": "d126fb1b6f1e114c52b4a8c19839ea65e3a9c24d",
     "irplus": "57605b5971b7c5ef531ebaf0707826a1c073f9bb"
   },
